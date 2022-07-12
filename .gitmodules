@@ -1,0 +1,6 @@
+[submodule "gateware/submodules/bedrock"]
+	path = gateware/submodules/bedrock
+	url = https://github.com/BerkeleyLab/Bedrock
+[submodule "gateware/submodules/bantamweightUDP"]
+	path = gateware/submodules/bantamweightUDP
+	url = ../../alsu-instrumentation/bantamweightUDP.git

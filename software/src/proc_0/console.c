@@ -1,0 +1,699 @@
+/*
+ * Copyright 2020, Lawrence Berkeley National Laboratory
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS
+ * AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+ * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Simple command interpreter
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <xparameters.h>
+#include <xuartlite_l.h>
+#include "bwudp.h"
+#include "evgCoincidence.h"
+#include "evio.h"
+#include "eyescan.h"
+#include "gpio.h"
+#include "iicProc.h"
+#include "mgtClkSwitch.h"
+#include "st7789v.h"
+#include "tod.h"
+#include "util.h"
+#include "xadc.h"
+
+/*
+ * UDP console support
+ */
+static struct udpConsole {
+    int         active;
+    int         outIndex;
+    uint32_t    usAtFirstOutputCharacter;
+    int         inIndex;
+} udpConsole;
+
+/*
+ * Special modes
+ */
+static int (*modalHandler)(int argc, char **argv);
+
+/*
+ * Mark UDP console inactive while draining in case
+ * network code diagnostic messages are enabled.
+ */
+static void
+udpConsoleDrain(void)
+{
+    udpConsole.active = 0;
+    sharedMemory->udpConsole.txSize = udpConsole.outIndex;
+    while (sharedMemory->udpConsole.txSize >= 0) continue;
+    udpConsole.outIndex = 0;
+    udpConsole.active = 1;
+}
+
+/*
+ * Pulling in real sprintf bloats executable by more than 60 kB so provide this
+ * fake version that accepts only a limited number of integer arguments.
+ */
+static char *outbyteStash;
+int
+sprintf(char *buf, const char *fmt, ...)
+{
+    va_list args;
+    unsigned int a[6];
+    va_start(args, fmt);
+    a[0] = va_arg(args, unsigned int);
+    a[1] = va_arg(args, unsigned int);
+    a[2] = va_arg(args, unsigned int);
+    a[3] = va_arg(args, unsigned int);
+    a[4] = va_arg(args, unsigned int);
+    a[5] = va_arg(args, unsigned int);
+    *buf = '\0';
+    outbyteStash = buf;
+    printf(fmt, a[0], a[1], a[2], a[3], a[4], a[5]);
+    outbyteStash = NULL;
+    va_end(args);
+    return outbyteStash - buf;
+}
+
+/*
+ * Stash character and return if in 'sprintf'.
+ * Convert <newline> to <carriage return><newline> so
+ * we can use normal looking printf format strings.
+ * Hang on to startup messages.
+ * Buffer to limit the number of transmitted packets.
+ */
+#define STARTBUF_SIZE   2000
+static char startBuf[STARTBUF_SIZE];
+static int startIdx = 0;
+static int isStartup = 1;
+static int showingStartup = 0;
+
+void
+outbyte(char8 c)
+{
+    static int wasReturn;
+
+    if (outbyteStash != NULL) {
+        *outbyteStash++ = c;
+        *outbyteStash = '\0';
+        return;
+    }
+    if ((c == '\n') && !wasReturn) outbyte('\r');
+    wasReturn = (c == '\r');
+    XUartLite_SendByte(STDOUT_BASEADDRESS, c);
+    if (isStartup && (startIdx < STARTBUF_SIZE))
+        startBuf[startIdx++] = c;
+    if (udpConsole.active) {
+        if (udpConsole.outIndex == 0)
+            udpConsole.usAtFirstOutputCharacter = MICROSECONDS_SINCE_BOOT();
+        sharedMemory->udpConsole.txBuf[udpConsole.outIndex++] = c;
+        if (udpConsole.outIndex >= SHARED_RAM_UDP_BUFSIZE) {
+            udpConsoleDrain();
+        }
+    }
+}
+
+static int
+cmdLOG(int argc, char **argv)
+{
+    showingStartup = 1;
+    return 0;
+}
+
+static int
+cmdBOOT(int argc, char **argv)
+{
+    static int bootAlternateImage;
+    if (modalHandler) {
+        if (argc == 1) {
+            if (strcasecmp(argv[0], "Y") == 0) {
+                if (udpConsole.active) udpConsoleDrain();
+                microsecondSpin(1000);
+                resetFPGA(bootAlternateImage);
+                modalHandler = NULL;
+                return 0;
+            }
+            if (strcasecmp(argv[0], "N") == 0) {
+                modalHandler = NULL;
+                return 0;
+            }
+        }
+    }
+    else {
+        if (argc == 1) {
+            bootAlternateImage = 0;
+        }
+        else if ((argc == 2)
+              && (argv[1][0] == '-')
+              && ((argv[1][1] == 'b') || (argv[1][1] == 'B'))
+              && (argv[1][2] == '\0')) {
+            bootAlternateImage = 1;
+        }
+        else {
+            printf("Invalid argument.\n");
+            return 0;
+        }
+        modalHandler = cmdBOOT;
+    }
+    printf("Reboot FPGA image %c (y or n)? ", 'A' + bootAlternateImage);
+    fflush(stdout);
+    return 0;
+}
+
+static int
+cmdDEBUG(int argc, char **argv)
+{
+    char *endp;
+    int d;
+    int sFlag = 0;
+
+    if ((argc > 1) && (strcmp(argv[1], "-s") == 0)) {
+        sFlag = 1;
+        argc--;
+        argv++;
+    }
+    if (argc > 1) {
+        d = strtol(argv[1], &endp, 16);
+        if (*endp == '\0') {
+            debugFlags = d;
+        }
+    }
+    printf("Debug flags: 0x%x\n", debugFlags);
+    if (debugFlags & DEBUGFLAG_IIC_SCAN) iicProcScan();
+    if (debugFlags & DEBUGFLAG_DUMP_SCREEN) st7789vDumpScreen();
+    if (debugFlags & DEBUGFLAG_DUMP_MGT_SWITCH) mgtClkSwitchDump();
+    if (debugFlags & DEBUGFLAG_DUMP_CROSSPOINT) evioShowCrosspointRegisters();
+    if (debugFlags & DEBUGFLAG_SHOW_COINCIDENCE) evgCoincidenceShow(0);
+    if (debugFlags & DEBUGFLAG_PLOT_COINCIDENCE) evgCoincidenceShow(1);
+    if (sFlag) {
+        sharedMemory->systemParameters.startupDebugFlags = debugFlags;
+        systemParametersStash();
+        printf("Startup debug flags: 0x%x\n", debugFlags);
+    }
+    return 0;
+}
+
+static int
+cmdFMON(int argc, char **argv)
+{
+    int i;
+    int ppsValid = ((GPIO_READ(GPIO_IDX_NTP_SERVER_STATUS) &
+                                             NTP_SERVER_STATUS_PPS_VALID) != 0);
+    static const char *names[] = { "System",
+                                   "EVG 1 MGT reference",
+                                   "EVG 1 Tx",
+                                   "EVG 1 Rx",
+                                   "EVG 2 MGT reference",
+                                   "EVG 2 Tx",
+                                   "EVG 2 Rx",
+                                   "Ethernet Tx",
+                                   "Ethernet Rx" };
+    if (!ppsValid) {
+        printf("Pulse per second signal missing -- Relative accuracy only.\n");
+    }
+    for (i = 0 ; i < sizeof names / sizeof names[0] ; i++) {
+        GPIO_WRITE(GPIO_IDX_FREQ_MONITOR_CSR, i);
+        unsigned int rate = GPIO_READ(GPIO_IDX_FREQ_MONITOR_CSR);
+        printf("%20s clock: %3d.%06d\n", names[i], rate / 1000000,
+                                                   rate % 1000000);
+    }
+    return 0;
+}
+
+static int
+cmdNET(int argc, char **argv)
+{
+    int bad = 0;
+    int i;
+    char *cp;
+    uint32_t netmask;
+    unsigned int netLen = 24;
+    char *endp;
+    static struct sysNetParms np;
+    if (modalHandler) {
+        if (argc == 1) {
+            if (strcasecmp(argv[0], "Y") == 0) {
+                sharedMemory->systemParameters.netConfig.np = np;
+                systemParametersStash();
+                modalHandler = NULL;
+                return 0;
+            }
+            if (strcasecmp(argv[0], "N") == 0) {
+                modalHandler = NULL;
+                return 0;
+            }
+        }
+        printf("Write to flash (y or n)? ");
+        fflush(stdout);
+        return 0;
+    }
+    else {
+        if (argc == 1) {
+            np = sharedMemory->systemParameters.netConfig.np;
+        }
+        else if (argc == 2) {
+            cp = argv[1];
+            i = parseIP(cp, &np.address);
+            if (i < 0) {
+                bad = 1;
+            }
+            else if (cp[i] == '/') {
+                netLen = strtol(cp + i + 1, &endp, 0);
+                if ((*endp != '\0')
+                 || (netLen < 8)
+                 || (netLen > 24)) {
+                    bad = 1;
+                    netLen = 24;
+                }
+            }
+            netmask = ~0U << (32 - netLen);
+            np.netmask.a[0] = netmask >> 24;
+            np.netmask.a[1] = netmask >> 16;
+            np.netmask.a[2] = netmask >> 8;
+            np.netmask.a[3] = netmask;
+            np.gateway.a[0] = np.address.a[0] & np.netmask.a[0];
+            np.gateway.a[1] = np.address.a[1] & np.netmask.a[1];
+            np.gateway.a[2] = np.address.a[2] & np.netmask.a[2];
+            np.gateway.a[3] = (np.address.a[3] & np.netmask.a[3]) | 1;
+        }
+        else {
+            bad = 1;
+        }
+        if (bad) {
+            printf("Command takes single optional argument of the form "
+                   "www.xxx.yyy.xxx[/n]\n");
+            return 1;
+        }
+    }
+    showNetworkConfig(&np);
+    if (!memcmp(&np.address,
+                   (void *)&sharedMemory->systemParameters.netConfig.np.address,
+                   sizeof(ipv4Address))
+     && !memcmp(&np.netmask,
+                   (void *)&sharedMemory->systemParameters.netConfig.np.netmask,
+                   sizeof(ipv4Address))
+     && !memcmp(&np.gateway,
+                   (void *)&sharedMemory->systemParameters.netConfig.np.gateway,
+                   sizeof(ipv4Address))) {
+        return 0;
+    }
+    printf("Write parameters to flash (y or n)? ");
+    fflush(stdout);
+    modalHandler = cmdNET;
+    return 0;
+}
+
+static int
+cmdMAC(int argc, char **argv)
+{
+    int bad = 0;
+    int i;
+    static ethernetMAC mac;
+    if (modalHandler) {
+        if (argc == 1) {
+            if (strcasecmp(argv[0], "Y") == 0) {
+                memcpy(
+                  (void *)&sharedMemory->systemParameters.netConfig.ethernetMAC,
+                                                               &mac,sizeof mac);
+                systemParametersStash();
+                modalHandler = NULL;
+                return 0;
+            }
+            if (strcasecmp(argv[0], "N") == 0) {
+                modalHandler = NULL;
+                return 0;
+            }
+        }
+    }
+    else {
+        if (argc == 1) {
+            memcpy(&mac,
+                  (void *)&sharedMemory->systemParameters.netConfig.ethernetMAC,
+                  sizeof mac);
+        }
+        else if (argc == 2) {
+            i = parseMAC(argv[1], &mac);
+            if ((i < 0) || (argv[1][i] != '\0')) {
+                bad = 1;
+            }
+        }
+        else {
+            bad = 1;
+        }
+        if (bad) {
+            printf("Command takes single optional argument of the form "
+                   "aa:bb:cc:dd:ee:ff\n");
+            return 1;
+        }
+    }
+    printf("   ETHERNET ADDRESS: %s\n", formatMAC(&mac));
+    if (!(memcmp((void *)&sharedMemory->systemParameters.netConfig.ethernetMAC,
+                                                           &mac, sizeof mac))) {
+        return 0;
+    }
+    modalHandler = cmdMAC;
+    printf("Write to flash (y or n)? ");
+    fflush(stdout);
+    return 0;
+}
+
+static int
+cmdNTP(int argc, char **argv)
+{
+    int bad = 0;
+    int i;
+    char *cp;
+    static ipv4Address ntpHost;
+    if (modalHandler) {
+        if (argc == 1) {
+            if (strcasecmp(argv[0], "Y") == 0) {
+                sharedMemory->systemParameters.ntpHost = ntpHost;
+                systemParametersStash();
+                modalHandler = NULL;
+                return 0;
+            }
+            if (strcasecmp(argv[0], "N") == 0) {
+                modalHandler = NULL;
+                return 0;
+            }
+        }
+    }
+    else {
+        if (argc == 1) {
+            ntpHost = sharedMemory->systemParameters.ntpHost;
+        }
+        else if (argc == 2) {
+            cp = argv[1];
+            i = parseIP(cp, &ntpHost);
+            if ((i < 0) || (cp[i] != '\0')) {
+                bad = 1;
+            }
+        }
+        else {
+            bad = 1;
+        }
+        if (bad) {
+            printf("Command takes single optional argument of the form "
+                   "www.xxx.yyy.xxx\n");
+            return 1;
+        }
+    }
+    showNTPserver(&ntpHost);
+    if (memcmp(&ntpHost, (void *)&sharedMemory->systemParameters.ntpHost,
+                                                         sizeof(ipv4Address))) {
+        printf("Write to flash (y or n)? ");
+        fflush(stdout);
+        modalHandler = cmdNTP;
+    }
+    return 0;
+}
+
+/*
+ * PLL phase alignment targets
+ */
+static int
+cmdPLL(int argc, char **argv)
+{
+    int i;
+    for (i = 0 ; i < (sizeof sharedMemory->systemParameters.pllPhaseShift /
+                      sizeof sharedMemory->systemParameters.pllPhaseShift[0]) ;
+                                                                          i++) {
+        if (argc == 1) {
+            printf("EVG %d phase shift target: %d\n", i + 1,
+                               sharedMemory->systemParameters.pllPhaseShift[i]);
+        }
+        else {
+            char *endp;
+            int v;
+            if ((i + 1) >= argc) {
+                printf("Missing value\n");
+                return 1;
+            }
+            v = strtol(argv[i+1], &endp, 0);
+            if (*endp != '\0') {
+                printf("Bad value\n");
+                return 1;
+            }
+            sharedMemory->systemParameters.pllPhaseShift[i] = v;
+        }
+    }
+    if (argc > 1) {
+        systemParametersStash();
+    }
+    return 0;
+}
+
+static int
+cmdREG(int argc, char **argv)
+{
+    char *endp;
+    int i;
+    int first;
+    int n = 1;
+
+    if (argc > 1) {
+        first = strtol(argv[1], &endp, 0);
+        if (*endp != '\0')
+            return 1;
+        if (argc > 2) {
+            n = strtol(argv[2], &endp, 0);
+            if (*endp != '\0')
+                return 1;
+        }
+        if ((first < 0) || (first >= GPIO_IDX_COUNT) || (n <= 0))
+            return 1;
+        if ((first + n) > GPIO_IDX_COUNT)
+            n = GPIO_IDX_COUNT - first;
+        for (i = first ; i < first + n ; i++) {
+            showReg(i);
+        }
+    }
+    return 0;
+}
+
+static void
+commandHandler(int argc, char **argv)
+{
+    int i;
+    int len;
+    int matched = -1;
+    struct commandInfo {
+        const char *name;
+        int       (*handler)(int argc, char **argv);
+        const char *description;
+    };
+    static struct commandInfo commandTable[] = {
+      { "boot",    cmdBOOT,        "Reboot FPGA"                        },
+      { "debug",   cmdDEBUG,       "Set debug flags"                    },
+      { "eyescan", eyescanCommand, "Perform transceiver eye scan"       },
+      { "fmon",    cmdFMON,        "Show clock frequencies"             },
+      { "log",     cmdLOG,         "Replay startup console output"      },
+      { "mac",     cmdMAC,         "Set Ethernet MAC address"           },
+      { "net",     cmdNET,         "Set network parameters"             },
+      { "pll",     cmdPLL,         "Set PLL phase alignment targets"    },
+      { "reg",     cmdREG,         "Show GPIO register(s)"              },
+      { "tod",     cmdNTP,         "Set time-of-day (NTP) host address" },
+    };
+
+    if (argc <= 0)
+        return;
+    len = strlen(argv[0]);
+    for (i = 0 ; i < sizeof commandTable / sizeof commandTable[0] ; i++) {
+        if (strncasecmp(argv[0], commandTable[i].name, len) == 0) {
+            if (matched >= 0) {
+                printf("Not unique.\n");
+                return;
+            }
+            matched = i;
+        }
+    }
+    if (matched >= 0) {
+        (*commandTable[matched].handler)(argc, argv);
+        return;
+    }
+    if ((strncasecmp(argv[0], "help", len) == 0) || (argv[0][0] == '?')) {
+        printf("Commands:\n");
+        for (i = 0 ; i < sizeof commandTable / sizeof commandTable[0] ; i++) {
+            printf("%8s -- %s\n", commandTable[i].name,
+                                  commandTable[i].description);
+        }
+    }
+    else {
+        printf("Invalid command\n");
+    }
+}
+
+static void
+handleLine(char *line)
+{
+    char *argv[10];
+    int argc;
+    char *tokArg, *tokSave;
+
+    argc = 0;
+    tokArg = line;
+    while ((argc < (sizeof argv / sizeof argv[0]) - 1)) {
+        char *cp = strtok_r(tokArg, " ,", &tokSave);
+        if (cp == NULL)
+            break;
+        argv[argc++] = cp;
+        tokArg = NULL;
+    }
+    argv[argc] = NULL;
+    if (modalHandler) {
+        (*modalHandler)(argc, argv);
+    }
+    else {
+        commandHandler(argc, argv);
+    }
+}
+/*
+ * Check for and act upon character from console
+ */
+void
+consoleCheck(void)
+{
+    int c;
+    static char line[200];
+    static int idx = 0;
+
+    /*
+     * See if other processor has console output pending
+     * Used to be a for(;;) loop but that resulted in this processor
+     * remaining stuck here when the other processor started spewing.
+     *
+     * Emitting characters from other processor could mess up an eye scan
+     * but messsages from the other processor are important enough that
+     * this is acceptable.
+     */
+    for (int n = 0 ; n < 500 ; n++) {
+        static int warnIdx = -1;
+        int tail = sharedMemory->stdoutBufTail;
+        if (tail == sharedMemory->stdoutBufHead) break;
+        c = sharedMemory->stdoutBuf[tail];
+        sharedMemory->stdoutBufTail = (tail == (SHARED_RAM_STDOUT_BUFSIZE-1)) ?
+                                                                 0 : (tail + 1);
+        if (c == ASCII_SO) {
+            warnIdx = 0;
+        }
+        else if (warnIdx >= 0) {
+            static char warnBuf[120];
+            if (c == '\n') {
+                warnBuf[warnIdx] = '\0';
+                warn(warnBuf);
+                warnIdx = -1;
+            }
+            else if (warnIdx < ((sizeof warnBuf) - 1)) {
+                warnBuf[warnIdx++] = c;
+            }
+        }
+        else {
+            outbyte(c);
+        }
+    }
+    if (udpConsole.outIndex != 0){
+        if ((MICROSECONDS_SINCE_BOOT() - udpConsole.usAtFirstOutputCharacter) >
+                                                                       100000) {
+            udpConsoleDrain();
+        }
+    }
+
+    /*
+     * Startup log display in progress?
+     */
+    if (showingStartup) {
+        static int i;
+        if (i < startIdx) {
+            outbyte(startBuf[i++]);
+        }
+        else {
+            i = 0;
+            showingStartup = 0;
+        }
+    }
+
+    /*
+     * Eye scan in progress?
+     */
+    if (eyescanCrank()) return;
+
+    /*
+     * See if UART or other processor has console input pending
+     */
+    if (!XUartLite_IsReceiveEmpty(STDIN_BASEADDRESS)) {
+        c = XUartLite_RecvByte(STDIN_BASEADDRESS) & 0xFF;
+        udpConsole.active = 0;
+        udpConsole.outIndex = 0;
+        udpConsole.inIndex = 0;
+        sharedMemory->udpConsole.rxSize = -1;
+    }
+    else if (sharedMemory->udpConsole.rxSize >= 0) {
+        udpConsole.active = 1;
+        if (udpConsole.inIndex < sharedMemory->udpConsole.rxSize) {
+            c = sharedMemory->udpConsole.rxBuf[udpConsole.inIndex++] & 0xFF;
+        }
+        else {
+            udpConsole.inIndex = 0;
+            sharedMemory->udpConsole.rxSize = -1;
+            return;
+        }
+    }
+    else {
+        return;
+    }
+    if ((c == '\001') || (c > '\177')) return;
+    if (c == '\t') c = ' ';
+    else if (c == '\177') c = '\b';
+    else if (c == '\r') c = '\n';
+    if (c == '\n') {
+        isStartup = 0;
+        printf("\n");
+        line[idx] = '\0';
+        idx = 0;
+        handleLine(line);
+        return;
+    }
+    if (c == '\b') {
+        if (idx) {
+            printf("\b \b");
+            fflush(stdout);
+            idx--;
+        }
+        return;
+    }
+    if (c < ' ')
+        return;
+    if (idx < ((sizeof line) - 1)) {
+        printf("%c", c);
+        fflush(stdout);
+        line[idx++] = c;
+    }
+}

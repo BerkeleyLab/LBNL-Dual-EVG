@@ -1,0 +1,77 @@
+stages:
+  - prepare
+  - gateware
+  - software
+
+variables:
+  XILINX_VIVADO: /non-free/Xilinx/Vivado_and_Vitis/2020.2/Vivado/2020.2
+  XILINX_VITIS: /non-free/Xilinx/Vivado_and_Vitis/2020.2/Vitis/2020.2
+  CI_REGISTRY: mohs.dhcp.lbl.gov
+  CONTAINER_IMAGE: $CI_REGISTRY/xilinx_env
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+  GIT_SUBMODULE_STRATEGY: normal
+
+image: $CONTAINER_IMAGE:$CI_COMMIT_REF_NAME
+
+services:
+  - name: mohs.dhcp.lbl.gov/docker:20.10.12-dind
+    command: ["--insecure-registry", "mohs.dhcp.lbl.gov"]
+    alias: docker
+
+include:
+  - local: .gitlab/ci/build-image.gitlab-ci.yml
+
+# Gateware jobs
+# Gitlab doesn't seem to suport the usage of variables in
+# a "dependencies" or "needs" statement. So, unroll the job
+# description, as to simplify job descriptions
+gw_devg_marble:
+  before_script:
+    - cd gateware/syn/devg_marble && ls /non-free
+  stage: gateware
+  script:
+    - make clean && PATH=$XILINX_VIVADO/bin:$PATH time make devg_marble_top.bit
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 7 days
+    paths:
+      - gateware/syn/devg_marble/devg_marble_top.bit
+      - gateware/syn/devg_marble/_xilinx/devg_marble_top/*.runs/impl_1/*.rpt
+      - gateware/syn/devg_marble/bd.xsa
+
+# Software jobs
+# Gitlab doesn't seem to suport the usage of variables in
+# a "dependencies" or "needs" statement. So, unroll the job
+# description...
+sw_devg_marble_proc_0:
+  before_script:
+    - cd software/app/devg/proc_0
+  stage: software
+  script:
+    - make TARGET=devg_marble clean && PATH=$XILINX_VITIS/bin:$XILINX_VITIS/gnu/microblaze/lin/bin:$PATH time make TARGET=devg_marble
+  # Get artifacts from this job, needed to compile the sofware
+  needs:
+    - job: gw_devg_marble
+      artifacts: true
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 7 days
+    paths:
+      - software/app/devg/proc_0/devg_marble_proc_0.elf
+
+sw_devg_marble_proc_1:
+  before_script:
+    - cd software/app/devg/proc_1
+  stage: software
+  script:
+    - make TARGET=devg_marble clean && PATH=$XILINX_VITIS/bin:$XILINX_VITIS/gnu/microblaze/lin/bin:$PATH time make TARGET=devg_marble
+  # Get artifacts from this job, needed to compile the sofware
+  needs:
+    - job: gw_devg_marble
+      artifacts: true
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 7 days
+    paths:
+      - software/app/devg/proc_1/devg_marble_proc_1.elf

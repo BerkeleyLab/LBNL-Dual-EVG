@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>ST7789V Support</title></head><body>
+<h1>Introduction</h1>
+
+    This support module provides firmware and software to communicate with a Sitronix ST7789V color display controller.<br>
+
+    
+    
+<h1>Hardware<br>
+</h1>
+
+    
+<p>The ST7789V configuration pins must be IM[3:0]=4'b0110 (4-line 8-bit 
+serial interface, bidirectional SDA).&nbsp; The carrier board provides 
+mounting points to attach the 
+display to a panel, connectors for 'Display' and 'Reboot/Recovery' 
+buttons and a power/data connector.&nbsp; The latter is designed to 
+connect to a dual PMOD (3.3V) connector as follows.<br>
+</p>
+
+    
+<table style="text-align: left; width: 500px; margin-left: 40px;" cellspacing="2" cellpadding="2" border="1">
+
+      <tbody>
+        <tr>
+          <td style="text-align: center;"><span style="font-weight:
+              bold;">PMOD</span><span style="font-weight: bold;"><br>
+            </span><span style="font-weight: bold;">Line</span><br>
+          </td>
+          <td style="vertical-align: middle; text-align: center;"><span style="font-weight: bold;">ST7789V</span><span style="font-weight: bold;"><br>
+            </span><span style="font-weight: bold;">Line</span><br>
+          </td>
+          <td style="vertical-align: middle; text-align: center;"><span style="font-weight: bold;">De</span><span style="font-weight: bold;">scrip</span><span style="font-weight: bold;">tion</span><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">0<br>
+          </td>
+          <td style="text-align: center;"><span style="text-decoration:overline"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mtext>CS</mtext><mo>¯</mo></mover><annotation encoding="TeX">\overline{\text{CS}}</annotation></semantics></math></span>
+          </td>
+          <td style="vertical-align: top;"><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">1<br>
+          </td>
+          <td style="text-align: center;">SDA<br>
+          </td>
+          <td style="vertical-align: top;">Bidirectional data transfer.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">2<br>
+          </td>
+          <td style="text-align: center;">–<br>
+          </td>
+          <td style=" vertical-align: top;">Enable display backlight
+            driver<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">3<br>
+          </td>
+          <td style="text-align: center;">SCLK<br>
+          </td>
+          <td style="vertical-align: top;"><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">4<br>
+          </td>
+          <td style="text-align: center;"><span style="text-decoration:overline"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mtext>RESET</mtext><mo>¯</mo></mover><annotation encoding="TeX">\overline{\text{RESET}}</annotation></semantics></math></span></td>
+          <td style="vertical-align: top;"><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">5<br>
+          </td>
+          <td style="text-align: center;"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>D/</mtext><mover><mtext>C</mtext><mo>¯</mo></mover></mrow><annotation encoding="TeX">\text{D/}\overline{\text{C}}</annotation></semantics></math><br>
+          </td>
+          <td style="vertical-align: top;"><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">6<br>
+          </td>
+          <td style="text-align: center;">–<br>
+          </td>
+          <td style="vertical-align: top;">Reset/Recovery button
+            (active low, on-board pull-up)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">7<br>
+          </td>
+          <td style="text-align: center;">–<br>
+          </td>
+          <td style="vertical-align: top;">Display button (active low, on-board
+            pull-up)</td>
+        </tr>
+      </tbody>
+    
+</table>
+
+    <br>
+The buttons provide momentary closure to ground.&nbsp; The Display button cycles through the assorted display
+      pages.&nbsp; If the display is showing a warning message (black
+      text on a yellow background) pressing and holding the Display
+      button for more than a second will clear the message and restore
+      normal display operation.<br>
+<br>
+<br>
+<h1>Firmware</h1>
+<h2>Ports</h2>
+
+<p>The firmware is designed for connection to a 32 bit microprocessor bus where it appears as two 32 bit registers.</p>
+<table style="text-align: left; width: 800px; margin-left: 40px;" cellspacing="2" cellpadding="2" border="1">
+
+
+      <tbody>
+        <tr>
+          <td style="text-align: center;"><span style="font-weight:
+              bold;">Port</span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><br>
+          </td>
+          <td style="text-align: center;"><span style="font-weight: bold;">Direction</span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><br>
+          </td>
+          <td style="text-align: center;"><span style="font-weight: bold;">Width</span><br>
+  </td>
+<td style="vertical-align: middle; text-align: center;"><span style="font-weight: bold;">De</span><span style="font-weight: bold;">scrip</span><span style="font-weight: bold;">tion</span><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">clk<br>
+          </td>
+          <td style="text-align: center;">Input<br>
+</td>
+          <td style="text-align: center;">1<br>
+  </td>
+<td style="vertical-align: top;"><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">csrStrobe<br>
+          </td>
+          <td style="text-align: center;">Input<br>
+          </td>
+          <td style="text-align: center;">1<br>
+  </td>
+<td style="vertical-align: top;">Asserted for one clock cycle to write to control/status register.<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">dataStrobe<br>
+</td>
+          <td style="text-align: center;">Input<br>
+          </td>
+          <td style="text-align: center;">1<br>
+  </td>
+<td style=" vertical-align: top;">Asserted for one clock cycle to write to data register.
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">GPIO_OUT</td>
+          <td style="text-align: center;">Input<br>
+          </td>
+          <td style="text-align: center;">32<br>
+  </td>
+<td style="vertical-align: top;">Data to be written to register.&nbsp; Must be valid when either of the write strobes is asserted.<br>
+          </td>
+        </tr>
+        
+        
+        <tr>
+    <td style="text-align: center;">status<br>
+    </td>
+    <td style="text-align: center;">Output<br>
+    </td>
+    <td style="text-align: center;">32<br>
+    </td>
+    <td style="vertical-align: top;">Status register.<br>
+    </td>
+  </tr>
+<tr>
+          <td style="text-align: center;">readData<br>
+          </td>
+          <td style="text-align: center;">Output<br>
+          </td>
+          <td style="text-align: center;">32<br>
+  </td>
+<td style="vertical-align: top;">Data register.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">DISPLAY_BACKLIGHT_ENABLE<br>
+          </td>
+          <td style="text-align: center;">Output<br>
+          </td>
+          <td style="text-align: center;">1<br>
+  </td>
+<td style="vertical-align: top;">Drives display backlight enable line.<br>
+</td>
+        </tr><tr>
+    <td style="text-align: center;">DISPLAY_RESET_N<br>
+    </td>
+    <td style="text-align: center;">Output</td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;">Drives display <span style="text-decoration:overline">RESET</span> line.<span style="text-decoration:overline"><span style="text-decoration:overline"><br>
+        </span></span></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">DISPLAY_CMD_N<br>
+    </td>
+    <td style="text-align: center;">Output</td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;">Drives display <mtext>D/</mtext><span style="text-decoration:overline">C</span> line.<mtext></mtext><mtext></mtext><mtext></mtext><mtext></mtext></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">DISPLAY_CLK<br>
+    </td>
+    <td style="text-align: center;">Output</td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;"><mtext>Drives display SCLK line.</mtext><mtext></mtext></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">DISPLAY_CS_N<br>
+    </td>
+    <td style="text-align: center;">Output</td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;">Drives display <span style="text-decoration:overline">CS</span> line.<span style="text-decoration:overline"><span style="text-decoration:overline"><br>
+  </span></span></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">DISPLAY_SDA_O<br>
+    </td>
+    <td style="text-align: center;">Output</td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;">Drives three-state buffer connected to display SDA line.<br>
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">DISPLAY_SDA_T<br>
+    </td>
+    <td style="text-align: center;">Output<br>
+    </td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;">Drives three-state buffer connected to display SDA line.</td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">DISPLAY_SDA_I<br>
+    </td>
+    <td style="text-align: center;">Input<br>
+    </td>
+    <td style="text-align: center;">1<br>
+    </td>
+    <td style="vertical-align: top;">Driven by three-state buffer connected to display SDA line.</td>
+  </tr>
+
+      </tbody>
+    
+</table>
+<div style="margin-left: 80px;">
+
+    <br>
+</div>
+<h2>Parameters</h2>
+
+<div style="margin-left: 40px;">
+
+
+    
+</div>
+<table style="text-align: left; width: 900px; margin-left: 40px;" cellspacing="2" cellpadding="2" border="1">
+
+
+      <tbody>
+        <tr>
+          <td style="text-align: center;"><span style="font-weight:
+              bold;">Name</span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><br>
+          </td>
+          <td style="vertical-align: middle; text-align: center;"><span style="font-weight: bold;">Default<br>
+Value</span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><br>
+          </td>
+          <td style=" vertical-align: middle; text-align: center;"><span style="font-weight: bold;">De</span><span style="font-weight: bold;">scrip</span><span style="font-weight: bold;">tion</span><br>
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="text-align: center;">CLK_RATE<br>
+          </td>
+          <td style="text-align: center;">100000000<br>
+          </td>
+          <td style=" vertical-align: top;">The rate of the clk pin.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">EXTRA_WRITE_CYCLE_NS<br>
+          </td>
+          <td style="text-align: center;">0<br>
+          </td>
+          <td style=" vertical-align: top;">Extra time per bit for values transmitted to display,<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">EXTRA_READ_CYCLE_NS<br>
+          </td>
+          <td style="text-align: center;">100<br>
+          </td>
+          <td style="vertical-align: top;">Extra time per bit for values received from display.
+          </td>
+        </tr>
+        
+        
+        <tr>
+          <td style="text-align: center;">COMMAND_QUEUE_ADDRESS_WIDTH<br>
+          </td>
+          <td style="text-align: center;">11<br>
+          </td>
+          <td style="vertical-align: top;">Set size of write data FIFO (1&lt;&lt;COMMAND_QUEUE_ADDRESS_WIDTH).
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">DEBUG<br>
+          </td>
+          <td style="text-align: center;">"false"<br>
+          </td>
+          <td style="vertical-align: top;">Set mark_debug attribute for assorted nets.<br>
+</td>
+        </tr>
+      </tbody>
+    
+</table>
+<div style="margin-left: 40px;">
+
+    <br>
+</div>
+The EXTRA_WRITE_CYCLE_NS and EXTRA_READ_CYCLE_NS parameters provide a 
+mechanism for adding extra time to account for level shifter and cable 
+latency.&nbsp; This is usually necessary only for read cycles.<br>
+<br>
+<br>
+<h1>Software</h1>
+<p>The software coordinate system assumes that the display is in 
+landscape orientation with (0,0) as the upper left-hand pixel and 
+(319,239) as the lower right-hand pixel.&nbsp; The color of each pixel 
+is set by three (Red, Green, Blue) 5-bit components.&nbsp; The routines 
+make use of the following functions:<br>
+  <br>
+</p>
+<ul>
+  <li>printf – For diagnostic messages and screen dumps</li>
+  <li>microsecondSpin – For startup delays.&nbsp; Takes a single integer argument specifying the duration of the delay.</li>
+</ul>
+<p><br>
+</p>
+<h2>Macros</h2>
+<ul>
+  <li><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">ST7789V_COLOUR(r,g,b)</span><span style="font-family: Courier New,Courier,monospace;"><br>
+      <span style="font-family: Times New Roman,Times,serif;">Merge the 
+three components, each of which must be between 0 and 31, into a single 
+value used as a color argument for the routines.&nbsp; The header file 
+also provides a number of predefined colors, namely:</span></span></li>
+  <li><span style=" font-family: Courier New,Courier,monospace;"><span style=" font-family: Times New Roman,Times,serif;">ST7789V_RED</span></span></li>
+  <li><span style="  font-family: Courier New,Courier,monospace;"><span style="  font-family: Times New Roman,Times,serif;">ST7789V_GREEN</span></span></li>
+  <li><span style="   font-family: Courier New,Courier,monospace;"><span style="   font-family: Times New Roman,Times,serif;">ST7789V_BLUE</span></span></li>
+  <li><span style="    font-family: Courier New,Courier,monospace;"><span style="    font-family: Times New Roman,Times,serif;">ST7789V_CYAN</span></span></li>
+  <li><span style="     font-family: Courier New,Courier,monospace;"><span style="     font-family: Times New Roman,Times,serif;">ST7789V_MAGENTA</span></span></li>
+  <li><span style="      font-family: Courier New,Courier,monospace;"><span style="      font-family: Times New Roman,Times,serif;">ST7789V_YELLOW</span></span></li>
+  <li><span style="       font-family: Courier New,Courier,monospace;"><span style="       font-family: Times New Roman,Times,serif;">ST7789V_BLACK</span></span></li>
+  <li><span style="        font-family: Courier New,Courier,monospace;"><span style="        font-family: Times New Roman,Times,serif;">ST7789V_WHITE</span></span></li>
+  <li><span style="         font-family: Courier New,Courier,monospace;"><span style="         font-family: Times New Roman,Times,serif;">ST7789V_ORANGE</span></span></li>
+  <li><span style="          font-family: Courier New,Courier,monospace;"><span style="          font-family: Times New Roman,Times,serif;">ST7789V_PURPLE</span></span></li>
+  <li><span style="           font-family: Courier New,Courier,monospace;"><span style="           font-family: Times New Roman,Times,serif;">ST7789V_BROWN<br>
+      </span></span></li>
+</ul>
+<h2>Global Variables</h2>
+<p style="margin-left: 40px;"><span style="font-family: Courier New,Courier,monospace;">extern int st7789vCharWidth, st7789vCharHeight;</span><br>
+</p>
+<p>These values specify the size, in pixels, of each character.&nbsp; 
+The values are valid after the call to st7789vInit() has 
+completed.&nbsp; They should be considered read-only.<br>
+</p>
+<h2>Utility Routines<br>
+</h2>
+
+<ul>
+  <li><span style="font-family: Courier New,Courier,monospace;">void st7789vInit(void);</span><br>
+Initialize the display and turn on the backlight.&nbsp; This routine 
+must be called before calling any other routine or using the external 
+variables.</li>
+  <li><span style="font-family: Courier New,Courier,monospace;">void st7789vBacklightEnable(int enable);</span><br>
+Turns the backlight off if the argument is zero, else turns it on.</li>
+  <li><span style="font-family: Courier New,Courier,monospace;">void st7789vAwaitCompletion(void);</span><br>
+
+Returns after all values have been sent to the display.<br>
+  </li>
+  <li><span style="font-family: Courier New,Courier,monospace;">void st7789vShow(void);</span><br>
+Calls printf to show the names and contents of various display registers.</li>
+  <li><span style="font-family: Courier New,Courier,monospace;">int st7789ColorAtPixel(int x, int y);</span><br>
+Returns the color currently displayed at the specified location.</li>
+</ul>
+<h2>Rectangle Drawing Routines<br>
+</h2>
+
+
+<ul>
+<li><span style="font-family: Courier New,Courier,monospace;">void st7789vFlood(int xs, int ys, int width, int height, int value);</span><br>
+Fill the specified area with the specified value.<br>
+</li><li><span style="font-family: Courier New,Courier,monospace;">void st7789vDrawRectangle(int xs, int ys, int width, int height, const uint16_t *data);</span><br>Fill the specified area with the values, stored row-wise, pointed to by the final argument.</li>
+</ul>
+<h2>Character Drawing Routines<br>
+</h2>
+
+
+
+<ul>
+<li><span style="font-family: Courier New,Courier,monospace;">void st7789vSetCharacterRGB(int foreground, int background);</span><br>Set the foreground and background colors for subsequent character display.<br>
+</li><li><span style="font-family: Courier New,Courier,monospace;">void st7789vDrawChar(int x, int y, int c);</span><br>Display
+ a character with its upper left-hand corner at the specified 
+location.&nbsp; Only characters with ASCII codes in the range of 33 to 
+126 are drawn.&nbsp; All other values are drawn as a blank space.</li>
+  <li><span style="font-family: Courier New,Courier,monospace;">void st7789vShowString(int xBase, int yBase, const char *str);</span><br>
+Display a null-terminated sequence of characters with&nbsp; upper 
+left-hand corner at the specified location.&nbsp; No line breaking is 
+performed.&nbsp; Characters past the right of the display are ignored.</li>
+  <li><span style="font-family: Courier New,Courier,monospace;">int st7789vShowText(int xBase, int yBase, int width, int height, int foreground, int background, const char *str);</span><br>
+Display a null-terminated sequence of characters with&nbsp; upper 
+left-hand 
+corner at the specified location and with simple line breaking performed
+ to fit in the specified width.&nbsp; Characters that do not fit in the 
+specified region are ignored.&nbsp;&nbsp; Return value is the Y 
+coordinate of the last line.<br>
+  </li>
+</ul>
+
+<h2>Screen Dump Routines<br>
+</h2>
+
+
+
+
+<ul>
+<li><span style="font-family: Courier New,Courier,monospace;">void st7789vDumpScreen(void);<br>
+  <span style="font-family: Times New Roman,Times,serif;">Calls printf 
+to show the contents of the display as an ASCII portable pixmap (PPM) 
+file.&nbsp;&nbsp; This can result in the printing of close to a million 
+characters so be prepared to wait a while.</span></span></li>
+  <li><span style=" font-family: Courier New,Courier,monospace;"><span style=" font-family: Times New Roman,Times,serif;"><span style="font-family: Courier New,Courier,monospace;">void st7789vGrabScreen(void);<br>
+          <span style="font-family: Times New Roman,Times,serif;">This 
+routine is present only if the source was compiled with 
+ST7789_GRAB_SCREEN defined.&nbsp; It uses the Xilinix "ffs" library to 
+store </span></span></span></span><span style=" font-family: Courier New,Courier,monospace;"><span style=" font-family: Times New Roman,Times,serif;"><span style="font-family: Courier New,Courier,monospace;"><span style="font-family: Times New Roman,Times,serif;"><span style="font-family: Courier New,Courier,monospace;"><span style="font-family: Times New Roman,Times,serif;">
+ the contents of the display as an ASCII portable pixmap (PPM) file 
+named "/SCREEN.ppm".&nbsp; This is much faster than st7789vDumpScreen, 
+but still takes a substantial fraction of a second to complete.</span></span></span></span></span></span></li>
+</ul>
+<p><br>
+  <br>
+</p>
+
+<p>-----------------------------------------------------------------------<br>
+Copyright 2020, Lawrence Berkeley National Laboratory<br>
+  <br>
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are 
+met:<br>
+</p>
+<ol>
+  <li>Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</li>
+  <li>&nbsp;Redistributions in binary form must reproduce the above 
+copyright notice, this list of conditions and the following disclaimer 
+in the documentation and/or other materials provided with the 
+distribution.</li>
+  <li>Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.<br>
+  </li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br>
+  <br>
+  <br>
+</p>
+<p><br>
+</p>
+
+
+
+</body></html>

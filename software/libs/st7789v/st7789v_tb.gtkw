@@ -1,0 +1,79 @@
+[*]
+[*] GTKWave Analyzer v3.3.79 (w)1999-2017 BSI
+[*] Thu Aug 29 16:03:43 2019
+[*]
+[dumpfile] "/Users/wenorum/xildev/src/ip_repo/ST7789V/st7789v_tb.lxt"
+[dumpfile_mtime] "Thu Aug 29 16:01:31 2019"
+[dumpfile_size] 19592
+[savefile] "/Users/wenorum/xildev/src/ip_repo/ST7789V/st7789v_tb.gtkw"
+[timestart] 0
+[size] 2441 1065
+[pos] -1 -1
+*-7.336187 280 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] st7789v_tb.
+[sst_width] 193
+[signals_width] 287
+[sst_expanded] 1
+[sst_vpaned_height] 235
+@28
+st7789v_tb.st7789v.clk[0]
+st7789v_tb.st7789v.DISPLAY_RESET_N[0]
+st7789v_tb.st7789v.DISPLAY_CMD_N[0]
+st7789v_tb.st7789v.DISPLAY_CS_N[0]
+st7789v_tb.st7789v.DISPLAY_CLK[0]
+st7789v_tb.st7789v.DISPLAY_SDA_T[0]
+st7789v_tb.st7789v.DISPLAY_SDA_O[0]
+st7789v_tb.st7789v.DISPLAY_SDA_I[0]
+@22
+st7789v_tb.st7789v.status[31:0]
+@28
+st7789v_tb.st7789v.busy[0]
+@c00022
+st7789v_tb.st7789v.gpioOut[31:0]
+@28
+(0)st7789v_tb.st7789v.gpioOut[31:0]
+(1)st7789v_tb.st7789v.gpioOut[31:0]
+(2)st7789v_tb.st7789v.gpioOut[31:0]
+(3)st7789v_tb.st7789v.gpioOut[31:0]
+(4)st7789v_tb.st7789v.gpioOut[31:0]
+(5)st7789v_tb.st7789v.gpioOut[31:0]
+(6)st7789v_tb.st7789v.gpioOut[31:0]
+(7)st7789v_tb.st7789v.gpioOut[31:0]
+(8)st7789v_tb.st7789v.gpioOut[31:0]
+(9)st7789v_tb.st7789v.gpioOut[31:0]
+(10)st7789v_tb.st7789v.gpioOut[31:0]
+(11)st7789v_tb.st7789v.gpioOut[31:0]
+(12)st7789v_tb.st7789v.gpioOut[31:0]
+(13)st7789v_tb.st7789v.gpioOut[31:0]
+(14)st7789v_tb.st7789v.gpioOut[31:0]
+(15)st7789v_tb.st7789v.gpioOut[31:0]
+(16)st7789v_tb.st7789v.gpioOut[31:0]
+(17)st7789v_tb.st7789v.gpioOut[31:0]
+(18)st7789v_tb.st7789v.gpioOut[31:0]
+(19)st7789v_tb.st7789v.gpioOut[31:0]
+(20)st7789v_tb.st7789v.gpioOut[31:0]
+(21)st7789v_tb.st7789v.gpioOut[31:0]
+(22)st7789v_tb.st7789v.gpioOut[31:0]
+(23)st7789v_tb.st7789v.gpioOut[31:0]
+(24)st7789v_tb.st7789v.gpioOut[31:0]
+(25)st7789v_tb.st7789v.gpioOut[31:0]
+(26)st7789v_tb.st7789v.gpioOut[31:0]
+(27)st7789v_tb.st7789v.gpioOut[31:0]
+(28)st7789v_tb.st7789v.gpioOut[31:0]
+(29)st7789v_tb.st7789v.gpioOut[31:0]
+(30)st7789v_tb.st7789v.gpioOut[31:0]
+(31)st7789v_tb.st7789v.gpioOut[31:0]
+@1401200
+-group_end
+@28
+st7789v_tb.st7789v.csrStrobe[0]
+st7789v_tb.st7789v.dataStrobe[0]
+st7789v_tb.st7789v.tick[0]
+st7789v_tb.st7789v.bitCounterDone[0]
+@22
+st7789v_tb.st7789v.readData[31:0]
+@28
+st7789v_tb.st7789v.fifoEmpty[0]
+st7789v_tb.st7789v.fifoFull[0]
+[pattern_trace] 1
+[pattern_trace] 0
