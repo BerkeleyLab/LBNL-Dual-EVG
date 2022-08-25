@@ -3,24 +3,16 @@ stages:
   - gateware
   - software
 
+default:
+  tags:
+    - xilinx
+
 variables:
   XILINX_VIVADO: /non-free/Xilinx/Vivado_and_Vitis/2020.2/Vivado/2020.2
   XILINX_VITIS: /non-free/Xilinx/Vivado_and_Vitis/2020.2/Vitis/2020.2
-  CI_REGISTRY: mohs.dhcp.lbl.gov
-  CONTAINER_IMAGE: $CI_REGISTRY/xilinx_env
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
   GIT_SUBMODULE_STRATEGY: normal
-
-image: $CONTAINER_IMAGE:$CI_COMMIT_REF_NAME
-
-services:
-  - name: mohs.dhcp.lbl.gov/docker:20.10.12-dind
-    command: ["--insecure-registry", "mohs.dhcp.lbl.gov"]
-    alias: docker
-
-include:
-  - local: .gitlab/ci/build-image.gitlab-ci.yml
 
 # Gateware jobs
 # Gitlab doesn't seem to suport the usage of variables in
