@@ -48,7 +48,7 @@ end
 (*mark_debug=DEBUG*) wire [3:0] hw_config;
 (*mark_debug=DEBUG*) wire i2cSCL, i2cSDAdrive, i2cSDAsense;
 
-i2c_chunk #(.initial_file("iicCommandTable.hex"),
+i2c_chunk #(.initial_file("iicCommandTable.dat"),
             .tick_scale($clog2(CLK_RATE / (14 * I2C_RATE))))
   i2c_chunk (
     .clk(clk),
