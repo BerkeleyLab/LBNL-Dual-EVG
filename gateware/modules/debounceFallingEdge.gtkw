@@ -1,0 +1,43 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Sep  1 22:44:41 2022
+[*]
+[dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/debounceFallingEdge.vcd"
+[dumpfile_mtime] "Thu Sep  1 22:42:31 2022"
+[dumpfile_size] 179893
+[savefile] "/home/lrusso/repos/dual-evg/gateware/modules/debounceFallingEdge.gtkw"
+[timestart] 0
+[size] 1589 1023
+[pos] -1 -1
+*-10.145985 2991 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] debounceFallingEdge_tb.
+[sst_width] 294
+[signals_width] 278
+[sst_expanded] 1
+[sst_vpaned_height] 301
+@28
+debounceFallingEdge_tb.debounceFallingEdge.clk
+@22
+debounceFallingEdge_tb.debounceFallingEdge.counter[6:0]
+@28
+debounceFallingEdge_tb.debounceFallingEdge.debouncedActiveHigh
+debounceFallingEdge_tb.debounceFallingEdge.inputActiveLow
+@200
+-
+@421
+debounceFallingEdge_tb.counterDebouncedActiveHigh
+@420
+debounceFallingEdge_tb.counterInput
+@28
+debounceFallingEdge_tb.debouncedActiveHigh
+@420
+debounceFallingEdge_tb.errors
+@28
+debounceFallingEdge_tb.fault
+debounceFallingEdge_tb.inputActiveLow
+@420
+debounceFallingEdge_tb.rightAnswer
+@28
+debounceFallingEdge_tb.testState[1:0]
+[pattern_trace] 1
+[pattern_trace] 0
