@@ -75,6 +75,11 @@ axi_lite_generic_reg
 *prio_xci_files.tcl
 *ipcores_repos.tcl
 
+*bd.xsa
+*construct_tx_table.v
+*rtefi_blob.v
+*rtefi_preblob.vh
+
 # Script-generated
 *softwareBuildDate.h
 *firmwareBuildDate.v
