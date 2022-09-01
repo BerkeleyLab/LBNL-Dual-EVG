@@ -14,7 +14,7 @@ module coincidenceRecorder #(
 
     input                     samplingClk,
     input [CHANNEL_COUNT-1:0] value_a,
-    
+
     input  txClk,
     output txHeartbeatStrobe);
 
@@ -125,7 +125,7 @@ always @(posedge samplingClk) begin
     startToggle   <= startToggle_m;
     if (startToggle != startMatch) begin
         busy <= 1;
-    end 
+    end
     else if (cycleCountDone && writeEnable) begin
         busy <= 0;
     end

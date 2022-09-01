@@ -26,7 +26,7 @@ reg [DATA_WIDTH-1:0] dpramSys, dpramMMC;
 
 assign csr = { {32-ADDRESS_WIDTH-DATA_WIDTH{1'b0}}, sysAddrLatch, dpramSys };
 wire sysWriteEnable = GPIO_STROBE && GPIO_OUT[31];
-        
+
 
 // MMC access to DPRAM
 (*mark_debug=DEBUG*) wire [DATA_WIDTH-1:0] mmcRxAddr, mmcRxData;

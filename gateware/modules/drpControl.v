@@ -27,7 +27,7 @@ module drpControl #(
 assign dataOut = { busy, resetStatus,
                    {32-1-RESET_STATUS_WIDTH-DRP_DATA_WIDTH{1'b0}},
                    data };
-            
+
 (*mark_debug=DEBUG*) reg [RESET_CONTROL_WIDTH-1:0] resetControl_r = 0;
 assign resetControl = resetControl_r;
 
