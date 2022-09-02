@@ -21,7 +21,7 @@ sw:
 	make -C proc_0 TARGET=$(TARGET) BIT=$(BIT) all
 	make -C proc_1 TARGET=$(TARGET) BIT=$(BIT) all
 
-$(DEPLOY_BIT): $(MMI)
+$(DEPLOY_BIT): $(MMI) $(BIT) proc_0/*.elf proc_1/*.elf
 	rm -f updatemem.jou updatemem.log
 	updatemem -force -meminfo $< -bit $(BIT) \
 		-data proc_0/*.elf -proc bd_i/microblaze_0 \
