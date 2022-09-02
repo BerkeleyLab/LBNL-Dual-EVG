@@ -77,6 +77,8 @@ axi_lite_generic_reg
 *system_top.xdc
 *prio_xci_files.tcl
 *ipcores_repos.tcl
+*.mmi
+*download.bit
 
 *bd.xsa
 *construct_tx_table.v

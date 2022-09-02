@@ -14,8 +14,11 @@ include ../../../dir_list.mk
 # Top level design name
 TARGET ?= devg_marble
 
+GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
+XPR             = $(GW_DEVG_TGT_DIR)/_xilinx/$(TARGET)_top/$(TARGET)_top.xpr
+
 # Top level bitstream name
-all: $(TARGET)_top.bit
+all: $(TARGET)_top.bit $(TARGET)_top.mmi
 
 # Search for .v files here
 vpath %.v $(MODULES_DIR)
@@ -152,6 +155,9 @@ vpath %.dat $(MODULES_DIR)
 # prerequisites as well as a system_top.xdc file
 $(TARGET)_top.bit: system_top.xdc $(VIVADO_SYNTH_EXTRA_TCL) $(TOP_LVL_DIR)/$(TARGET)_top.v iicCommandTable.dat $(BD_bds) evLogFIFO.xci ila_td256_s4096_cap.xci
 $(TOP_LVL_DIR)/$(TARGET)_top.v: $(TOP_LVL_DIR)/firmwareBuildDate.v $(TOP_LVL_DIR)/gpioIDX.vh $(RTEFI_V) $(IP_CORES_CUSTOM) $(IP_CORES_TOP_LVL_SRCS) $(BD_TOP_LVL_SRCS)
+
+$(TARGET)_top.mmi: $(XPR) $(TARGET)_top.bit
+	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_mem_info.tcl -tclargs $< $@
 
 # Generate bundled .xdc from other .xdc. Don't change the order of the
 # prerequisites as we need constraints in tGe order specified
