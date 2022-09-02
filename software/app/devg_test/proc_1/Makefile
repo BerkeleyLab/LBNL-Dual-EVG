@@ -69,7 +69,7 @@ LINKER_FILES = $(SW_SRC_DIR)/$(PROC_NAME)/lscript.ld
 
 CFLAGS = -Wall -O2 -mlittle-endian -mxl-barrel-shift -mno-xl-soft-div -mcpu=v11.0 -mno-xl-soft-mul -ffunction-sections -fdata-sections
 LD_FLAGS = -Wl,-T -Wl,$(LINKER_FILES) -Wl,--no-relax
-USER_FLAGS = -D__BAREMETAL__
+USER_FLAGS = -D__BAREMETAL__ -DBWUDP_ENDPOINT_CAPACITY=5
 LIB_DIRS = $(BSP_DIR)/lib
 LIB_FLAGS = $(addprefix -L, $(LIB_DIRS))
 LIBS = -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
