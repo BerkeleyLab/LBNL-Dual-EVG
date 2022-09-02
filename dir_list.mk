@@ -31,4 +31,9 @@ SW_APP_DIR         = $(SOFTWARE_DIR)/app
 SW_DEVG_APP_DIR    = $(SW_APP_DIR)/devg
 SW_DEVG_SCRIPTS_DIR = $(SW_DEVG_APP_DIR)/scripts
 
+# DEVG test Software
+
+SW_DEVG_TEST_APP_DIR    = $(SW_APP_DIR)/devg_test
+SW_DEVG_TEST_SCRIPTS_DIR = $(SW_DEVG_TEST_APP_DIR)/scripts
+
 include $(BEDROCK_DIR)/dir_list.mk

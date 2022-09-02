@@ -7,7 +7,7 @@ BIT      ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.bit
 PROC_NAME  = proc_1
 CPU_NAME   = microblaze_1
 TARGET_DIR = $(SW_TGT_DIR)/$(TARGET)
-BSP_DIR    = $(SW_DEVG_APP_DIR)/$(PROC_NAME)/$(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_NAME)
+BSP_DIR    = $(SW_DEVG_TEST_APP_DIR)/$(PROC_NAME)/$(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_NAME)
 
 all: $(TARGET)_$(PROC_NAME) $(TARGET)_$(PROC_NAME).elf $(TARGET)_$(PROC_NAME).elf.size
 
@@ -95,4 +95,4 @@ vpath *.h $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
 vpath *.o $(SW_SRC_DIR)/$(PROC_NAME)
 
 # Actual build rules
-include $(SW_DEVG_APP_DIR)/bottom_rules.mk
+include $(SW_DEVG_TEST_APP_DIR)/bottom_rules.mk
