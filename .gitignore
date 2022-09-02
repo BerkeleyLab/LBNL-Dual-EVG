@@ -27,7 +27,10 @@ _xilinx/
 *BOOT.bin
 
 # BSP-generated directories
-software/app/devg/devg_*/
+software/app/devg/proc_0/
+software/app/devg/proc_1/
+software/app/devg_test/proc_0/
+software/app/devg_test/proc_1/
 
 ######################
 # Modelsim
