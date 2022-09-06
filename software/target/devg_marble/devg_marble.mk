@@ -3,7 +3,8 @@ DEVG_MARBLE_DIR := $(__DEVG_MARBLE_DIR:/=)
 
 __HDR_DEVG_MARBLE_FILES = \
 	gpio.h \
-	config.h
+	config.h \
+	eyescanTarget.h
 HDR_DEVG_MARBLE_FILES = $(addprefix $(DEVG_MARBLE_DIR)/, $(__HDR_DEVG_MARBLE_FILES))
 
 # For top-level makfile

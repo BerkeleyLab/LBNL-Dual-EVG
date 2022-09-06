@@ -41,7 +41,7 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
-#define GPIO_IDX_COUNT 64
+#define GPIO_IDX_COUNT 128
 
 #define GPIO_IDX_FIRMWARE_BUILD_DATE      0 // Firmware build POSIX seconds (R)
 #define GPIO_IDX_MICROSECONDS_SINCE_BOOT  1 // Microseconds since boot (R)
@@ -67,23 +67,30 @@
 #define GPIO_IDX_EVG_1_SEQ_RBK           21 // EVG 1 sequencer readback
 #define GPIO_IDX_EVG_1_HW_CSR            22 // EVG 1 hardware trigger control
 #define GPIO_IDX_EVG_1_SW_CSR            23 // EVG 1 software trigger control
-#define GPIO_IDX_EVG_1_DRP_CSR           24 // EVG 1 transceiver DRP access
-#define GPIO_IDX_EVG_1_LATENCY           25 // EVG 1 round-trip latency
-#define GPIO_IDX_EVG_2_COINC_CSR         26 // EVG 2 coincidence measure/control
-#define GPIO_IDX_EVG_2_SEQ_CSR           27 // EVG 2 sequencer control
-#define GPIO_IDX_EVG_2_SEQ_RBK           28 // EVG 2 sequencer readback
-#define GPIO_IDX_EVG_2_HW_CSR            29 // EVG 2 hardware trigger control
-#define GPIO_IDX_EVG_2_SW_CSR            30 // EVG 2 software trigger control
-#define GPIO_IDX_EVG_2_DRP_CSR           31 // EVG 2 transceiver DRP access
-#define GPIO_IDX_EVG_2_LATENCY           32 // EVG 1 round-trip latency
-#define GPIO_IDX_INJECTION_CYCLE_CSR     33 // Injection cycle control
-#define GPIO_IDX_SWAPOUT_CYCLE_CSR       34 // Swapout cycle control
-#define GPIO_IDX_NTP_SERVER_STATUS       35 // NTP server status (R)
-#define GPIO_IDX_NTP_SERVER_SECONDS      36 // NTP server seconds (R/W)
-#define GPIO_IDX_NTP_SERVER_FRACTION     37 // NTP fractional seconds (R)
-#define GPIO_IDX_MMC_MAILBOX             38 // Communicate with MMC
-#define GPIO_IDX_EVG_1_LOG_CSR           39 // EVG 1 event logger
-#define GPIO_IDX_EVG_2_LOG_CSR           40 // EVG 2 event logger
+#define GPIO_IDX_EVG_2_COINC_CSR         24 // EVG 2 coincidence measure/control
+#define GPIO_IDX_EVG_2_SEQ_CSR           25 // EVG 2 sequencer control
+#define GPIO_IDX_EVG_2_SEQ_RBK           26 // EVG 2 sequencer readback
+#define GPIO_IDX_EVG_2_HW_CSR            27 // EVG 2 hardware trigger control
+#define GPIO_IDX_EVG_2_SW_CSR            28 // EVG 2 software trigger control
+#define GPIO_IDX_INJECTION_CYCLE_CSR     29 // Injection cycle control
+#define GPIO_IDX_SWAPOUT_CYCLE_CSR       30 // Swapout cycle control
+#define GPIO_IDX_NTP_SERVER_STATUS       31 // NTP server status (R)
+#define GPIO_IDX_NTP_SERVER_SECONDS      32 // NTP server seconds (R/W)
+#define GPIO_IDX_NTP_SERVER_FRACTION     33 // NTP fractional seconds (R)
+#define GPIO_IDX_MMC_MAILBOX             34 // Communicate with MMC
+#define GPIO_IDX_EVG_1_LOG_CSR           35 // EVG 1 event logger
+#define GPIO_IDX_EVG_2_LOG_CSR           36 // EVG 2 event logger
+
+// Per EVG 1 MGT
+#define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
+#define GPIO_IDX_EVG_1_0_LATENCY         65 // EVG 1 ID 0 round-trip latency
+
+#define GPIO_IDX_PER_MGTWRAPPER          (GPIO_IDX_EVG_1_0_LATENCY-GPIO_IDX_EVG_1_0_DRP_CSR+1)
+
+// Per EVG 2 MGT
+#define GPIO_IDX_EVG_2_0_DRP_CSR         (GPIO_IDX_EVG_1_0_DRP_CSR+16) // EVG 2 ID 0 transceiver DRP access
+#define GPIO_IDX_EVG_2_0_LATENCY         (GPIO_IDX_EVG_1_0_LATENCY+16) // EVG 2 ID 0 round-trip latency
+
 
 #include <xil_io.h>
 #include <xparameters.h>
