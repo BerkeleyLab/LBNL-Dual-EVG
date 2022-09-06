@@ -25,23 +25,23 @@ module devg_test_marble_top #(
     input  MGT_CLK_1_P, MGT_CLK_1_N,
     output QSFP1_TX_1_P, QSFP1_TX_1_N,
     input  QSFP1_RX_1_P, QSFP1_RX_1_N,
-    //output QSFP1_TX_2_P, QSFP1_TX_2_N,
-    //input  QSFP1_RX_2_P, QSFP1_RX_2_N,
-    //output QSFP1_TX_3_P, QSFP1_TX_3_N,
-    //input  QSFP1_RX_3_P, QSFP1_RX_3_N,
-    //output QSFP1_TX_4_P, QSFP1_TX_4_N,
-    //input  QSFP1_RX_4_P, QSFP1_RX_4_N,
+    output QSFP1_TX_2_P, QSFP1_TX_2_N,
+    input  QSFP1_RX_2_P, QSFP1_RX_2_N,
+    output QSFP1_TX_3_P, QSFP1_TX_3_N,
+    input  QSFP1_RX_3_P, QSFP1_RX_3_N,
+    output QSFP1_TX_4_P, QSFP1_TX_4_N,
+    input  QSFP1_RX_4_P, QSFP1_RX_4_N,
 
     input  MGT_CLK_2_P, MGT_CLK_2_N,
     input  MGT_CLK_3_P, MGT_CLK_3_N,
     output QSFP2_TX_1_P, QSFP2_TX_1_N,
     input  QSFP2_RX_1_P, QSFP2_RX_1_N,
-    //output QSFP2_TX_2_P, QSFP2_TX_2_N,
-    //input  QSFP2_RX_2_P, QSFP2_RX_2_N,
-    //output QSFP2_TX_3_P, QSFP2_TX_3_N,
-    //input  QSFP2_RX_3_P, QSFP2_RX_3_N,
-    //output QSFP2_TX_4_P, QSFP2_TX_4_N,
-    //input  QSFP2_RX_4_P, QSFP2_RX_4_N,
+    output QSFP2_TX_2_P, QSFP2_TX_2_N,
+    input  QSFP2_RX_2_P, QSFP2_RX_2_N,
+    output QSFP2_TX_3_P, QSFP2_TX_3_N,
+    input  QSFP2_RX_3_P, QSFP2_RX_3_N,
+    output QSFP2_TX_4_P, QSFP2_TX_4_N,
+    input  QSFP2_RX_4_P, QSFP2_RX_4_N,
 
     input  EXT0_CLK_P, EXT0_CLK_N,
     input  EXT1_CLK_P, EXT1_CLK_N,
@@ -348,27 +348,59 @@ injectorSequenceControl #(
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgSequenceStart(injectorSequenceStart));
 
+wire [3:0] qsfp1RxP = {QSFP1_RX_4_P, QSFP1_RX_3_P, QSFP1_RX_2_P, QSFP1_RX_1_P};
+wire [3:0] qsfp1RxN = {QSFP1_RX_4_N, QSFP1_RX_3_N, QSFP1_RX_2_N, QSFP1_RX_1_N};
+wire [3:0] qsfp1TxP;
+wire [3:0] qsfp1TxN;
+assign {QSFP1_TX_4_P, QSFP1_TX_3_P, QSFP1_TX_2_P, QSFP1_TX_1_P} = qsfp1TxP;
+assign {QSFP1_TX_4_N, QSFP1_TX_3_N, QSFP1_TX_2_N, QSFP1_TX_1_N} = qsfp1TxN;
+wire [3:0] evg1RxClksOut;
+wire [3:0] evg1TxClksOut;
+wire [3:0] evg1RxClksIn;
+wire [3:0] evg1TxClksIn;
+
+wire evg1RefClkUnbuf;
+IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
+
+generate
+for (i = 0 ; i < 4 ; i = i + 1) begin : evg1_mgt_fanout
+wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
+localparam integer rOff = i * GPIO_IDX_PER_MGTWRAPPER;
 mgtWrapper #(.EVG(1),
+             .MGT_ID(i),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
              .DRP_DEBUG("false"))
   evg1mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_DRP_CSR]),
-    .drpStatus(GPIO_IN[GPIO_IDX_EVG_1_DRP_CSR]),
-    .latency(GPIO_IN[GPIO_IDX_EVG_1_LATENCY]),
-    .evgTxClk(evg1TxClk),
+    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_0_DRP_CSR+rOff]),
+    .drpStatus(GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR+rOff]),
+    .latency(GPIO_IN[GPIO_IDX_EVG_1_0_LATENCY+rOff]),
+    .evgTxClkIn(evg1TxClksIn[i]),
+    .evgTxClkOut(evg1TxClksOut[i]),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .refClk_p(MGT_CLK_0_P),
-    .refClk_n(MGT_CLK_0_N),
+    .refClk(evg1RefClkUnbuf),
+    .gt0_qplloutclk_i(gt0_qplloutclk_i),
+    .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
     .samplingClk(clkLatencySampler),
-    .tx_p(QSFP1_TX_1_P),
-    .tx_n(QSFP1_TX_1_N),
-    .evgRxClk(evg1RxClk),
-    .rx_p(QSFP1_RX_1_P),
-    .rx_n(QSFP1_RX_1_N));
+    .tx_p(qsfp1TxP[i]),
+    .tx_n(qsfp1TxN[i]),
+    .evgRxClkIn(evg1RxClksIn[i]),
+    .evgRxClkOut(evg1RxClksOut[i]),
+    .rx_p(qsfp1RxP[i]),
+    .rx_n(qsfp1RxN[i]));
+end
+endgenerate
+
+//////////////////////////////////////////////////////////////////////////////
+// Buffer EVG1 clocks
+BUFG evg1RxBuf (.I(evg1RxClksOut[0]), .O(evg1RxClk));
+BUFG evg1TxBuf (.I(evg1TxClksOut[0]), .O(evg1TxClk));
+
+assign evg1RxClksIn = {4{evg1RxClk}};
+assign evg1TxClksIn = {4{evg1TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] DUMMY1_hwTrigger = 0;
 wire [CFG_EVIO_DIAG_IN_COUNT-1:0] DUMMY1_diagnosticIn = 0;
@@ -428,7 +460,26 @@ swapoutSequenceControl
     .evgHeartbeatRequest(evg2HeartbeatRequest),
     .evgSequenceStart(swapoutSequenceStart));
 
+wire [3:0] qsfp2RxP = {QSFP2_RX_4_P, QSFP2_RX_3_P, QSFP2_RX_2_P, QSFP2_RX_1_P};
+wire [3:0] qsfp2RxN = {QSFP2_RX_4_N, QSFP2_RX_3_N, QSFP2_RX_2_N, QSFP2_RX_1_N};
+wire [3:0] qsfp2TxP;
+wire [3:0] qsfp2TxN;
+assign {QSFP2_TX_4_P, QSFP2_TX_3_P, QSFP2_TX_2_P, QSFP2_TX_1_P} = qsfp2TxP;
+assign {QSFP2_TX_4_N, QSFP2_TX_3_N, QSFP2_TX_2_N, QSFP2_TX_1_N} = qsfp2TxN;
+wire [3:0] evg2RxClksOut;
+wire [3:0] evg2TxClksOut;
+wire [3:0] evg2RxClksIn;
+wire [3:0] evg2TxClksIn;
+
+wire evg2RefClkUnbuf;
+IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_2_P), .IB(MGT_CLK_2_N), .O(evg2RefClkUnbuf));
+
+generate
+for (i = 0 ; i < 4 ; i = i + 1) begin : evg2_mgt_fanout
+wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
+localparam integer rOff = i * GPIO_IDX_PER_MGTWRAPPER;
 mgtWrapper #(.EVG(2),
+             .MGT_ID(i),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
              .DRP_DEBUG("false"),
@@ -436,20 +487,33 @@ mgtWrapper #(.EVG(2),
   evg2mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_DRP_CSR]),
-    .drpStatus(GPIO_IN[GPIO_IDX_EVG_2_DRP_CSR]),
-    .latency(GPIO_IN[GPIO_IDX_EVG_2_LATENCY]),
-    .evgTxClk(evg2TxClk),
+    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_0_DRP_CSR+rOff]),
+    .drpStatus(GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR+rOff]),
+    .latency(GPIO_IN[GPIO_IDX_EVG_2_0_LATENCY+rOff]),
+    .evgTxClkIn(evg2TxClksIn[i]),
+    .evgTxClkOut(evg2TxClksOut[i]),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
-    .refClk_p(MGT_CLK_2_P),
-    .refClk_n(MGT_CLK_2_N),
+    .refClk(evg2RefClkUnbuf),
+    .gt0_qplloutclk_i(gt0_qplloutclk_i),
+    .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
     .samplingClk(clkLatencySampler),
-    .tx_p(QSFP2_TX_1_P),
-    .tx_n(QSFP2_TX_1_N),
-    .evgRxClk(evg2RxClk),
-    .rx_p(QSFP2_RX_1_P),
-    .rx_n(QSFP2_RX_1_N));
+    .tx_p(qsfp2TxP[i]),
+    .tx_n(qsfp2TxN[i]),
+    .evgRxClkIn(evg2RxClksIn[i]),
+    .evgRxClkOut(evg2RxClksOut[i]),
+    .rx_p(qsfp2RxP[i]),
+    .rx_n(qsfp2RxN[i]));
+end
+endgenerate
+
+//////////////////////////////////////////////////////////////////////////////
+// Buffer EVG2 clocks
+BUFG evg2RxBuf (.I(evg2RxClksOut[0]), .O(evg2RxClk));
+BUFG evg2TxBuf (.I(evg2TxClksOut[0]), .O(evg2TxClk));
+
+assign evg2RxClksIn = {4{evg2RxClk}};
+assign evg2TxClksIn = {4{evg2TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] DUMMY2_hwTrigger = 0;
 wire                                  DUMMY2_auxInput = 0;

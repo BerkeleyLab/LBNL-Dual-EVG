@@ -350,6 +350,13 @@ injectorSequenceControl #(
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgSequenceStart(injectorSequenceStart));
 
+wire evg1RxClkOut;
+wire evg1TxClkOut;
+wire evg1RxClkIn;
+wire evg1TxClkIn;
+wire evg1RefClkUnbuf;
+IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
+
 wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
 mgtWrapper #(.EVG(1),
              .SAMPLING_CLOCK_RATE(500000000),
@@ -358,22 +365,31 @@ mgtWrapper #(.EVG(1),
   evg1mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_DRP_CSR]),
-    .drpStatus(GPIO_IN[GPIO_IDX_EVG_1_DRP_CSR]),
-    .latency(GPIO_IN[GPIO_IDX_EVG_1_LATENCY]),
-    .evgTxClk(evg1TxClk),
+    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_0_DRP_CSR]),
+    .drpStatus(GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR]),
+    .latency(GPIO_IN[GPIO_IDX_EVG_1_0_LATENCY]),
+    .evgTxClkIn(evg1TxClkIn),
+    .evgTxClkOut(evg1TxClkOut),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .refClk_p(MGT_CLK_0_P),
-    .refClk_n(MGT_CLK_0_N),
+    .refClk(evg1RefClkUnbuf),
     .samplingClk(clkLatencySampler),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
     .tx_p(MGT_TX_1_P),
     .tx_n(MGT_TX_1_N),
-    .evgRxClk(evg1RxClk),
+    .evgRxClkIn(evg1RxClkIn),
+    .evgRxClkOut(evg1RxClkOut),
     .rx_p(MGT_RX_1_P),
     .rx_n(MGT_RX_1_N));
+
+//////////////////////////////////////////////////////////////////////////////
+// Buffer EVG1 clocks
+BUFG evg1RxBuf (.I(evg1RxClkOut), .O(evg1RxClk));
+BUFG evg1TxBuf (.I(evg1TxClkOut), .O(evg1TxClk));
+
+assign evg1RxClkIn = evg1RxClk;
+assign evg1TxClkIn = evg1TxClk;
 
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -431,6 +447,13 @@ swapoutSequenceControl
     .evgHeartbeatRequest(evg2HeartbeatRequest),
     .evgSequenceStart(swapoutSequenceStart));
 
+wire evg2RxClkOut;
+wire evg2TxClkOut;
+wire evg2RxClkIn;
+wire evg2TxClkIn;
+wire evg2RefClkUnbuf;
+IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_1_P), .IB(MGT_CLK_1_N), .O(evg2RefClkUnbuf));
+
 mgtWrapper #(.EVG(2),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
@@ -438,22 +461,31 @@ mgtWrapper #(.EVG(2),
   evg2mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_DRP_CSR]),
-    .drpStatus(GPIO_IN[GPIO_IDX_EVG_2_DRP_CSR]),
-    .latency(GPIO_IN[GPIO_IDX_EVG_2_LATENCY]),
-    .evgTxClk(evg2TxClk),
+    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_0_DRP_CSR]),
+    .drpStatus(GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR]),
+    .latency(GPIO_IN[GPIO_IDX_EVG_2_0_LATENCY]),
+    .evgTxClkIn(evg2TxClkIn),
+    .evgTxClkOut(evg2TxClkOut),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
-    .refClk_p(MGT_CLK_1_P),
-    .refClk_n(MGT_CLK_1_N),
+    .refClk(evg2RefClkUnbuf),
     .samplingClk(clkLatencySampler),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
     .tx_p(MGT_TX_2_P),
     .tx_n(MGT_TX_2_N),
-    .evgRxClk(evg2RxClk),
+    .evgRxClkIn(evg2RxClkIn),
+    .evgRxClkOut(evg2RxClkOut),
     .rx_p(MGT_RX_2_P),
     .rx_n(MGT_RX_2_N));
+
+//////////////////////////////////////////////////////////////////////////////
+// Buffer EVG2 clocks
+BUFG evg2RxBuf (.I(evg2RxClkOut), .O(evg2RxClk));
+BUFG evg2TxBuf (.I(evg2TxClkOut), .O(evg2TxClk));
+
+assign evg2RxClkIn = evg2RxClk;
+assign evg2TxClkIn = evg2TxClk;
 
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),

@@ -87,21 +87,21 @@ set_property -dict {PACKAGE_PIN D2} [get_ports QSFP1_TX_1_P]
 set_property -dict {PACKAGE_PIN D1} [get_ports QSFP1_TX_1_N]
 set_property -dict {PACKAGE_PIN E4} [get_ports QSFP1_RX_1_P]
 set_property -dict {PACKAGE_PIN E3} [get_ports QSFP1_RX_1_N]
-### QSFP1-2/11, Bank 116 MGT 2, X0Y6
-##set_property -dict {PACKAGE_PIN B2} [get_ports QSFP1_TX_2_P]
-##set_property -dict {PACKAGE_PIN B1} [get_ports QSFP1_TX_2_N]
-##set_property -dict {PACKAGE_PIN C4} [get_ports QSFP1_RX_2_P]
-##set_property -dict {PACKAGE_PIN C3} [get_ports QSFP1_RX_2_N]
-### QSFP1-3/11, Bank 116 MGT 0, X0Y4
-##set_property -dict {PACKAGE_PIN F2} [get_ports QSFP1_TX_3_P]
-##set_property -dict {PACKAGE_PIN F1} [get_ports QSFP1_TX_3_N]
-##set_property -dict {PACKAGE_PIN G4} [get_ports QSFP1_RX_3_P]
-##set_property -dict {PACKAGE_PIN G3} [get_ports QSFP1_RX_3_N]
-### QSFP1-4/11, Bank 116  MGT 3, X?Y?
-##set_property -dict {PACKAGE_PIN A4} [get_ports QSFP1_TX_4_P]
-##set_property -dict {PACKAGE_PIN A3} [get_ports QSFP1_TX_4_N]
-##set_property -dict {PACKAGE_PIN B6} [get_ports QSFP1_RX_4_P]
-##set_property -dict {PACKAGE_PIN B5} [get_ports QSFP1_RX_4_N]
+# QSFP1-2/11, Bank 116 MGT 2, X0Y6
+set_property -dict {PACKAGE_PIN B2} [get_ports QSFP1_TX_2_P]
+set_property -dict {PACKAGE_PIN B1} [get_ports QSFP1_TX_2_N]
+set_property -dict {PACKAGE_PIN C4} [get_ports QSFP1_RX_2_P]
+set_property -dict {PACKAGE_PIN C3} [get_ports QSFP1_RX_2_N]
+# QSFP1-3/11, Bank 116 MGT 0, X0Y4
+set_property -dict {PACKAGE_PIN F2} [get_ports QSFP1_TX_3_P]
+set_property -dict {PACKAGE_PIN F1} [get_ports QSFP1_TX_3_N]
+set_property -dict {PACKAGE_PIN G4} [get_ports QSFP1_RX_3_P]
+set_property -dict {PACKAGE_PIN G3} [get_ports QSFP1_RX_3_N]
+# QSFP1-4/11, Bank 116  MGT 3, X?Y?
+set_property -dict {PACKAGE_PIN A4} [get_ports QSFP1_TX_4_P]
+set_property -dict {PACKAGE_PIN A3} [get_ports QSFP1_TX_4_N]
+set_property -dict {PACKAGE_PIN B6} [get_ports QSFP1_RX_4_P]
+set_property -dict {PACKAGE_PIN B5} [get_ports QSFP1_RX_4_N]
 
 # MGTREFCLK0_115 (schematic MGT_CLK_2), U2 output 4. EVG2
 set_property PACKAGE_PIN H6 [get_ports MGT_CLK_2_P]
@@ -112,21 +112,21 @@ set_property -dict {PACKAGE_PIN M2} [get_ports QSFP2_TX_1_P]
 set_property -dict {PACKAGE_PIN M1} [get_ports QSFP2_TX_1_N]
 set_property -dict {PACKAGE_PIN N4} [get_ports QSFP2_RX_1_P]
 set_property -dict {PACKAGE_PIN N3} [get_ports QSFP2_RX_1_N]
-### QSFP2-2/11, Bank 115 MGT 6, X?Y?
-##set_property -dict {PACKAGE_PIN K2} [get_ports QSFP2_TX_2_P]
-##set_property -dict {PACKAGE_PIN K1} [get_ports QSFP2_TX_2_N]
-##set_property -dict {PACKAGE_PIN L4} [get_ports QSFP2_RX_2_P]
-##set_property -dict {PACKAGE_PIN L3} [get_ports QSFP2_RX_2_N]
-### QSFP2-3/11, Bank 115 MGT 4, X?Y?
-##set_property -dict {PACKAGE_PIN P2} [get_ports QSFP2_TX_3_P]
-##set_property -dict {PACKAGE_PIN P1} [get_ports QSFP2_TX_3_N]
-##set_property -dict {PACKAGE_PIN R4} [get_ports QSFP2_RX_3_P]
-##set_property -dict {PACKAGE_PIN R3} [get_ports QSFP2_RX_3_N]
-### QSFP2-4/11, Bank 115  MGT 7, X?Y?
-##set_property -dict {PACKAGE_PIN H2} [get_ports QSFP2_TX_4_P]
-##set_property -dict {PACKAGE_PIN H1} [get_ports QSFP2_TX_4_N]
-##set_property -dict {PACKAGE_PIN J4} [get_ports QSFP2_RX_4_P]
-##set_property -dict {PACKAGE_PIN J3} [get_ports QSFP2_RX_4_N]
+# QSFP2-2/11, Bank 115 MGT 6, X?Y?
+set_property -dict {PACKAGE_PIN K2} [get_ports QSFP2_TX_2_P]
+set_property -dict {PACKAGE_PIN K1} [get_ports QSFP2_TX_2_N]
+set_property -dict {PACKAGE_PIN L4} [get_ports QSFP2_RX_2_P]
+set_property -dict {PACKAGE_PIN L3} [get_ports QSFP2_RX_2_N]
+# QSFP2-3/11, Bank 115 MGT 4, X?Y?
+set_property -dict {PACKAGE_PIN P2} [get_ports QSFP2_TX_3_P]
+set_property -dict {PACKAGE_PIN P1} [get_ports QSFP2_TX_3_N]
+set_property -dict {PACKAGE_PIN R4} [get_ports QSFP2_RX_3_P]
+set_property -dict {PACKAGE_PIN R3} [get_ports QSFP2_RX_3_N]
+# QSFP2-4/11, Bank 115  MGT 7, X?Y?
+set_property -dict {PACKAGE_PIN H2} [get_ports QSFP2_TX_4_P]
+set_property -dict {PACKAGE_PIN H1} [get_ports QSFP2_TX_4_N]
+set_property -dict {PACKAGE_PIN J4} [get_ports QSFP2_RX_4_P]
+set_property -dict {PACKAGE_PIN J3} [get_ports QSFP2_RX_4_N]
 
 # Direct monitoring of MGT reference clocks
 # EXT0_CLK. MGTREFCLK1_116 (schematic MGT_CLK_1), U2 output 1. EVG1
