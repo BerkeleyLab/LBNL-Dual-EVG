@@ -5,7 +5,8 @@ module mgtWrapper #(
     parameter EVG                 = -1,
     parameter SAMPLING_CLOCK_RATE = -1,
     parameter DEBUG               = "false",
-    parameter DRP_DEBUG           = "false"
+    parameter DRP_DEBUG           = "false",
+    parameter FORCE_GTE_COMMON    = "false"
     ) (
     input         sysClk,
     input         drpStrobe,
@@ -184,7 +185,11 @@ evg1mgt evg1mgt_i (
     .gt0_qplloutclk_in(gt0_qplloutclk_i), // input wire gt0_qplloutclk_in
     .gt0_qplloutrefclk_in(gt0_qplloutrefclk_i) // input wire gt0_qplloutrefclk_in
      );
+end
+endgenerate
 
+generate
+if (EVG == 1 || (EVG == 2 && FORCE_GTE_COMMON == "true")) begin
 ///////////////////////////////////////////////////////////////////////////////
 // Xilinx Answer Record 43339
 // Instantiate a GTXE2_COMMON even though QPLL is unused.
@@ -285,7 +290,9 @@ wire GT0_QPLLREFCLKLOST_OUT;
     );
 `endif // `ifndef SIMULATE
 end
+endgenerate
 
+generate
 if (EVG == 2) begin
 evg2mgt evg2mgt_i (
     .sysclk_in(sysClk), // input wire sysclk_in
