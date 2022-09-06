@@ -5,7 +5,6 @@ COMMUNICATION = gtx
 XILINX_TOOL := VIVADO
 FPGA_VENDOR := xilinx
 FPGA_PLATFORM := 7series
-FPGA_APPLICATION := devg
 
 CMD_SEP = ;
 
@@ -13,7 +12,9 @@ include ../../../dir_list.mk
 
 # Top level design name
 TARGET ?= devg_marble
+FPGA_APPLICATION ?= devg
 
+TARGET_PLATFORM_DIR = $(PLATFORM_DIR)/$(FPGA_VENDOR)/$(FPGA_PLATFORM)/$(FPGA_APPLICATION)
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 XPR             = $(GW_DEVG_TGT_DIR)/_xilinx/$(TARGET)_top/$(TARGET)_top.xpr
 
@@ -52,13 +53,13 @@ include $(MODULES_DIR)/axi_lite_generic_reg_rules.mk
 include $(MODULES_DIR)/bantamweightUDP_rules.mk
 
 IP_CORES += evg1mgt evg2mgt evLogFIFO ila_td256_s4096_cap
-evg1mgt_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/evg1mgt
+evg1mgt_DIR = $(TARGET_PLATFORM_DIR)/evg1mgt
 evg1mgt_TOP = $(evg1mgt_DIR)/evg1mgt.v
-evg2mgt_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/evg2mgt
+evg2mgt_DIR = $(TARGET_PLATFORM_DIR)/evg2mgt
 evg2mgt_TOP = $(evg2mgt_DIR)/evg2mgt.v
-evLogFIFO_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/evLogFIFO
+evLogFIFO_DIR = $(TARGET_PLATFORM_DIR)/evLogFIFO
 evLogFIFO_TOP = $(evLogFIFO_DIR)/synth/evLogFIFO.vhd
-ila_td256_s4096_cap_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/ila_td256_s4096_cap
+ila_td256_s4096_cap_DIR = $(TARGET_PLATFORM_DIR)/ila_td256_s4096_cap
 ila_td256_s4096_cap_TOP = $(ila_td256_s4096_cap_DIR)/synth/ila_td256_s4096_cap.v
 
 IP_CORES_TOP_LVL_SRCS += $(evg1mgt_TOP) $(evg2mgt_TOP) $(evLogFIFO_TOP) $(ila_td256_s4096_cap_TOP)
@@ -72,7 +73,7 @@ IP_CORES_SRCS_DIRS += $(addsuffix /synth, $(IP_CORES_DIRS))
 IP_CORES_SRCS_DIRS += $(addsuffix /hdl, $(IP_CORES_DIRS))
 
 BD += bd
-bd_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/bd
+bd_DIR = $(TARGET_PLATFORM_DIR)/bd
 bd_TOP = $(bd_DIR)/synth/bd.v
 
 BD_TOP_LVL_SRCS += $(bd_TOP)
