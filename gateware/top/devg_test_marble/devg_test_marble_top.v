@@ -348,7 +348,6 @@ injectorSequenceControl #(
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgSequenceStart(injectorSequenceStart));
 
-wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
 mgtWrapper #(.EVG(1),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
@@ -365,8 +364,6 @@ mgtWrapper #(.EVG(1),
     .refClk_p(MGT_CLK_0_P),
     .refClk_n(MGT_CLK_0_N),
     .samplingClk(clkLatencySampler),
-    .gt0_qplloutclk_i(gt0_qplloutclk_i),
-    .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
     .tx_p(QSFP1_TX_1_P),
     .tx_n(QSFP1_TX_1_N),
     .evgRxClk(evg1RxClk),
@@ -434,7 +431,8 @@ swapoutSequenceControl
 mgtWrapper #(.EVG(2),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
-             .DRP_DEBUG("false"))
+             .DRP_DEBUG("false"),
+             .FORCE_GTE_COMMON("true"))
   evg2mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
@@ -447,8 +445,6 @@ mgtWrapper #(.EVG(2),
     .refClk_p(MGT_CLK_2_P),
     .refClk_n(MGT_CLK_2_N),
     .samplingClk(clkLatencySampler),
-    .gt0_qplloutclk_i(gt0_qplloutclk_i),
-    .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
     .tx_p(QSFP2_TX_1_P),
     .tx_n(QSFP2_TX_1_N),
     .evgRxClk(evg2RxClk),
