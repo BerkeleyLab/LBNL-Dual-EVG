@@ -74,14 +74,6 @@ set_property -dict {PACKAGE_PIN K15 IOSTANDARD LVCMOS25} [get_ports FPGA_RxD]
 # Miscellaneous
 set_property -dict {PACKAGE_PIN B9 IOSTANDARD LVCMOS25} [get_ports PHY_RSTN]
 
-# MGTREFCLK0_115 (schematic MGT_CLK_2), U2 output 4. EVG2
-set_property PACKAGE_PIN H6 [get_ports MGT_CLK_2_P]
-set_property PACKAGE_PIN H5 [get_ports MGT_CLK_2_N]
-
-# MGTREFCLK1_115 (schematic MGT_CLK_3), U2 output 5. EVG2
-set_property -dict {PACKAGE_PIN K6} [get_ports MGT_CLK_3_P]
-set_property -dict {PACKAGE_PIN K5} [get_ports MGT_CLK_3_N]
-
 ########################
 # Transceivers
 ########################
@@ -89,10 +81,6 @@ set_property -dict {PACKAGE_PIN K5} [get_ports MGT_CLK_3_N]
 # MGTREFCLK0_116 (schematic MGT_CLK_0), U2 output 0. EVG1
 set_property PACKAGE_PIN D6 [get_ports MGT_CLK_0_P]
 set_property PACKAGE_PIN D5 [get_ports MGT_CLK_0_N]
-
-# MGTREFCLK1_116 (schematic MGT_CLK_1), U2 output 1. EVG1
-set_property -dict {PACKAGE_PIN F6} [get_ports MGT_CLK_1_P]
-set_property -dict {PACKAGE_PIN F5} [get_ports MGT_CLK_1_N]
 
 # QSFP1-1/11, Bank 116 MGT 1, X?Y?
 set_property -dict {PACKAGE_PIN D2} [get_ports QSFP1_TX_1_P]
@@ -119,10 +107,6 @@ set_property -dict {PACKAGE_PIN E3} [get_ports QSFP1_RX_1_N]
 set_property PACKAGE_PIN H6 [get_ports MGT_CLK_2_P]
 set_property PACKAGE_PIN H5 [get_ports MGT_CLK_2_N]
 
-# MGTREFCLK1_115 (schematic MGT_CLK_3), U2 output 5. EVG2
-set_property -dict {PACKAGE_PIN K6} [get_ports MGT_CLK_3_P]
-set_property -dict {PACKAGE_PIN K5} [get_ports MGT_CLK_3_N]
-
 # QSFP2-1/11, Bank 115 MGT 5, X?Y?
 set_property -dict {PACKAGE_PIN M2} [get_ports QSFP2_TX_1_P]
 set_property -dict {PACKAGE_PIN M1} [get_ports QSFP2_TX_1_N]
@@ -145,12 +129,12 @@ set_property -dict {PACKAGE_PIN N3} [get_ports QSFP2_RX_1_N]
 ##set_property -dict {PACKAGE_PIN J3} [get_ports QSFP2_RX_4_N]
 
 # Direct monitoring of MGT reference clocks
-# EXT0_CLK. MGTREFCLK0_116 (schematic MGT_CLK_0), U2 output 0. EVG1
-set_property -dict {PACKAGE_PIN D6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT0_CLK_P]
-set_property -dict {PACKAGE_PIN D5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT0_CLK_N]
-# EXT1_CLK. MGTREFCLK0_115 (schematic MGT_CLK_2), U2 output 4. EVG2
-set_property -dict {PACKAGE_PIN F6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_P]
-set_property -dict {PACKAGE_PIN F5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_N]
+# EXT0_CLK. MGTREFCLK1_116 (schematic MGT_CLK_1), U2 output 1. EVG1
+set_property -dict {PACKAGE_PIN F6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT0_CLK_P]
+set_property -dict {PACKAGE_PIN F5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT0_CLK_N]
+# EXT1_CLK. MGTREFCLK1_115 (schematic MGT_CLK_3), U2 output 5. EVG2
+set_property -dict {PACKAGE_PIN K6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_P]
+set_property -dict {PACKAGE_PIN K5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_N]
 
 # Bank 0 setup
 set_property CFGBVS VCCO [current_design]
