@@ -9,11 +9,17 @@ create_clock -period 8.000 -name rx_clk [get_ports RGMII_RX_CLK]
 #create_clock -period 50.000 -name clk20_vcxo [get_ports CLK20_VCXO]
 #set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets CLK20_VCXO]
 
-# MGTREFCLK0_115 (schematic MGT_CLK_2), U2 output 4
+# MGTREFCLK0_116 (schematic MGT_CLK_0), U2 output 0
 create_clock -period 8.001 -name gtx_ref0 [get_ports MGT_CLK_0_P]
 
+# MGTREFCLK1_116 (schematic MGT_CLK_1), U2 output 1
+create_clock -period 8.001 -name gtx_ref1 [get_ports MGT_CLK_1_P]
+
+# MGTREFCLK0_115 (schematic MGT_CLK_2), U2 output 4
+create_clock -period 7.999 -name gtx_ref2 [get_ports MGT_CLK_2_P]
+
 # MGTREFCLK1_115 (schematic MGT_CLK_3), U2 output 5
-create_clock -period 7.999 -name gtx_ref1 [get_ports MGT_CLK_1_P]
+create_clock -period 7.999 -name gtx_ref3 [get_ports MGT_CLK_3_P]
 
 # EXT0_CLK
 create_clock -period 8.001 -name refCoinc1 [get_ports EXT0_CLK_P]

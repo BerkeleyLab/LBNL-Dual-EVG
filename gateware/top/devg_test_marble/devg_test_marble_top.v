@@ -23,10 +23,25 @@ module devg_test_marble_top #(
 
     input  MGT_CLK_0_P, MGT_CLK_0_N,
     input  MGT_CLK_1_P, MGT_CLK_1_N,
-    output MGT_TX_1_P, MGT_TX_1_N,
-    input  MGT_RX_1_P, MGT_RX_1_N,
-    output MGT_TX_2_P, MGT_TX_2_N,
-    input  MGT_RX_2_P, MGT_RX_2_N,
+    output QSFP1_TX_1_P, QSFP1_TX_1_N,
+    input  QSFP1_RX_1_P, QSFP1_RX_1_N,
+    output QSFP1_TX_2_P, QSFP1_TX_2_N,
+    input  QSFP1_RX_2_P, QSFP1_RX_2_N,
+    output QSFP1_TX_3_P, QSFP1_TX_3_N,
+    input  QSFP1_RX_3_P, QSFP1_RX_3_N,
+    output QSFP1_TX_4_P, QSFP1_TX_4_N,
+    input  QSFP1_RX_4_P, QSFP1_RX_4_N,
+
+    input  MGT_CLK_2_P, MGT_CLK_2_N,
+    input  MGT_CLK_3_P, MGT_CLK_3_N,
+    output QSFP2_TX_1_P, QSFP2_TX_1_N,
+    input  QSFP2_RX_1_P, QSFP2_RX_1_N,
+    output QSFP2_TX_2_P, QSFP2_TX_2_N,
+    input  QSFP2_RX_2_P, QSFP2_RX_2_N,
+    output QSFP2_TX_3_P, QSFP2_TX_3_N,
+    input  QSFP2_RX_3_P, QSFP2_RX_3_N,
+    output QSFP2_TX_4_P, QSFP2_TX_4_N,
+    input  QSFP2_RX_4_P, QSFP2_RX_4_N,
 
     input  EXT0_CLK_P, EXT0_CLK_N,
     input  EXT1_CLK_P, EXT1_CLK_N,
@@ -352,11 +367,11 @@ mgtWrapper #(.EVG(1),
     .samplingClk(clkLatencySampler),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
-    .tx_p(MGT_TX_1_P),
-    .tx_n(MGT_TX_1_N),
+    .tx_p(QSFP1_TX_1_P),
+    .tx_n(QSFP1_TX_1_N),
     .evgRxClk(evg1RxClk),
-    .rx_p(MGT_RX_1_P),
-    .rx_n(MGT_RX_1_N));
+    .rx_p(QSFP1_RX_1_P),
+    .rx_n(QSFP1_RX_1_N));
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] DUMMY1_hwTrigger = 0;
 wire [CFG_EVIO_DIAG_IN_COUNT-1:0] DUMMY1_diagnosticIn = 0;
@@ -429,16 +444,16 @@ mgtWrapper #(.EVG(2),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
-    .refClk_p(MGT_CLK_1_P),
-    .refClk_n(MGT_CLK_1_N),
+    .refClk_p(MGT_CLK_2_P),
+    .refClk_n(MGT_CLK_2_N),
     .samplingClk(clkLatencySampler),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
-    .tx_p(MGT_TX_2_P),
-    .tx_n(MGT_TX_2_N),
+    .tx_p(QSFP2_TX_1_P),
+    .tx_n(QSFP2_TX_1_N),
     .evgRxClk(evg2RxClk),
-    .rx_p(MGT_RX_2_P),
-    .rx_n(MGT_RX_2_N));
+    .rx_p(QSFP2_RX_1_P),
+    .rx_n(QSFP2_RX_1_N));
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] DUMMY2_hwTrigger = 0;
 wire                                  DUMMY2_auxInput = 0;
