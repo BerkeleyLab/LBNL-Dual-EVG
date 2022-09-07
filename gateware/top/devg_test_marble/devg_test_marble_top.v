@@ -1,6 +1,6 @@
 // Top level module for ALSU Event Generator
 
-module devg_marble_top #(
+module devg_test_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
     parameter SYSCLK_FREQUENCY        = 100000000,
@@ -23,37 +23,28 @@ module devg_marble_top #(
 
     input  MGT_CLK_0_P, MGT_CLK_0_N,
     input  MGT_CLK_1_P, MGT_CLK_1_N,
-    output MGT_TX_1_P, MGT_TX_1_N,
-    input  MGT_RX_1_P, MGT_RX_1_N,
-    output MGT_TX_2_P, MGT_TX_2_N,
-    input  MGT_RX_2_P, MGT_RX_2_N,
+    output QSFP1_TX_1_P, QSFP1_TX_1_N,
+    input  QSFP1_RX_1_P, QSFP1_RX_1_N,
+    output QSFP1_TX_2_P, QSFP1_TX_2_N,
+    input  QSFP1_RX_2_P, QSFP1_RX_2_N,
+    output QSFP1_TX_3_P, QSFP1_TX_3_N,
+    input  QSFP1_RX_3_P, QSFP1_RX_3_N,
+    output QSFP1_TX_4_P, QSFP1_TX_4_N,
+    input  QSFP1_RX_4_P, QSFP1_RX_4_N,
 
-    input  FMC1_CLK0_M2C_P, FMC1_CLK0_M2C_N,
-    input  FMC2_CLK0_M2C_P, FMC2_CLK0_M2C_N,
+    input  MGT_CLK_2_P, MGT_CLK_2_N,
+    input  MGT_CLK_3_P, MGT_CLK_3_N,
+    output QSFP2_TX_1_P, QSFP2_TX_1_N,
+    input  QSFP2_RX_1_P, QSFP2_RX_1_N,
+    output QSFP2_TX_2_P, QSFP2_TX_2_N,
+    input  QSFP2_RX_2_P, QSFP2_RX_2_N,
+    output QSFP2_TX_3_P, QSFP2_TX_3_N,
+    input  QSFP2_RX_3_P, QSFP2_RX_3_N,
+    output QSFP2_TX_4_P, QSFP2_TX_4_N,
+    input  QSFP2_RX_4_P, QSFP2_RX_4_N,
 
-    input        [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC1_hwTrigger,
-    input                                         FMC1_auxInput,
-    input        [CFG_EVIO_DIAG_IN_COUNT-1:0] FMC1_diagnosticIn,
-    output wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] FMC1_diagnosticOut,
-    input              [CFG_EVIO_FIREFLY_COUNT-1:0] FMC1_fireflyPresent_n,
-    output           [CFG_EVIO_FIREFLY_COUNT/2-1:0] FMC1_fireflySelect_n,
-    output                                        FMC1_sysReset_n,
-    input                                         FMC1_FAN1_TACH,
-    input                                         FMC1_FAN2_TACH,
-    inout                                         FMC1_EVIO_SCL,
-    inout                                         FMC1_EVIO_SDA,
-
-    input        [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC2_hwTrigger,
-    input                                         FMC2_auxInput,
-    input        [CFG_EVIO_DIAG_IN_COUNT-1:0] FMC2_diagnosticIn,
-    output wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] FMC2_diagnosticOut,
-    input              [CFG_EVIO_FIREFLY_COUNT-1:0] FMC2_fireflyPresent_n,
-    output           [CFG_EVIO_FIREFLY_COUNT/2-1:0] FMC2_fireflySelect_n,
-    output                                        FMC2_sysReset_n,
-    input                                         FMC2_FAN1_TACH,
-    input                                         FMC2_FAN2_TACH,
-    inout                                         FMC2_EVIO_SCL,
-    inout                                         FMC2_EVIO_SDA,
+    input  EXT0_CLK_P, EXT0_CLK_N,
+    input  EXT1_CLK_P, EXT1_CLK_N,
 
     input  FPGA_SCLK,
     input  FPGA_CSB,
@@ -113,8 +104,8 @@ wire evg1RxClk, evg2RxClk;
 ///////////////////////////////////////////////////////////////////////////////
 // Resets
 wire sysReset_n;
-assign FMC1_sysReset_n = sysReset_n;
-assign FMC2_sysReset_n = sysReset_n;
+wire DUMMY1_sysReset_n = sysReset_n;
+wire DUMMY2_sysReset_n = sysReset_n;
 
 //////////////////////////////////////////////////////////////////////////////
 // General-purpose I/O block
@@ -204,14 +195,20 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire FMC1_CLK0_M2C, FMC2_CLK0_M2C;
-IBUFDS f1IBUF (.I(FMC1_CLK0_M2C_P), .IB(FMC1_CLK0_M2C_N),
-               .O(FMC1_CLK0_M2C));
-IBUFDS f2IBUF (.I(FMC2_CLK0_M2C_P), .IB(FMC2_CLK0_M2C_N),
-               .O(FMC2_CLK0_M2C));
+wire EXT0_CLK, EXT1_CLK;
+IBUFDS_GTE2 f1IBUF (
+    .I(EXT0_CLK_P),
+    .IB(EXT0_CLK_N),
+    .CEB(1'b0),
+    .O(EXT0_CLK));
+IBUFDS_GTE2 f2IBUF (
+    .I(EXT1_CLK_P),
+    .IB(EXT1_CLK_N),
+    .CEB(1'b0),
+    .O(EXT1_CLK));
 
-BUFG f1BUFG (.I(FMC1_CLK0_M2C), .O(evg1RefClk));
-BUFG f2BUFG (.I(FMC2_CLK0_M2C), .O(evg2RefClk));
+BUFG f1BUFG (.I(EXT0_CLK), .O(evg1RefClk));
+BUFG f2BUFG (.I(EXT1_CLK), .O(evg2RefClk));
 
 wire evg1HeartbeatRequest, evg2HeartbeatRequest;
 
@@ -252,7 +249,7 @@ coincidenceRecorder #(
 wire powerlineMarker;
 debounceFallingEdge debouncePowerline (
     .clk(sysClk),
-    .inputActiveLow(FMC2_auxInput),
+    .inputActiveLow(1'b1),
     .debouncedActiveHigh(powerlineMarker));
 
 //////////////////////////////////////////////////////////////////////////////
@@ -262,7 +259,7 @@ debounceFallingEdge debouncePowerline (
 // been updated.
 wire [2:0] sda_drive, sda_sense;
 wire [3:0] iic_proc_o;
-wire FMC2_SFP_SCL, FMC1_SFP_SCL;
+wire DUMMY2_SFP_SCL, DUMMY1_SFP_SCL;
 wire scl0;
 i2cHandler #(.CLK_RATE(SYSCLK_FREQUENCY),
              .CHANNEL_COUNT(3),
@@ -272,7 +269,7 @@ i2cHandler #(.CLK_RATE(SYSCLK_FREQUENCY),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_I2C_CHUNK_CSR]),
     .GPIO_OUT(GPIO_OUT),
     .status(GPIO_IN[GPIO_IDX_I2C_CHUNK_CSR]),
-    .scl({FMC2_SFP_SCL, FMC1_SFP_SCL, scl0}),
+    .scl({DUMMY2_SFP_SCL, DUMMY1_SFP_SCL, scl0}),
     .sda_drive(sda_drive),
     .sda_sense(sda_sense));
 IOBUF sdaIO0 (.I(1'b0),
@@ -295,7 +292,8 @@ clkIntervalCounters #(.CLK_RATE(SYSCLK_FREQUENCY))
 
 //////////////////////////////////////////////////////////////////////////////
 // Validate PPS signal sources
-wire fmcPPS_a = !FMC1_auxInput;
+wire DUMMY1_auxInput = 1'b1;
+wire fmcPPS_a = !DUMMY1_auxInput;
 wire fmcPPSvalid;
 ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) fmcPPScheck (
     .clk(sysClk),
@@ -350,47 +348,62 @@ injectorSequenceControl #(
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgSequenceStart(injectorSequenceStart));
 
-wire evg1RxClkOut;
-wire evg1TxClkOut;
-wire evg1RxClkIn;
-wire evg1TxClkIn;
+wire [3:0] qsfp1RxP = {QSFP1_RX_4_P, QSFP1_RX_3_P, QSFP1_RX_2_P, QSFP1_RX_1_P};
+wire [3:0] qsfp1RxN = {QSFP1_RX_4_N, QSFP1_RX_3_N, QSFP1_RX_2_N, QSFP1_RX_1_N};
+wire [3:0] qsfp1TxP;
+wire [3:0] qsfp1TxN;
+assign {QSFP1_TX_4_P, QSFP1_TX_3_P, QSFP1_TX_2_P, QSFP1_TX_1_P} = qsfp1TxP;
+assign {QSFP1_TX_4_N, QSFP1_TX_3_N, QSFP1_TX_2_N, QSFP1_TX_1_N} = qsfp1TxN;
+wire [3:0] evg1RxClksOut;
+wire [3:0] evg1TxClksOut;
+wire [3:0] evg1RxClksIn;
+wire [3:0] evg1TxClksIn;
+
 wire evg1RefClkUnbuf;
 IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
 
+generate
+for (i = 0 ; i < 4 ; i = i + 1) begin : evg1_mgt_fanout
 wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
+localparam integer rOff = i * GPIO_IDX_PER_MGTWRAPPER;
 mgtWrapper #(.EVG(1),
+             .MGT_ID(i),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
              .DRP_DEBUG("false"))
   evg1mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_0_DRP_CSR]),
-    .drpStatus(GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR]),
-    .latency(GPIO_IN[GPIO_IDX_EVG_1_0_LATENCY]),
-    .evgTxClkIn(evg1TxClkIn),
-    .evgTxClkOut(evg1TxClkOut),
+    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_0_DRP_CSR+rOff]),
+    .drpStatus(GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR+rOff]),
+    .latency(GPIO_IN[GPIO_IDX_EVG_1_0_LATENCY+rOff]),
+    .evgTxClkIn(evg1TxClksIn[i]),
+    .evgTxClkOut(evg1TxClksOut[i]),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
     .refClk(evg1RefClkUnbuf),
-    .samplingClk(clkLatencySampler),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
-    .tx_p(MGT_TX_1_P),
-    .tx_n(MGT_TX_1_N),
-    .evgRxClkIn(evg1RxClkIn),
-    .evgRxClkOut(evg1RxClkOut),
-    .rx_p(MGT_RX_1_P),
-    .rx_n(MGT_RX_1_N));
+    .samplingClk(clkLatencySampler),
+    .tx_p(qsfp1TxP[i]),
+    .tx_n(qsfp1TxN[i]),
+    .evgRxClkIn(evg1RxClksIn[i]),
+    .evgRxClkOut(evg1RxClksOut[i]),
+    .rx_p(qsfp1RxP[i]),
+    .rx_n(qsfp1RxN[i]));
+end
+endgenerate
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 clocks
-BUFG evg1RxBuf (.I(evg1RxClkOut), .O(evg1RxClk));
-BUFG evg1TxBuf (.I(evg1TxClkOut), .O(evg1TxClk));
+BUFG evg1RxBuf (.I(evg1RxClksOut[0]), .O(evg1RxClk));
+BUFG evg1TxBuf (.I(evg1TxClksOut[0]), .O(evg1TxClk));
 
-assign evg1RxClkIn = evg1RxClk;
-assign evg1TxClkIn = evg1TxClk;
+assign evg1RxClksIn = {4{evg1RxClk}};
+assign evg1TxClksIn = {4{evg1TxClk}};
 
+wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] DUMMY1_hwTrigger = 0;
+wire [CFG_EVIO_DIAG_IN_COUNT-1:0] DUMMY1_diagnosticIn = 0;
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -412,8 +425,8 @@ evg #(
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
     .sysPPStoggle(ppsToggle),
     .sysSeconds(posixSeconds),
-    .hwTriggers_a(FMC1_hwTrigger),
-    .diagnosticIn_a(FMC1_diagnosticIn),
+    .hwTriggers_a(DUMMY1_hwTrigger),
+    .diagnosticIn_a(DUMMY1_diagnosticIn),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
@@ -447,46 +460,64 @@ swapoutSequenceControl
     .evgHeartbeatRequest(evg2HeartbeatRequest),
     .evgSequenceStart(swapoutSequenceStart));
 
-wire evg2RxClkOut;
-wire evg2TxClkOut;
-wire evg2RxClkIn;
-wire evg2TxClkIn;
-wire evg2RefClkUnbuf;
-IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_1_P), .IB(MGT_CLK_1_N), .O(evg2RefClkUnbuf));
+wire [3:0] qsfp2RxP = {QSFP2_RX_4_P, QSFP2_RX_3_P, QSFP2_RX_2_P, QSFP2_RX_1_P};
+wire [3:0] qsfp2RxN = {QSFP2_RX_4_N, QSFP2_RX_3_N, QSFP2_RX_2_N, QSFP2_RX_1_N};
+wire [3:0] qsfp2TxP;
+wire [3:0] qsfp2TxN;
+assign {QSFP2_TX_4_P, QSFP2_TX_3_P, QSFP2_TX_2_P, QSFP2_TX_1_P} = qsfp2TxP;
+assign {QSFP2_TX_4_N, QSFP2_TX_3_N, QSFP2_TX_2_N, QSFP2_TX_1_N} = qsfp2TxN;
+wire [3:0] evg2RxClksOut;
+wire [3:0] evg2TxClksOut;
+wire [3:0] evg2RxClksIn;
+wire [3:0] evg2TxClksIn;
 
+wire evg2RefClkUnbuf;
+IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_2_P), .IB(MGT_CLK_2_N), .O(evg2RefClkUnbuf));
+
+generate
+for (i = 0 ; i < 4 ; i = i + 1) begin : evg2_mgt_fanout
+wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
+localparam integer rOff = i * GPIO_IDX_PER_MGTWRAPPER;
 mgtWrapper #(.EVG(2),
+             .MGT_ID(i),
              .SAMPLING_CLOCK_RATE(500000000),
              .DEBUG("false"),
-             .DRP_DEBUG("false"))
+             .DRP_DEBUG("false"),
+             .FORCE_GTE_COMMON("true"))
   evg2mgt (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_0_DRP_CSR]),
-    .drpStatus(GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR]),
-    .latency(GPIO_IN[GPIO_IDX_EVG_2_0_LATENCY]),
-    .evgTxClkIn(evg2TxClkIn),
-    .evgTxClkOut(evg2TxClkOut),
+    .drpStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_0_DRP_CSR+rOff]),
+    .drpStatus(GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR+rOff]),
+    .latency(GPIO_IN[GPIO_IDX_EVG_2_0_LATENCY+rOff]),
+    .evgTxClkIn(evg2TxClksIn[i]),
+    .evgTxClkOut(evg2TxClksOut[i]),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
     .refClk(evg2RefClkUnbuf),
-    .samplingClk(clkLatencySampler),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
-    .tx_p(MGT_TX_2_P),
-    .tx_n(MGT_TX_2_N),
-    .evgRxClkIn(evg2RxClkIn),
-    .evgRxClkOut(evg2RxClkOut),
-    .rx_p(MGT_RX_2_P),
-    .rx_n(MGT_RX_2_N));
+    .samplingClk(clkLatencySampler),
+    .tx_p(qsfp2TxP[i]),
+    .tx_n(qsfp2TxN[i]),
+    .evgRxClkIn(evg2RxClksIn[i]),
+    .evgRxClkOut(evg2RxClksOut[i]),
+    .rx_p(qsfp2RxP[i]),
+    .rx_n(qsfp2RxN[i]));
+end
+endgenerate
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG2 clocks
-BUFG evg2RxBuf (.I(evg2RxClkOut), .O(evg2RxClk));
-BUFG evg2TxBuf (.I(evg2TxClkOut), .O(evg2TxClk));
+BUFG evg2RxBuf (.I(evg2RxClksOut[0]), .O(evg2RxClk));
+BUFG evg2TxBuf (.I(evg2TxClksOut[0]), .O(evg2TxClk));
 
-assign evg2RxClkIn = evg2RxClk;
-assign evg2TxClkIn = evg2TxClk;
+assign evg2RxClksIn = {4{evg2RxClk}};
+assign evg2TxClksIn = {4{evg2TxClk}};
 
+wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] DUMMY2_hwTrigger = 0;
+wire                                  DUMMY2_auxInput = 0;
+wire [CFG_EVIO_DIAG_IN_COUNT-1:0] DUMMY2_diagnosticIn = 0;
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -508,8 +539,8 @@ evg #(
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
     .sysPPStoggle(ppsToggle),
     .sysSeconds(posixSeconds),
-    .hwTriggers_a(FMC2_hwTrigger),
-    .diagnosticIn_a(FMC2_diagnosticIn),
+    .hwTriggers_a(DUMMY2_hwTrigger),
+    .diagnosticIn_a(DUMMY2_diagnosticIn),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
@@ -556,6 +587,8 @@ freq_multi_count #(
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure fan speeds
+wire DUMMY1_FAN1_TACH = 1'b0;
+wire DUMMY1_FAN2_TACH = 1'b0;
 fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
           .FAN_COUNT(CFG_FAN_COUNT))
   fanTachs (
@@ -563,13 +596,13 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FAN_TACHOMETERS]),
     .GPIO_OUT(GPIO_OUT),
     .value(GPIO_IN[GPIO_IDX_FAN_TACHOMETERS]),
-    .tachs_a({FMC1_FAN2_TACH, FMC1_FAN1_TACH}));
+    .tachs_a({DUMMY1_FAN2_TACH, DUMMY1_FAN1_TACH}));
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic1ProgrammableOutputs;
 wire                             [1:0] diagnostic1Select;
-wire FMC1_auxSwitch_n, FMC2_auxSwitch_n;
+wire DUMMY1_auxSwitch_n, DUMMY2_auxSwitch_n;
 diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
                .OUTPUT_WIDTH(CFG_EVIO_DIAG_OUT_COUNT),
                .OUTPUT_SELECT_WIDTH(2))
@@ -578,11 +611,11 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FMC1_DIAGNOSTIC]),
     .GPIO_OUT(GPIO_OUT),
     .status(GPIO_IN[GPIO_IDX_FMC1_DIAGNOSTIC]),
-    .auxSwitch_n(FMC1_auxSwitch_n),
-    .diagnosticIn(FMC1_diagnosticIn),
+    .auxSwitch_n(DUMMY1_auxSwitch_n),
+    .diagnosticIn(DUMMY1_diagnosticIn),
     .diagnosticOut(diagnostic1ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic1Select));
-assign FMC1_diagnosticOut =
+wire DUMMY1_diagnosticOut =
      (diagnostic1Select == 2'h1) ? { evg1RefClk, evg1TxClk } :
      (diagnostic1Select == 2'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
      (diagnostic1Select == 2'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
@@ -598,11 +631,11 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FMC2_DIAGNOSTIC]),
     .GPIO_OUT(GPIO_OUT),
     .status(GPIO_IN[GPIO_IDX_FMC2_DIAGNOSTIC]),
-    .auxSwitch_n(FMC1_auxSwitch_n),
-    .diagnosticIn(FMC2_diagnosticIn),
+    .auxSwitch_n(DUMMY1_auxSwitch_n),
+    .diagnosticIn(DUMMY2_diagnosticIn),
     .diagnosticOut(diagnostic2ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic2Select));
-assign FMC2_diagnosticOut =
+wire DUMMY2_diagnosticOut =
      (diagnostic2Select == 2'h1) ? { evg2RefClk, evg2TxClk } :
      (diagnostic2Select == 2'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
      (diagnostic2Select == 2'h3) ? { evg1HeartbeatRequest, evg2TxClk } :
@@ -637,36 +670,21 @@ badger badger (
 // the conventional approach of making SCL unidirectional can not be used.
 (*MARK_DEBUG="false"*) wire evio_iic_scl_i, evio_iic_scl_o, evio_iic_scl_t;
 (*MARK_DEBUG="false"*) wire evio_iic_sda_i, evio_iic_sda_o, evio_iic_sda_t;
-(*MARK_DEBUG="false"*) wire fmc1_scl_i, fmc1_sda_i, fmc2_scl_i, fmc2_sda_i;
+(*MARK_DEBUG="false"*) wire fmc1_scl_i = 0, fmc1_sda_i = 0, fmc2_scl_i = 0, fmc2_sda_i = 0;
 (*MARK_DEBUG="false"*) wire [CFG_EVIO_FIREFLY_COUNT/2:0] evio_iic_gpo;
-
-IOBUF FMC1_EVIO_SCL_IOBUF (.I(evio_iic_scl_o),
-                          .IO(FMC1_EVIO_SCL),
-                          .O(fmc1_scl_i),
-                          .T(evio_iic_scl_t | evio_iic_gpo[0]));
-IOBUF FMC1_EVIO_SDA_IOBUF (.I(evio_iic_sda_o),
-                          .IO(FMC1_EVIO_SDA),
-                          .O(fmc1_sda_i),
-                          .T(evio_iic_sda_t | evio_iic_gpo[0]));
-IOBUF FMC2_EVIO_SCL_IOBUF (.I(evio_iic_scl_o),
-                          .IO(FMC2_EVIO_SCL),
-                          .O(fmc2_scl_i),
-                          .T(evio_iic_scl_t | !evio_iic_gpo[0]));
-IOBUF FMC2_EVIO_SDA_IOBUF (.I(evio_iic_sda_o),
-                          .IO(FMC2_EVIO_SDA),
-                          .O(fmc2_sda_i),
-                          .T(evio_iic_sda_t | !evio_iic_gpo[0]));
 
 assign evio_iic_scl_i = evio_iic_gpo[0] ? fmc2_scl_i : fmc1_scl_i;
 assign evio_iic_sda_i = evio_iic_gpo[0] ? fmc2_sda_i : fmc1_sda_i;
 
-assign FMC1_fireflySelect_n = ~evio_iic_gpo[CFG_EVIO_FIREFLY_COUNT/2:1];
-assign FMC2_fireflySelect_n = ~evio_iic_gpo[CFG_EVIO_FIREFLY_COUNT/2:1];
+wire DUMMY1_fireflySelect_n = ~evio_iic_gpo[CFG_EVIO_FIREFLY_COUNT/2:1];
+wire DUMMY2_fireflySelect_n = ~evio_iic_gpo[CFG_EVIO_FIREFLY_COUNT/2:1];
 
+wire [CFG_EVIO_FIREFLY_COUNT-1:0] DUMMY1_fireflyPresent_n = ~0;
 assign GPIO_IN[GPIO_IDX_FMC1_FIREFLY] = {{32-CFG_EVIO_FIREFLY_COUNT{1'b0}},
-                                         FMC1_fireflyPresent_n };
+                                         DUMMY1_fireflyPresent_n };
+wire [CFG_EVIO_FIREFLY_COUNT-1:0] DUMMY2_fireflyPresent_n = ~0;
 assign GPIO_IN[GPIO_IDX_FMC2_FIREFLY] = {{32-CFG_EVIO_FIREFLY_COUNT{1'b0}},
-                                         FMC2_fireflyPresent_n };
+                                         DUMMY2_fireflyPresent_n };
 
 // Make this a black box for simulation
 `ifndef SIMULATE

@@ -60,15 +60,15 @@ writeResets(int mgtBitmap, uint32_t resets)
 {
     resets |= CSR_W_ENABLE_RESETS;
     if (mgtBitmap & 0x1) {
-        GPIO_WRITE(GPIO_IDX_EVG_1_DRP_CSR, CSR_W_ENABLE_RESETS | resets);
+        GPIO_WRITE(GPIO_IDX_EVG_1_0_DRP_CSR, CSR_W_ENABLE_RESETS | resets);
     }
     if (mgtBitmap & 0x2) {
-        GPIO_WRITE(GPIO_IDX_EVG_2_DRP_CSR, CSR_W_ENABLE_RESETS | resets);
+        GPIO_WRITE(GPIO_IDX_EVG_2_0_DRP_CSR, CSR_W_ENABLE_RESETS | resets);
     }
     if (debugFlags & DEBUGFLAG_SHOW_TX_RESETS) {
         printf("TX resets:%x 1:%08X 2:%08X\n", mgtBitmap,
-                                             GPIO_READ(GPIO_IDX_EVG_1_DRP_CSR),
-                                             GPIO_READ(GPIO_IDX_EVG_2_DRP_CSR));
+                                             GPIO_READ(GPIO_IDX_EVG_1_0_DRP_CSR),
+                                             GPIO_READ(GPIO_IDX_EVG_2_0_DRP_CSR));
     }
 }
 
@@ -85,14 +85,14 @@ mgtTxReset(int mgtBitmap)
     seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
     then = MICROSECONDS_SINCE_BOOT();
     while (((mgtBitmap & 0x1)
-          && !(GPIO_READ(GPIO_IDX_EVG_1_DRP_CSR) & CSR_R_CPLL_LOCKED))
+          && !(GPIO_READ(GPIO_IDX_EVG_1_0_DRP_CSR) & CSR_R_CPLL_LOCKED))
         || ((mgtBitmap & 0x2)
-          && !(GPIO_READ(GPIO_IDX_EVG_2_DRP_CSR) & CSR_R_CPLL_LOCKED))) {
+          && !(GPIO_READ(GPIO_IDX_EVG_2_0_DRP_CSR) & CSR_R_CPLL_LOCKED))) {
         if ((MICROSECONDS_SINCE_BOOT() - then) > 100000) {
             if ((seconds - whenWarned) > 5) {
                 warn("MGT CPLL lock fail %x %X %X", mgtBitmap,
-                                             GPIO_READ(GPIO_IDX_EVG_1_DRP_CSR),
-                                             GPIO_READ(GPIO_IDX_EVG_2_DRP_CSR));
+                                             GPIO_READ(GPIO_IDX_EVG_1_0_DRP_CSR),
+                                             GPIO_READ(GPIO_IDX_EVG_2_0_DRP_CSR));
                 whenWarned = seconds;
             }
             break;
@@ -101,14 +101,14 @@ mgtTxReset(int mgtBitmap)
     writeResets(mgtBitmap, 0);
     then = MICROSECONDS_SINCE_BOOT();
     while (((mgtBitmap & 0x1)
-          && !(GPIO_READ(GPIO_IDX_EVG_1_DRP_CSR) & CSR_R_TX_RESET_DONE))
+          && !(GPIO_READ(GPIO_IDX_EVG_1_0_DRP_CSR) & CSR_R_TX_RESET_DONE))
         || ((mgtBitmap & 0x2)
-          && !(GPIO_READ(GPIO_IDX_EVG_2_DRP_CSR) & CSR_R_TX_RESET_DONE))) {
+          && !(GPIO_READ(GPIO_IDX_EVG_2_0_DRP_CSR) & CSR_R_TX_RESET_DONE))) {
         if ((MICROSECONDS_SINCE_BOOT() - then) > 100000) {
             if ((seconds - whenWarned) > 5) {
                 warn("MGT Tx reset fail %x %08X %08X", mgtBitmap,
-                                             GPIO_READ(GPIO_IDX_EVG_1_DRP_CSR),
-                                             GPIO_READ(GPIO_IDX_EVG_2_DRP_CSR));
+                                             GPIO_READ(GPIO_IDX_EVG_1_0_DRP_CSR),
+                                             GPIO_READ(GPIO_IDX_EVG_2_0_DRP_CSR));
                 whenWarned = seconds;
             }
             break;
@@ -161,8 +161,8 @@ mgtFetchLatency(unsigned int evgIdx)
         uint16_t csrIdx;
         uint16_t latencyIdx;
     } rxLoopbackInfo[EVG_COUNT] = {
-        { GPIO_IDX_EVG_1_DRP_CSR, GPIO_IDX_EVG_1_LATENCY },
-        { GPIO_IDX_EVG_2_DRP_CSR, GPIO_IDX_EVG_2_LATENCY },
+        { GPIO_IDX_EVG_1_0_DRP_CSR, GPIO_IDX_EVG_1_0_LATENCY },
+        { GPIO_IDX_EVG_2_0_DRP_CSR, GPIO_IDX_EVG_2_0_LATENCY },
     };
     if (evgIdx >= EVG_COUNT) {
         return -1;

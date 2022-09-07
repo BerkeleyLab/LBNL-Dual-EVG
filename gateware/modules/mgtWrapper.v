@@ -3,9 +3,11 @@
 //
 module mgtWrapper #(
     parameter EVG                 = -1,
+    parameter MGT_ID              =  0,
     parameter SAMPLING_CLOCK_RATE = -1,
     parameter DEBUG               = "false",
-    parameter DRP_DEBUG           = "false"
+    parameter DRP_DEBUG           = "false",
+    parameter FORCE_GTE_COMMON    = "false"
     ) (
     input         sysClk,
     input         drpStrobe,
@@ -13,18 +15,19 @@ module mgtWrapper #(
     output [31:0] drpStatus,
     output [31:0] latency,
 
-    input         refClk_p,
-    input         refClk_n,
+    input         refClk,
     input         samplingClk,
     inout         gt0_qplloutclk_i,    // Xilinx Answer Record 43339
     inout         gt0_qplloutrefclk_i, // Xilinx Answer Record 43339
 
-    output                            evgTxClk,
+    input                             evgTxClkIn,
+    output                            evgTxClkOut,
     (*mark_debug=DEBUG*) input [15:0] evgTxData,
     (*mark_debug=DEBUG*) input  [1:0] evgTxCharIsK,
     output                            tx_p,
     output                            tx_n,
-    output                            evgRxClk,
+    input                             evgRxClkIn,
+    output                            evgRxClkOut,
     input                             rx_p,
     input                             rx_n);
 
@@ -94,7 +97,7 @@ localparam COMMA_COUNTER_WIDTH = $clog2(COMMA_COUNTER_RELOAD+1) + 1;
 assign rxIsAligned = commaCounter[COMMA_COUNTER_WIDTH-1];
 (*mark_debug=DEBUG*) wire [1:0] evgRxCharIsK, evgRxNotInTable;
 (*mark_debug=DEBUG*) wire [15:0] evgRxData;
-always @(posedge evgRxClk) begin
+always @(posedge evgRxClkIn) begin
     if ((evgRxNotInTable != 0) || evgRxCharIsK[1]) begin
         commaCounter <= COMMA_COUNTER_RELOAD;
     end
@@ -114,13 +117,6 @@ measureLatency #(.SAMPLING_CLOCK_RATE(SAMPLING_CLOCK_RATE),
     .rxValid(rxIsAligned),
     .ping(evgTxData[9]),
     .echo(evgRxData[9]));
-
-//////////////////////////////////////////////////////////////////////////////
-// Buffer clocks
-wire refClk, txOutClk, rxOutClk;
-IBUFDS_GTE2 refBuf (.I(refClk_p), .IB(refClk_n), .O(refClk));
-BUFG txBuf (.I(txOutClk), .O(evgTxClk));
-BUFG rxBuf (.I(rxOutClk), .O(evgRxClk));
 
 //////////////////////////////////////////////////////////////////////////////
 // Instantiate appropriate MGT
@@ -153,8 +149,8 @@ evg1mgt evg1mgt_i (
     .gt0_rxuserrdy_in(1'b1), // input wire gt0_rxuserrdy_in
     .gt0_eyescandataerror_out(), // output wire gt0_eyescandataerror_out
     .gt0_eyescantrigger_in(1'b0), // input wire gt0_eyescantrigger_in
-    .gt0_rxusrclk_in(evgRxClk), // input wire gt0_rxusrclk_in
-    .gt0_rxusrclk2_in(evgRxClk), // input wire gt0_rxusrclk2_in
+    .gt0_rxusrclk_in(evgRxClkIn), // input wire gt0_rxusrclk_in
+    .gt0_rxusrclk2_in(evgRxClkIn), // input wire gt0_rxusrclk2_in
     .gt0_rxdata_out(evgRxData), // output wire [15:0] gt0_rxdata_out
     .gt0_rxdisperr_out(), // output wire [1:0] gt0_rxdisperr_out
     .gt0_rxnotintable_out(evgRxNotInTable), // output wire [1:0] gt0_rxnotintable_out
@@ -163,7 +159,7 @@ evg1mgt evg1mgt_i (
     .gt0_rxdfelpmreset_in(1'b0), // input wire gt0_rxdfelpmreset_in
     .gt0_rxmonitorout_out(), // output wire [6:0] gt0_rxmonitorout_out
     .gt0_rxmonitorsel_in(2'b0), // input wire [1:0] gt0_rxmonitorsel_in
-    .gt0_rxoutclk_out(rxOutClk), // output wire gt0_rxoutclk_out
+    .gt0_rxoutclk_out(evgRxClkOut), // output wire gt0_rxoutclk_out
     .gt0_rxoutclkfabric_out(), // output wire gt0_rxoutclkfabric_out
     .gt0_gtrxreset_in(gtRxReset), // input wire gt0_gtrxreset_in
     .gt0_rxpmareset_in(1'b0), // input wire gt0_rxpmareset_in
@@ -171,12 +167,12 @@ evg1mgt evg1mgt_i (
     .gt0_rxresetdone_out(rxResetDone), // output wire gt0_rxresetdone_out
     .gt0_gttxreset_in(gtTxReset), // input wire gt0_gttxreset_in
     .gt0_txuserrdy_in(1'b1), // input wire gt0_txuserrdy_in
-    .gt0_txusrclk_in(evgTxClk), // input wire gt0_txusrclk_in
-    .gt0_txusrclk2_in(evgTxClk), // input wire gt0_txusrclk2_in
+    .gt0_txusrclk_in(evgTxClkIn), // input wire gt0_txusrclk_in
+    .gt0_txusrclk2_in(evgTxClkIn), // input wire gt0_txusrclk2_in
     .gt0_txdata_in(evgTxData), // input wire [15:0] gt0_txdata_in
     .gt0_gtxtxn_out(tx_n), // output wire gt0_gtxtxn_out
     .gt0_gtxtxp_out(tx_p), // output wire gt0_gtxtxp_out
-    .gt0_txoutclk_out(txOutClk), // output wire gt0_txoutclk_out
+    .gt0_txoutclk_out(evgTxClkOut), // output wire gt0_txoutclk_out
     .gt0_txoutclkfabric_out(), // output wire gt0_txoutclkfabric_out
     .gt0_txoutclkpcs_out(), // output wire gt0_txoutclkpcs_out
     .gt0_txcharisk_in(evgTxCharIsK), // input wire [1:0] gt0_txcharisk_in
@@ -184,7 +180,12 @@ evg1mgt evg1mgt_i (
     .gt0_qplloutclk_in(gt0_qplloutclk_i), // input wire gt0_qplloutclk_in
     .gt0_qplloutrefclk_in(gt0_qplloutrefclk_i) // input wire gt0_qplloutrefclk_in
      );
+end
+endgenerate
 
+generate
+if ((EVG == 1 && MGT_ID == 0) ||
+    (EVG == 2 && MGT_ID == 0 && FORCE_GTE_COMMON == "true")) begin
 ///////////////////////////////////////////////////////////////////////////////
 // Xilinx Answer Record 43339
 // Instantiate a GTXE2_COMMON even though QPLL is unused.
@@ -285,7 +286,9 @@ wire GT0_QPLLREFCLKLOST_OUT;
     );
 `endif // `ifndef SIMULATE
 end
+endgenerate
 
+generate
 if (EVG == 2) begin
 evg2mgt evg2mgt_i (
     .sysclk_in(sysClk), // input wire sysclk_in
@@ -314,8 +317,8 @@ evg2mgt evg2mgt_i (
     .gt0_rxuserrdy_in(1'b1), // input wire gt0_rxuserrdy_in
     .gt0_eyescandataerror_out(), // output wire gt0_eyescandataerror_out
     .gt0_eyescantrigger_in(1'b0), // input wire gt0_eyescantrigger_in
-    .gt0_rxusrclk_in(evgRxClk), // input wire gt0_rxusrclk_in
-    .gt0_rxusrclk2_in(evgRxClk), // input wire gt0_rxusrclk2_in
+    .gt0_rxusrclk_in(evgRxClkIn), // input wire gt0_rxusrclk_in
+    .gt0_rxusrclk2_in(evgRxClkIn), // input wire gt0_rxusrclk2_in
     .gt0_rxdata_out(evgRxData), // output wire [15:0] gt0_rxdata_out
     .gt0_rxdisperr_out(), // output wire [1:0] gt0_rxdisperr_out
     .gt0_rxnotintable_out(evgRxNotInTable), // output wire [1:0] gt0_rxnotintable_out
@@ -324,7 +327,7 @@ evg2mgt evg2mgt_i (
     .gt0_rxdfelpmreset_in(1'b0), // input wire gt0_rxdfelpmreset_in
     .gt0_rxmonitorout_out(), // output wire [6:0] gt0_rxmonitorout_out
     .gt0_rxmonitorsel_in(2'b0), // input wire [1:0] gt0_rxmonitorsel_in
-    .gt0_rxoutclk_out(rxOutClk), // output wire gt0_rxoutclk_out
+    .gt0_rxoutclk_out(evgRxClkOut), // output wire gt0_rxoutclk_out
     .gt0_rxoutclkfabric_out(), // output wire gt0_rxoutclkfabric_out
     .gt0_gtrxreset_in(gtRxReset), // input wire gt0_gtrxreset_in
     .gt0_rxpmareset_in(1'b0), // input wire gt0_rxpmareset_in
@@ -332,12 +335,12 @@ evg2mgt evg2mgt_i (
     .gt0_rxresetdone_out(rxResetDone), // output wire gt0_rxresetdone_out
     .gt0_gttxreset_in(gtTxReset), // input wire gt0_gttxreset_in
     .gt0_txuserrdy_in(1'b1), // input wire gt0_txuserrdy_in
-    .gt0_txusrclk_in(evgTxClk), // input wire gt0_txusrclk_in
-    .gt0_txusrclk2_in(evgTxClk), // input wire gt0_txusrclk2_in
+    .gt0_txusrclk_in(evgTxClkIn), // input wire gt0_txusrclk_in
+    .gt0_txusrclk2_in(evgTxClkIn), // input wire gt0_txusrclk2_in
     .gt0_txdata_in(evgTxData), // input wire [15:0] gt0_txdata_in
     .gt0_gtxtxn_out(tx_n), // output wire gt0_gtxtxn_out
     .gt0_gtxtxp_out(tx_p), // output wire gt0_gtxtxp_out
-    .gt0_txoutclk_out(txOutClk), // output wire gt0_txoutclk_out
+    .gt0_txoutclk_out(evgTxClkOut), // output wire gt0_txoutclk_out
     .gt0_txoutclkfabric_out(), // output wire gt0_txoutclkfabric_out
     .gt0_txoutclkpcs_out(), // output wire gt0_txoutclkpcs_out
     .gt0_txcharisk_in(evgTxCharIsK), // input wire [1:0] gt0_txcharisk_in

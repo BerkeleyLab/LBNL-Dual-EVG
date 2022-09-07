@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-APP=${1:-devg}
-PLATFORM=${2:-marble}
-
 SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
+BITFILE=${1:-download.bit}
 
-cd ${SCRIPTPATH}/../gateware/scripts
-
-cd ${SCRIPTPATH}/../software/scripts
+if test -r "${BITFILE}"; then
+    openocd -s "${SCRIPTPATH}" -f marble.cfg -c "transport select jtag; init; xc7_program xc7.tap; pld load 0 ${BITFILE}; exit"
+else
+    echo "${BITFILE} not found"
+fi

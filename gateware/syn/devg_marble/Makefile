@@ -5,7 +5,6 @@ COMMUNICATION = gtx
 XILINX_TOOL := VIVADO
 FPGA_VENDOR := xilinx
 FPGA_PLATFORM := 7series
-FPGA_APPLICATION := devg
 
 CMD_SEP = ;
 
@@ -13,9 +12,14 @@ include ../../../dir_list.mk
 
 # Top level design name
 TARGET ?= devg_marble
+FPGA_APPLICATION ?= devg
+
+TARGET_PLATFORM_DIR = $(PLATFORM_DIR)/$(FPGA_VENDOR)/$(FPGA_PLATFORM)/$(FPGA_APPLICATION)
+GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
+XPR             = $(GW_DEVG_TGT_DIR)/_xilinx/$(TARGET)_top/$(TARGET)_top.xpr
 
 # Top level bitstream name
-all: $(TARGET)_top.bit
+all: $(TARGET)_top.bit $(TARGET)_top.mmi
 
 # Search for .v files here
 vpath %.v $(MODULES_DIR)
@@ -49,13 +53,13 @@ include $(MODULES_DIR)/axi_lite_generic_reg_rules.mk
 include $(MODULES_DIR)/bantamweightUDP_rules.mk
 
 IP_CORES += evg1mgt evg2mgt evLogFIFO ila_td256_s4096_cap
-evg1mgt_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/evg1mgt
+evg1mgt_DIR = $(TARGET_PLATFORM_DIR)/evg1mgt
 evg1mgt_TOP = $(evg1mgt_DIR)/evg1mgt.v
-evg2mgt_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/evg2mgt
+evg2mgt_DIR = $(TARGET_PLATFORM_DIR)/evg2mgt
 evg2mgt_TOP = $(evg2mgt_DIR)/evg2mgt.v
-evLogFIFO_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/evLogFIFO
+evLogFIFO_DIR = $(TARGET_PLATFORM_DIR)/evLogFIFO
 evLogFIFO_TOP = $(evLogFIFO_DIR)/synth/evLogFIFO.vhd
-ila_td256_s4096_cap_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/ila_td256_s4096_cap
+ila_td256_s4096_cap_DIR = $(TARGET_PLATFORM_DIR)/ila_td256_s4096_cap
 ila_td256_s4096_cap_TOP = $(ila_td256_s4096_cap_DIR)/synth/ila_td256_s4096_cap.v
 
 IP_CORES_TOP_LVL_SRCS += $(evg1mgt_TOP) $(evg2mgt_TOP) $(evLogFIFO_TOP) $(ila_td256_s4096_cap_TOP)
@@ -69,7 +73,7 @@ IP_CORES_SRCS_DIRS += $(addsuffix /synth, $(IP_CORES_DIRS))
 IP_CORES_SRCS_DIRS += $(addsuffix /hdl, $(IP_CORES_DIRS))
 
 BD += bd
-bd_DIR = $(PLATFORM_7SERIES_DEVG_DIR)/bd
+bd_DIR = $(TARGET_PLATFORM_DIR)/bd
 bd_TOP = $(bd_DIR)/synth/bd.v
 
 BD_TOP_LVL_SRCS += $(bd_TOP)
@@ -153,6 +157,9 @@ vpath %.dat $(MODULES_DIR)
 $(TARGET)_top.bit: system_top.xdc $(VIVADO_SYNTH_EXTRA_TCL) $(TOP_LVL_DIR)/$(TARGET)_top.v iicCommandTable.dat $(BD_bds) evLogFIFO.xci ila_td256_s4096_cap.xci
 $(TOP_LVL_DIR)/$(TARGET)_top.v: $(TOP_LVL_DIR)/firmwareBuildDate.v $(TOP_LVL_DIR)/gpioIDX.vh $(RTEFI_V) $(IP_CORES_CUSTOM) $(IP_CORES_TOP_LVL_SRCS) $(BD_TOP_LVL_SRCS)
 
+$(TARGET)_top.mmi: $(XPR) $(TARGET)_top.bit
+	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_mem_info.tcl -tclargs $< $@
+
 # Generate bundled .xdc from other .xdc. Don't change the order of the
 # prerequisites as we need constraints in tGe order specified
 system_top.xdc: $(SYSTEM_TOP_PINS_XDC) $(IP_CORES_XDCS) $(SYSTEM_TOP_TIM_XDC)
@@ -201,8 +208,8 @@ $(BD_TOP_LVL_SRCS): % : $$(basename $$(notdir %)).bd
 
 # clean generate IP cores files, but the source ones (.xci or .bd)
 clean::
-	$(foreach ipcore, $(IP_CORES), find $($(ipcore)_DIR) -mindepth 1 -not \( -name \*$(ipcore).xci -o -name \*$(ipcore).bd \) -delete $(CMD_SEP))
-	$(foreach bd, $(BD), find $($(bd)_DIR) -mindepth 1 -not \( -name \*$(bd).xci -o -name \*$(bd).bd \) -delete $(CMD_SEP))
+	$(foreach ipcore, $(IP_CORES), find $($(ipcore)_DIR)/ -mindepth 1 -not \( -name \*$(ipcore).xci -o -name \*$(ipcore).bd \) -delete $(CMD_SEP))
+	$(foreach bd, $(BD), find $($(bd)_DIR)/ -mindepth 1 -not \( -name \*$(bd).xci -o -name \*$(bd).bd \) -delete $(CMD_SEP))
 
 # Cleaning rules
 include $(BUILD_DIR)/bottom_rules.mk

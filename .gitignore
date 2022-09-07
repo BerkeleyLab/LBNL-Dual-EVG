@@ -27,7 +27,10 @@ _xilinx/
 *BOOT.bin
 
 # BSP-generated directories
-software/app/devg/devg_*/
+software/app/devg/proc_0/devg_marble_proc_0
+software/app/devg/proc_1/devg_marble_proc_1
+software/app/devg_test/proc_0/devg_test_marble_proc_0
+software/app/devg_test/proc_1/devg_test_marble_proc_1
 
 ######################
 # Modelsim
@@ -74,6 +77,13 @@ axi_lite_generic_reg
 *system_top.xdc
 *prio_xci_files.tcl
 *ipcores_repos.tcl
+*.mmi
+*download.bit
+
+*bd.xsa
+*construct_tx_table.v
+*rtefi_blob.v
+*rtefi_preblob.vh
 
 # Script-generated
 *softwareBuildDate.h

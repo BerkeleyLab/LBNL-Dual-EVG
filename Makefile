@@ -15,13 +15,12 @@ all: bit sw
 
 bit:
 	make -C $(GW_TGT_DIR) TARGET=$(TARGET) $(TARGET)_top.bit
+	make -C $(GW_TGT_DIR) TARGET=$(TARGET) $(TARGET)_top.mmi
 
 sw:
-	make -C $(SW_TGT_DIR)/proc_0 TARGET=$(TARGET) BIT=$(BIT) all
-	make -C $(SW_TGT_DIR)/proc_1 TARGET=$(TARGET) BIT=$(BIT) all
+	make -C $(SW_TGT_DIR) TARGET=$(TARGET) BIT=$(BIT) all
 
 clean:
 	make -C $(GW_TGT_DIR) TARGET=$(TARGET) clean
-	make -C $(SW_TGT_DIR)/proc_0 TARGET=$(TARGET) clean
-	make -C $(SW_TGT_DIR)/proc_1 TARGET=$(TARGET) clean
+	make -C $(SW_TGT_DIR) TARGET=$(TARGET) clean
 	rm -f *.log *.jou

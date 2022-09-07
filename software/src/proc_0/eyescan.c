@@ -73,6 +73,8 @@
 #define DRP_CSR_R_BUSY          (1U << 31)
 #define DRP_CSR_RW_DATA_MASK    0xFFFF
 
+#define REG(base,chan)  ((base) + (GPIO_IDX_PER_MGTWRAPPER * (chan)))
+
 static const char *laneNames[] = EYESCAN_LANE_NAMES;
 
 static enum eyescanFormat {
@@ -165,9 +167,11 @@ eyescanInit(void)
 {
     int lane, r;
     uint32_t csrIdx;
+    uint32_t csrBaseIdx;
 
     for (lane = 0 ; lane < EYESCAN_LANECOUNT ; lane++) {
-        csrIdx = lane ? GPIO_IDX_EVG_2_DRP_CSR : GPIO_IDX_EVG_1_DRP_CSR;
+        csrBaseIdx = (lane <= EYESCAN_EVG1_MAXLANE)? GPIO_IDX_EVG_1_0_DRP_CSR : GPIO_IDX_EVG_2_0_DRP_CSR;
+        csrIdx = REG(csrBaseIdx, lane % (EYESCAN_LANECOUNT/2));
         /* Enable eye scan if necessary. PMA_RSV2[5] */
         if ((drp_read(csrIdx, DRP_REG_PMA_RSV2) & (1U << 5)) == 0) {
             drp_set(csrIdx, DRP_REG_PMA_RSV2, 1U << 5);
@@ -269,12 +273,14 @@ eyescanStep(int lane)
     static int hOffset, vOffset, utFlag;
     static int errorCount;
     static uint32_t csrIdx;
+    uint32_t csrBaseIdx;
 
     if ((lane >= 0) && !eyescanActive) {
-        csrIdx = lane ? GPIO_IDX_EVG_2_DRP_CSR : GPIO_IDX_EVG_1_DRP_CSR;
+        csrBaseIdx = (lane <= EYESCAN_EVG1_MAXLANE)? GPIO_IDX_EVG_1_0_DRP_CSR : GPIO_IDX_EVG_2_0_DRP_CSR;
+        csrIdx = REG(csrBaseIdx, lane % (EYESCAN_LANECOUNT/2));
         /* Want 32 horizontal offsets on either side of csrIdxline */
         int rxDiv = 1 << (drp_read(csrIdx, DRP_REG_TXOUT_RXOUT_DIV) & 0x3);
-        hRange = 32 * rxDiv; 
+        hRange = 32 * rxDiv;
         hStride = 2 * rxDiv;
         hOffset = -hRange;
         vOffset = -VRANGE;
@@ -335,7 +341,7 @@ eyescanStep(int lane)
         else {
             int hSign;
             int vSign, vAbs;
-            
+
             hSign = (hOffset < 0) ? 1 << 11 : 0;
             if (vOffset < 0) {
                 vAbs = -vOffset;

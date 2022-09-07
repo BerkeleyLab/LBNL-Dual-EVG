@@ -32,8 +32,8 @@
 #ifndef _EYESCAN_H_
 #define _EYESCAN_H_
 
-#define EYESCAN_LANECOUNT           2
-#define EYESCAN_LANE_NAMES          { "EVG 1", "EVG 2" }
+#include "eyescanTarget.h"
+
 #define EYESCAN_TRANSCEIVER_WIDTH   20
 
 void eyescanInit(void);

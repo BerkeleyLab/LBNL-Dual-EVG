@@ -1,13 +1,13 @@
 include ../../../../dir_list.mk
 
-TARGET   ?= devg_marble
+TARGET   ?= devg_test_marble
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 BIT      ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.bit
 
 PROC_NAME  = proc_1
 CPU_NAME   = microblaze_1
 TARGET_DIR = $(SW_TGT_DIR)/$(TARGET)
-BSP_DIR    = $(SW_DEVG_APP_DIR)/$(PROC_NAME)/$(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_NAME)
+BSP_DIR    = $(SW_DEVG_TEST_APP_DIR)/$(PROC_NAME)/$(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_NAME)
 
 all: $(TARGET)_$(PROC_NAME) $(TARGET)_$(PROC_NAME).elf $(TARGET)_$(PROC_NAME).elf.size
 
@@ -70,12 +70,11 @@ LINKER_FILES = $(SW_SRC_DIR)/$(PROC_NAME)/lscript.ld
 CFLAGS = -Wall -O2 -mlittle-endian -mxl-barrel-shift -mno-xl-soft-div -mcpu=v11.0 -mno-xl-soft-mul -ffunction-sections -fdata-sections
 LD_FLAGS = -Wl,-T -Wl,$(LINKER_FILES) -Wl,--no-relax
 USER_FLAGS = -D__BAREMETAL__ -DBWUDP_ENDPOINT_CAPACITY=5
-
 LIB_DIRS = $(BSP_DIR)/lib
 LIB_FLAGS = $(addprefix -L, $(LIB_DIRS))
 LIBS = -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
 
-ifeq ($(TARGET),devg_marble)
+ifeq ($(TARGET),devg_test_marble)
 	USER_FLAGS += -D__TARGET_DEVG_MARBLE__
 else
 	USER_FLAGS += -D__TARGET_NOT_RECOGNIZED__
@@ -96,4 +95,4 @@ vpath *.h $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
 vpath *.o $(SW_SRC_DIR)/$(PROC_NAME)
 
 # Actual build rules
-include $(SW_DEVG_APP_DIR)/bottom_rules.mk
+include $(SW_DEVG_TEST_APP_DIR)/bottom_rules.mk
