@@ -307,7 +307,7 @@ ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) gpsPPScheck (
     .pps_a(gpsPPS_a),
     .ppsValid(gpsPPSvalid));
 
-wire bestPPS_a = fmcPPSvalid ? fmcPPS_a : gpsPPS_a;
+wire bestPPS_a = gpsPPSvalid ? gpsPPS_a : (fmcPPSvalid ? fmcPPS_a : sysPPSmarker);
 
 //////////////////////////////////////////////////////////////////////////////
 // NTP server support
