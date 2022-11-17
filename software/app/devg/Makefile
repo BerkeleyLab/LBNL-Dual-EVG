@@ -35,4 +35,5 @@ $(DEPLOY_BIT): $(MMI) $(BIT) $(PROC_0_ELF) $(PROC_1_ELF)
 clean:
 	make -C proc_0 TARGET=$(TARGET) clean
 	make -C proc_1 TARGET=$(TARGET) clean
+	rm -f $(DEPLOY_BIT)
 	rm -f *.log *.jou
