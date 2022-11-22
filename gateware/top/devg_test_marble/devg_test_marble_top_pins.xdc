@@ -137,5 +137,10 @@ set_property -dict {PACKAGE_PIN K6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EX
 set_property -dict {PACKAGE_PIN K5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_N]
 
 # Bank 0 setup
-set_property CFGBVS VCCO [current_design]
-set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property BITSTREAM.CONFIG.CONFIGRATE 26       [current_design]
+set_property BITSTREAM.CONFIG.SPI_FALL_EDGE NO    [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 2      [current_design]
+set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR NO   [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE      [current_design]
+set_property CFGBVS VCCO                          [current_design]
+set_property CONFIG_VOLTAGE 3.3                   [current_design]

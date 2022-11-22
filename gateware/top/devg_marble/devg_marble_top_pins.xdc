@@ -113,5 +113,10 @@ set_property -dict {PACKAGE_PIN Y23 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports F
 set_property -dict {PACKAGE_PIN AA24 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports FMC2_CLK0_M2C_N]
 
 # Bank 0 setup
-set_property CFGBVS VCCO [current_design]
-set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property BITSTREAM.CONFIG.CONFIGRATE 26       [current_design]
+set_property BITSTREAM.CONFIG.SPI_FALL_EDGE NO    [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 2      [current_design]
+set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR NO   [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE      [current_design]
+set_property CFGBVS VCCO                          [current_design]
+set_property CONFIG_VOLTAGE 3.3                   [current_design]
