@@ -3,4 +3,4 @@
 	url = https://github.com/BerkeleyLab/Bedrock
 [submodule "gateware/submodules/bantamweightUDP"]
 	path = gateware/submodules/bantamweightUDP
-	url = ../../alsu-instrumentation/bantamweightUDP.git
+	url = https://github.com/BerkeleyLab/BWUDP
