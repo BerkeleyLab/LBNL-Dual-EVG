@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>HowtoUpdateFirmware</title></head><body>
+<h1>How to Update Firmware</h1>
+<p>These instructions present the procedure to create a bootable image 
+containing FPGA firmware and application software and to transfer this 
+image to flash memory.&nbsp; The instructions assume that a Vivado 
+session with the desired project is running.&nbsp; The procedure is made
+ more difficult by some annoying flaws in the Xiinx development tools.<br>
+</p>
+<ol>
+  <li>Click File→Export→Export Hardware….</li>
+  <li>In the 'Export Hardware' window that pops up ensure that the 
+'Include bitstream' box does not have a check mark, then click 'OK'.</li>
+  <li>Start Vitis and select the ALSUeventGenerator workspace.</li>
+  <li>In the project hierarchy window highlight and right click on 
+ALSUeventGenerator_platform and select 'Update Hardware Specification'.</li>
+  <li>In the 'Update Hardware Specification' window that pops up confirm
+ that the 'Hardware Specification File:' field refers to the 
+ALSUeventGenerator.xsa file then click 'OK',.</li>
+  <li>In the completion window that pops up, click 'OK'.</li>
+  <li>That should be it, but a flaw in the 2019.3 tools used for this 
+project means that some extra steps are required.&nbsp; In the platform 
+hierarchy pane, highlight the 'Board Support Package' entry then&nbsp; 
+click 'Reset BSP Sources'.&nbsp; In the 'Reset BSP Sources' confirmation
+ window that pops up, click 'Yes' then, in the error window that pops up
+ a little later, click 'OK'.</li>
+  <li>In the project hierarchy window highlight and right click on 
+ALSUeventGenerator_platform and select 'Build Project'.&nbsp; If the 
+progress pane at the lower center of the window shows just a single line
+ of the form "XSDB Server Channel: tcfchan#1" you must repeat from step 4.</li>
+  <li>In the project hierarchy window highlight and right click on 
+ALSUeventGenerator_system and select 'Build Project'.&nbsp; View the 
+build progress in the progress pane at the lower center of the window.<br>
+  </li>
+  <li>In a terminal window cd to the ALSUeventGenerator/src directory in
+ the ALSUeventGenerator project workspace then run ''sh startVitis.sh 
+bash'.&nbsp; This starts a shell session with environment variables that
+ enable the Xilinx development tools.<br>
+  </li>
+  <li>In a terminal window cd to the ALSUeventGenerator/scripts 
+directory in the ALSUeventGenerator project workspace then run 
+'make'.&nbsp; This will leave a 'download.bit' file in the scripts 
+directory.</li>
+  <li>If a suitable application is already running on the FPGA follow 
+the steps below.&nbsp; If this is a new FPGA, or for whatever reason 
+there is 
+no suitable application running on it, use the <a href="BringingUpNewBoard.html">USB/JTAG connection</a> to download and run the application and then run the programFlash.sh script.</li>
+<li> Run the 
+programFlash.sh script with the 'B' option.&nbsp; This uses TFTP to transfer the 
+download.bit file to the alternate boot image in the flash memory and then to read back the flash 
+memory contents to confirm that the transfer and flash write 
+succeeded.&nbsp; For example:<br>
+
+&nbsp;<span style="font-weight: bold;"><span style="font-family: Courier New, Courier, monospace;">sh programFlash.sh B 131.243.93.169</span></span></li>
+<li>Connect to the FPGA console and boot the new image by providing the '-b' argument to the 'boot' command:<br>
+
+  <span style="font-weight: bold;"><span style="font-family: Courier New, Courier, monospace;">boot -b</span></span><br>
+
+Alternatively, press and hold the Display button then press the Reboot/Recovery button for a couple of seconds.<br>
+
+This directs the FPGA to boot the alternate image that was transferred to the flash memory in step 13.</li>
+<li>If the FPGA boots and starts properly go on to the next step, otherwise 
+press the Reboot/Recovery button for a couple of seconds or power cycle 
+the unit to reboot the old firmware in the base boot image.</li>
+<li>Run the 
+programFlash.sh script without the 'B' option.&nbsp; This uses TFTP to transfer the 
+download.bit file to the base boot image in the flash memory and then to read back the flash 
+memory contents to confirm that the transfer and flash write 
+succeeded.&nbsp; For example:<br>
+
+
+&nbsp;<span style="font-weight: bold;"><span style="font-family: Courier New, Courier, monospace;">sh programFlash.sh 131.243.93.169</span></span></li>
+<li>Connect to the FPGA console and issue the 'boot' command with no 
+arguments, or press the Reboot/Recovery button for a couple of seconds, 
+or power cycle the unit to reboot the new base boot image.<br>
+  <span style=" font-family: Courier New, Courier, monospace;"></span><span style=" font-weight: bold;"><span style=" font-family: Courier New, Courier, monospace;"></span></span></li>
+
+</ol>
+<p>To update the flash memory after making changes to the application software, start at step 9.<br>
+</p>
+
+</body></html>

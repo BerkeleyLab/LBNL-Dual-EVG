@@ -1,0 +1,402 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Dual Event Generator Hardware</title>
+    <meta name="generator" content="amaya 8.5, see
+      http://www.w3.org/Amaya/">
+  </head>
+  <body>
+    <h1>Hardware</h1>The dual event generator consists of an FPGA platform, two FMC
+    cards, a front panel display, and an optional PMOD card.&nbsp; Each event generator distributes RF reference and
+timing signals on an optical fiber using a protocol compatible with that
+ used by Micro-Research Finland timing equipment.&nbsp; The ALS-U
+project requires two event generators, one for each of the RF
+frequencies in use.&nbsp; The generators are locked to a common base and
+ ensure coincidence between the two frequency domains.&nbsp; The FPGA can also act as a stratum 1 NTP server.<br>
+    <p></p><br>
+<h2>Front Panel</h2>
+<img moz-do-not-send="true" src="EVGfront.png" alt="" style=" width: 1024px; height: 378px;"><br>
+
+<h3><span style="color: rgb(0, 0, 0);">Front Panel Connectors</span></h3>
+
+
+
+<p>There are several connectors on the event generator front panel.<br>
+    </p>
+
+
+
+<ol>
+<li>RJ-45 1000Base-T Ethernet.</li>
+<li>USB console serial port and JTAG interface.<span style="font-family:
+            monospace;"></span></li>
+<li>BNC connectors carrying diagnostic signals.<br>
+</li>
+<li>Up to three fiber I/O cartridges per event domain, each with 12 dual-LC50 fiber connectors.</li>
+</ol><span style="font-family:
+            monospace;"></span><span style="font-family:
+            monospace;"></span>
+<ol>
+
+</ol>
+
+
+
+
+
+
+
+<h4>“Display” Button</h4>
+
+
+
+<p>This button has multiple uses.<br>
+    </p>
+
+
+
+<ol>
+<li>To extend its lifetime the display backlight is turned off
+        after twenty minutes.&nbsp; Pressing and releasing this button
+        enables the display for another twenty minutes.</li><li>If the display is showing a warning message pressing and holding
+this button for one second will clear the warning message and restore
+the display to its current page.</li>
+  <li>Each momentary press cycles to the next display page.</li>
+<li>Holding
+this button down then pressing and holding the “Reboot/Recovery” button
+for more than one second, as described below, will cause the
+DEVG_B.bin file to be used in place of the default DEVG_A.bin file.</li>
+
+</ol>
+
+<h4>“Reboot/Recovery” Button</h4>
+
+
+
+
+<p>Pressing and holding this button for more than one second causes the FPGA to
+perform a power-on reset.&nbsp; If this switch is held down while the
+FPGA is starting up after a power cycle or reset the FPGA will enter
+“recovery” mode where the
+Ethernet MAC address and IPv4 address are set to default values
+(AA:4C:42:4E:4C:04 and 192.168.1.129/24, respectively).<br>
+</p>
+
+<h4><span style="color: rgb(0, 0, 0);"><a name="FrontPanelDisplay"></a>Front Panel Display</span></h4>&nbsp;
+
+
+
+
+
+<span style="color: rgb(0, 0, 0);">On startup the front panel display contains information as      shown in the image below.<br>
+  <br>
+</span>
+<div style="margin-left: 80px;"><img src="Display.png" alt="" style=" width: 320px; height: 240px;"></div>
+<ol>
+<li>The top few lines of the display show the status of the event
+sequence pattern generators.&nbsp; The green indicator to the right of
+the 'TRG:' text blinks when an event sequence is triggered.&nbsp; The
+ value to the right of the 'SEQ:' text shows the number (0/1)
+of the currently or previously active sequence.&nbsp; The 'HW:' line
+shows the status of the hardware trigger inputs with trigger input 1 at
+the left side of the row of indicators and trigger input 6 at the
+right.&nbsp; A green block indicates the presence of light at the
+trigger input.</li>
+<li>The fifth line of the display shows the frequencies, in MHz, of the input reference clocks.</li>
+<li>The sixth line of the display shows the word 'ALIGNED' to indicate
+that both event generators are emitting heartbeat events aligned to the
+point at which the RF references are in coincidence and shows the word
+'MISALIGNED' if RF coincidence can not be measured or the coincidence
+point has shifted.<br>
+</li>
+
+<li>The 'Markers' region at the lower left side of the display shows the status of the timing marker inputs.<br>
+      </li><li>The 'Temperature' region shows a bar indicator of the
+temperature of the FPGA and the warmest receiver and transmitter module on each of the FMC cards.<br>
+</li><li>The penultimate line of the display shows the IPv4 network address of the event generator.&nbsp; The
+ network address is normally shown as white text on a black background.&nbsp;
+ A network address shown as black text on a white background indicates
+that the unit is in “recovery” mode.<br>
+  </li><li>The bottom line of the display shows the date and time (UTC).</li></ol>
+<p>Pressing and releasing the “Display” button will cycle to the next page in the sequence.&nbsp; The page contents are:<br>
+</p>
+<ul>
+  <li>The startup display showing information as described above.<br>
+  </li>
+  <li>The event codes being emitted by event generator 1.&nbsp; Event
+codes appear on the screen as they are emitted and remain on the screen
+for about seven tenths of a second.<br>
+</li>
+  <li>The event codes being emitted by event generator 2.<br>
+  </li>
+</ul>
+<ol>
+
+</ol>
+
+
+<h4>Special displays</h4>
+
+
+
+
+<ul>
+<li>Black text on a red background – event generator is reporting a fatal
+        error condition.&nbsp;&nbsp; The only exit from this state is a reset or power cycle.<br>
+</li><li>Black text on a yellow background – event generator is reporting a warning
+        condition.&nbsp; Pressing and holding the “Display” button for one second will exit this state.</li></ul>
+<p><br>
+</p>
+<ul>
+
+</ul>
+
+
+
+
+
+
+<h2>Rear Panel</h2><img moz-do-not-send="true" src="EVGback.png" alt="" style=" width: 1024px; height: 400px;">
+
+
+
+
+
+<p>There following components are present on the event generator rear panel.<br>
+    </p>
+
+
+
+
+<ol>
+<li>Connectors for 12V power adapters.</li>
+  <li>Holder for 3A slow-blow fuse.<br>
+  </li>
+<li>On/Off switch.</li>
+<li>Power supply test points<br>
+</li>
+
+
+
+
+<li>Isolated SMA connector for antenna to the optional <a href="#GPS_PMOD">GPS receiver</a>.</li>
+
+<li>Broadcomm "Versatile Link" fiber receivers for hardware event
+triggers.&nbsp; Only the first six connectors of each group of eight
+are used.&nbsp; Event triggers are generated upon loss of light.<br>
+</li>
+
+<li>Isolated BNC inputs for timing reference signals.&nbsp; Inputs
+are LVTTL compatible, medium impedance (475Ω plus series LED).&nbsp;
+Logic 1 threshold is about 1.8V and maximum input voltage is 5.0V.<br>
+</li>
+</ol>
+<br>
+
+
+
+
+<h3><span style="color: rgb(0, 0, 0);"></span></h3>
+
+<h2><br>
+</h2>
+<h1>Hardware</h1>
+
+<p>As shown in the following figure the dual event generator is based on
+ a Marble FPGA carrier board and two EVIO FMC cards.&nbsp; An optional
+GPS receiver PMOD card can be used to provide the time reference.&nbsp;
+The system is enclosed in a 4U rack-mount chassis.<br>
+  <br>
+</p>
+
+<img moz-do-not-send="true" src="ChassisBlockDiagram.png" alt="" style=" width: 587px; height: 882px;">
+<h2><br>
+</h2>
+<h2><a name="FPGA_Card"></a>FPGA Card</h2>
+
+
+    <p>The FPGA carrier card is a 'Marble' developed by the LBNL
+      Accelerator Technology Group.&nbsp; The following block diagram
+      shows the salient features of this board.</p>
+    <img src="MarbleBlockDiagram.png" alt="" style=" width: 763px; height: 534px;">
+    <ul>
+      <li>Open Hardware (OHWR) dual-LPC-FMC carrier based on a Kintex-7 (XC7K160TFFG676-2)<br>
+</li>
+
+      <li>Power entry&nbsp; through barrel-style connector (CUI
+        PJ-102AH) or Ethernet (PoE).</li>
+      <li>1000BaseT Ethernet on 8P8C "RJ45" connector.</li>
+      <li>Eight FPGA GTX transceivers, up to 12.5 Gb/s, connected to QSFP
+        slots and FMC connectors.<br>
+</li>
+      <li>Two FMC connectors.&nbsp; LPC superset, with multiple high speed serial lanes.<br>
+</li>
+      <li>SO-DIMM SDRAM connector, unused in this application.<br>
+</li>
+      <li>Two dual-row (12 pin) 3.3V PMOD connectors.&nbsp; One of these
+ drives the display and the other is used to connect the optional <a href="#GPS_Receiver" moz-do-not-send="true">GPS receiver</a>.</li>
+      <li>16 MB SPI flash memory for FPGA and application bootstrap.<br>
+      </li>
+    </ul>
+    <p><br>
+    </p>
+    <blockquote>
+      <p> </p>
+    </blockquote>
+    <h2>FMC Cards</h2>
+    Each FMC card provides a reference clock to the FPGA gigabit
+    transceiver block and to an FPGA clock input, six hardware trigger inputs driven by fiber to copper converts on another
+board, and one optically coupled,
+    TTL level auxiliary input.&nbsp;
+    Each card also provides one non-isolated, TTL level, diagnostic
+    input and two non-isolated, LVTTL level, diagnostic
+outputs capable of driving 50Ω loads.&nbsp;&nbsp; The auxiliary input of the first card is
+    used to provide a pulse-per-second signal to the FPGA and the
+    auxiliary input of the second card is used to provide a power line
+    monitor signal to the FPGA.&nbsp;&nbsp; Up to three 12-channel
+Firefly transceivers can be installed to provide event stream
+outputs.&nbsp; The first channel of the first transceiver is
+used to carry the reference clock signal to the card.&nbsp; A 40×40
+crosspoint switch allows for flexible routing of event streams and
+reference clocks between the Firefly modules and the FMC connector.<br>
+<br>
+In addition to their use in the dual event generator the FMC cards are also used in the event fanout modules.<br>
+    <br>
+<h2><a name="GPS_Receiver"></a>GPS Receiver</h2>
+<p>A Digilent GPS receiver module can be connected to the Marble PMOD1
+(J12) connector to provide the absolute time of day and the
+pulse-per-second marker required for event generator operation.&nbsp; An
+ SMA connector must be soldered to the module and connected through the
+rear panel isolated SMA&nbsp; connector to an external antenna.<br>
+  <img moz-do-not-send="true" src="Digilent_PMODGPS.png" alt="" style=" width: 369px; height: 324px;"><br>
+</p>
+<span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><br>
+
+<h2>Front Panel Display<br>
+</h2>
+<p>The Marble PMOD2 (J13) connector connects to the front panel Display
+      and Reset/Recovery push buttons and drives a 240×320
+      display equipped with a Sitronix ST7789V controller configured for
+      4-line serial operation.&nbsp; The connector pin assignments are
+      shown in the following table.<br>
+    </p>
+
+
+
+<table style=" text-align: left; width: 600px;" cellspacing="2" cellpadding="2" border="1">
+
+
+      <tbody>
+        <tr>
+          <td style="text-align: center;"><span style="font-weight:
+              bold;">PMOD2</span><span style="font-weight: bold;"><br>
+            </span><span style="font-weight: bold;">Line</span><br>
+          </td>
+          <td style="vertical-align: middle; text-align: center;"><span style="font-weight: bold;">ST7789V</span><span style="font-weight: bold;"><br>
+            </span><span style="font-weight: bold;">Line</span><br>
+          </td>
+          <td style="vertical-align: middle; text-align: center;"><span style="font-weight: bold;">De</span><span style="font-weight: bold;">scrip</span><span style="font-weight: bold;">tion</span><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">0<br>
+          </td>
+          <td style="text-align: center;"><span style="text-decoration:overline"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mtext>CS</mtext><mo>¯</mo></mover><annotation encoding="TeX">\overline{\text{CS}}</annotation></semantics></math></span>
+          </td>
+          <td style="text-align: left;">Active-low chip select signal.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">1<br>
+          </td>
+          <td style="text-align: center;">SDA<br>
+          </td>
+          <td style="text-align: left;">Bidirectional data transfer.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">2<br>
+          </td>
+          <td style="text-align: center;">–<br>
+          </td>
+          <td style="text-align: left;">Enable display backlight
+            driver<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">3<br>
+          </td>
+          <td style="text-align: center;">SCLK<br>
+          </td>
+          <td style="text-align: left;"><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">4<br>
+          </td>
+          <td style="text-align: center;"><span style="text-decoration:overline"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mtext>RESET</mtext><mo>¯</mo></mover><annotation encoding="TeX">\overline{\text{RESET}}</annotation></semantics></math></span></td>
+          <td style=" text-align: left;">Active-low reset signal.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">5<br>
+          </td>
+          <td style="text-align: center;"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>D/</mtext><mover><mtext>C</mtext><mo>¯</mo></mover></mrow><annotation encoding="TeX">\text{D/}\overline{\text{C}}</annotation></semantics></math><br>
+          </td>
+          <td style="text-align: left;">Command(Low) or Data(High) transfer.<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">6<br>
+          </td>
+          <td style="text-align: center;">–<br>
+          </td>
+          <td style="text-align: left;">Reset/Recovery button
+            (active-low, on-board pull-up)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">7<br>
+          </td>
+          <td style="text-align: center;">–<br>
+          </td>
+          <td style="text-align: left;">Display button (active-low, on-board
+            pull-up)</td>
+        </tr>
+      </tbody>
+
+</table>
+
+<br>
+<h2>USB FTDI Serial Ports</h2>
+The four ports of the USB/Serial adapter are assigned as follows:<br>
+
+
+&nbsp;&nbsp;&nbsp; A – JTAG<br>
+
+
+&nbsp;&nbsp;&nbsp; B – RTS/DTR drive the LPC_ISPn and ISP_RSTn lines,
+respectively.&nbsp; Thus the DTR line resets the microcontroller when low ("DTR Active").<br>
+
+
+&nbsp;&nbsp;&nbsp; C – FPGA console serial port.<br>
+
+
+&nbsp;&nbsp;&nbsp; D – Microcontroller console serial port.<br>
+
+
+The console serial ports are set to 115200-8N1.&nbsp; Use a terminal
+emulator of your choice to communicate with the FPGA or microcontroller.<span style="font-family:
+            monospace;"></span><br>
+<h2></h2>
+    <p> </p>
+
+
+
+
+
+
+
+
+
+</body></html>

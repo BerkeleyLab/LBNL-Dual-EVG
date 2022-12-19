@@ -91,6 +91,11 @@ axi_lite_generic_reg
 *gpioIDX.vh
 
 ######################
+# Sphinx files
+######################
+_build/
+
+######################
 # Vivado files
 ######################
 

@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>BringingUpNewBoard</title></head><body>
+<h1>Bootstrapping A New Board</h1>
+These instructions present the procedure to download and execute FPGA 
+firmware and software using its JTAG port.&nbsp; The instructions assume
+ that a download image is ready for download as described in the <a href="HowtoUpdateFirmware.html">Updating Firmware</a> documentation and that a Vivado session with the desired project is running.<br>
+<ol>
+  <li>Connect the USB ports of the development machine and the FPGA to be programmed.</li>
+  <li>In a terminal window start the Xilinx virtual cable server:<br>
+    <span style="font-family: Courier New,Courier,monospace;">&nbsp;&nbsp;&nbsp; ftdiJTAG -c 30M -g 11</span></li>
+  <li>In the Vivado session click 'Open Hardware Manager' (or Flow→Hardware Manager menu item).</li>
+  <li>Click 'Open Target'.</li>
+  <li>Click 'Open New Target...'.</li>
+  <li>In the 'Open New Hardware Target' window that pops up, click 'Next&gt;'.</li>
+  <li>Set the menu to 'Connect to Local server', then click 
+'Next&gt;'.&nbsp; This menu item must be chosen even if the server was 
+started on a different machine.</li>
+  <li>If the desired device is not present in the 'Hardware Targets' 
+table, click the 'Add Xilinx Virtual Cable (XVC)' button and select the 
+IP address and port corresponding to the server started in step 2 
+(defaults are 127.0.0.1 and 2542, respectively).</li>
+  <li>Ensure that the desired device is highlighted in the 'Hardware Targets' table, then click 'Next&gt;'.</li>
+  <li>Click 'Finish'.</li>
+  <li>Click 'Program Device' (or Tools→Program Device menu item).</li>
+  <li>In the 'Program Device' window that pops up, clear the 'Debug 
+probes file' field then navigate the 'Bitstream file' field to the 
+scripts directory in the Vitis workspace, select the download.bit file 
+there, then click 'Program'.</li>
+  <li>Once the download is complete the application will start running.&nbsp; Use a <a href="Hardware.html#ConsoleCommands">console</a> session in another terminal window to observe its progress.<br>
+  </li>
+  <li>Use a TFTP client to transfer the download.bit file to the flash 
+memory DEVG_A.bit.&nbsp; There is a 'programFlash.sh' script in the scripts 
+directory to assist with this.<br>
+  </li>
+  <li>Set the application system parameters in flash memory as appropriate.<br>
+  </li>
+</ol>
+Steps 1 through 10 apply to initiating a ChipScope session, too.&nbsp; Perform them, then click 'Refresh Device'.<br>
+<br>
+</body></html>
