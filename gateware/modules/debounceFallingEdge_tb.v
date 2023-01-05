@@ -6,18 +6,18 @@ reg clk;
 integer cc;
 integer errors = 0;
 initial begin
-	if ($test$plusargs("vcd")) begin
-		$dumpfile("debounceFallingEdge.vcd");
-		$dumpvars(5,debounceFallingEdge_tb);
-	end
+    if ($test$plusargs("vcd")) begin
+        $dumpfile("debounceFallingEdge.vcd");
+        $dumpvars(5,debounceFallingEdge_tb);
+    end
 
-	clk = 0;
-	for (cc = 0; cc < 5000; cc = cc+1) begin
-		#10; clk = 1;
-		#11; clk = 0;
-	end
+    clk = 0;
+    for (cc = 0; cc < 5000; cc = cc+1) begin
+        #10; clk = 1;
+        #11; clk = 0;
+    end
 
-	if (errors == 0)
+    if (errors == 0)
         $display("PASS");
 end
 
@@ -65,9 +65,9 @@ always @(posedge clk) begin
     // expected result is the width of input + 2<<HIGH_COUNTER_WIDTH
     CMP_RESULTS: begin
         rightAnswer = counterInput + (1<<HIGH_COUNTER_WIDTH)-1;
-		fault = rightAnswer != counterDebouncedActiveHigh;
-		$display("%x  %x  %s", rightAnswer, counterDebouncedActiveHigh, fault?"FAULT":"    .");
-		if (fault)
+        fault = rightAnswer != counterDebouncedActiveHigh;
+        $display("%x  %x  %s", rightAnswer, counterDebouncedActiveHigh, fault?"FAULT":"    .");
+        if (fault)
             errors = errors+1;
 
         testState <= IDLE;
