@@ -44,7 +44,7 @@ ARM_TOOLCHAIN_LOCATION=/media/Xilinx/Vivado/2020.2.2/Vitis/2020.2/gnu/microblaze
 For now the following APPs are supported:
 
 * devg
-* devg-test
+* devg_test
 
 ### Deploying
 
