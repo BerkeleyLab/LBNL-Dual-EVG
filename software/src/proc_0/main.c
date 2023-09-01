@@ -86,6 +86,9 @@ main(void)
     /* Let UART settle down */
     microsecondSpin(20000);
 
+    /* Screen check */
+    startupScreen();
+
     /* Announce our presence */
     printf("\nFirmware POSIX seconds: %u\n",
                          (unsigned int)GPIO_READ(GPIO_IDX_FIRMWARE_BUILD_DATE));
