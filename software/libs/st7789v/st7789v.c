@@ -326,6 +326,17 @@ st7789vTestPattern(void)
 }
 
 /*
+ * Test splash screen at boot
+ */
+void
+startupScreen(void)
+{
+    st7789vTestPattern();
+    microsecondSpin(0.5 * 1000 * 1000);
+    st7789vFlood(0, 0, COL_COUNT, ROW_COUNT, 0);
+}
+
+/*
  * Text display
  */
 #define FONT_MAX_BPP 4
