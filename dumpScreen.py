@@ -22,7 +22,7 @@ class dumpScreen():
     re_IP_address = "^(\d{1,3}).\d{1,3}.\d{1,3}.\d{1,3}"
     re_undesired_serial_text = "[a-zA-z].*?\\r"
     dump_screen_command = 'd 1000000\r'.encode('ascii')
-    reading_timeout = 10  # seconds
+    reading_timeout = 120  # seconds
     filename = None
 
     class wrongDestination(Exception):
@@ -183,10 +183,12 @@ class dumpScreen():
             print("[!] Error - write operation error. Please retry.")
             return False
         # Reading
+        reading_start_time = time.time()
         watchdog = time.time()
         buffer = bytes()
         while True:
             if time.time() - watchdog > 5: break
+            if time.time() - reading_start_time > self.reading_timeout: break
             try:
                 data = self.readline()
             except SerialException:
