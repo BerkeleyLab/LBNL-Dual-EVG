@@ -6,12 +6,13 @@ Flake8 --ignore=E266,E501,E701,W503,W504,W605
 import os
 import re
 import time
-import random
+import socket
 import argparse
 import numpy as np
 from PIL import Image
 from datetime import datetime
 import serial
+from serial.serialutil import SerialException
 from serial.tools.list_ports_posix import comports
 
 
@@ -44,7 +45,7 @@ class dumpScreen():
             print(self.error)
             super().__init__(*args, **kwargs)
 
-    def __init__(self, destination: str = None, filename: str = '', verbose: bool = False) -> None:
+    def __init__(self, destination: str = None, port: int = 50004, filename: str = '', verbose: bool = False) -> None:
         """
         Args:
             destination (str, optional): _description_. Defaults to /dev/ttyUSB2.
@@ -60,6 +61,7 @@ class dumpScreen():
         if filename is not None and len(filename) > 0:
             self.filename = filename
         self.verbose = verbose
+        self.port = port
         self.screenRes = [0, 0]
         self.destinationAnalysis()
 
@@ -72,17 +74,17 @@ class dumpScreen():
             if self.verbose: print("[INFO] destination detected as ttyUSB type.")
             self.destination = serial_match[0]
             if not self.serialInit():
-                raise self.criticalError(" unable to initialize serial communication!.")
+                raise self.criticalError("unable to initialize serial communication!.")
         elif ip_match:
             if self.verbose: print("[INFO] destination detected as IP address type.")
             self.destination = ip_match[0]
             if not self.socketInit():
-                raise self.criticalError(" unable to initialize socket communication!.")
+                raise self.criticalError("unable to initialize socket communication!.")
         else:
-            raise self.criticalError(" destination of communication not corrected!")
+            raise self.wrongDestination()
 
     def serialInit(self):
-        """Serial communication initialization
+        """ Serial communication initialization
         """
         try:
             self.ser = serial.Serial(port=self.destination,
@@ -107,8 +109,30 @@ class dumpScreen():
             print("[!] Error - something happened during the access to serial resource. ",
                   "Further details:\n", e)
 
+    def socket_readline(self):
+        try:
+            return self.socket.recv(2048)
+        except Exception:
+            return ''.encode()
+
     def socketInit(self):
-        pass
+        """ Socket communication initialization
+        """
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.socket.settimeout(5)
+            self.readline = self.socket_readline
+            self.readable = lambda: os.system("ping -c 1 " + self.destination) == 0
+            self.in_buffer_len = lambda: 0  # fake method
+            self.writable = self.readable
+            self.write = lambda text: self.socket.sendto(text, (self.destination, self.port))
+            self.flush_channel = lambda: self.socket.recv(2048)
+            print(f"[Success] Connection established with {self.destination}:{self.port}")
+            return True
+        except Exception as e:
+            print("[!] Error - something happened during the access to socket resource. ",
+                  "Further details:\n", e)
 
     def checkInit(self):
         """ Check initialization (serial or socket) via function pointer being not None
@@ -163,7 +187,10 @@ class dumpScreen():
         buffer = bytes()
         while True:
             if time.time() - watchdog > 5: break
-            data = self.readline()
+            try:
+                data = self.readline()
+            except SerialException:
+                raise self.criticalError('serial connection not working. The resource may be occupated by another program or process.')
             if data:
                 watchdog = time.time()
                 buffer += data
@@ -186,15 +213,17 @@ class dumpScreen():
                 pixel_buffer += [int(res) for res in re.findall('\d{1,3}', line)]
             elif self.verbose:
                 print('\t*]\t', line)
-        self.buffer = pixel_buffer
-        pixel_buffer = np.reshape(pixel_buffer, (self.screenRes[1], self.screenRes[0], 3)).astype(np.uint8)
+        try:
+            pixel_buffer = np.reshape(pixel_buffer, (self.screenRes[1], self.screenRes[0], 3)).astype(np.uint8)
+        except Exception:
+            raise self.criticalError('number of received pixel less than display resolution!')
         img = Image.fromarray(pixel_buffer)
         filename = self.generateFileName()
         try:
             img.save(filename)
         except ValueError:
-            print("[!] Error - privided filename has wrong image extension. Using random filename.")
-            filename = f"screen_dump_{''.join([chr(random.randint(97, 122)) for _ in range(10)])}.bmp"
+            print("[!] Error - privided filename has wrong image extension. Using default filename.")
+            filename = None; filename = self.generateFileName()
             img.save(filename)
         print(f"[Success] Image saved [{filename}].")
         return True
@@ -239,6 +268,7 @@ def getTTYUSBdetails():
 
 
 if __name__ == '__main__':
+    # d = dumpScreen('192.168.1.129', 50004, verbose=True)
     parser = argparse.ArgumentParser(description='Marble screen dump script.')
     parser.add_argument('--board-info', '-i', '-b', dest='info',
                         help='Command to show all information about serial devices',
@@ -252,12 +282,11 @@ if __name__ == '__main__':
     parser.add_argument('--image-filename', '-f', dest='filename',
                         help='Specify the image filename. I.e. EVFR_main_screen.bmp',
                         type=str, default='')
-    # TODO is necessary the port?
-    # parser.add_argument('-p', '--port', help='port', dest='port', type=int,
-    # default=50006)
+    parser.add_argument('--port', '-p', help='socket port', dest='port', type=int,
+                        default=50004)
     args = parser.parse_args()
     if args.info:
         showSerialInfo()
     if len(args.device) > 0:
-        dumper = dumpScreen(args.device, args.filename, args.verbose)
+        dumper = dumpScreen(args.device, args.port, args.filename, args.verbose)
         dumper.getScreen()
