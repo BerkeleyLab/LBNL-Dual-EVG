@@ -70,6 +70,7 @@ void st7789vDrawRectangle(int xs, int ys, int width, int height, const uint16_t 
 
 int st7789vColorAtPixel(int x, int y);
 void st7789vTestPattern(void);
+void startupScreen(void);
 
 void st7789vSetCharacterRGB(int foreground, int background);
 void st7789vDrawChar(int x, int y, int c);
