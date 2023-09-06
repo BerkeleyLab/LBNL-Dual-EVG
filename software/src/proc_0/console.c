@@ -222,6 +222,14 @@ cmdDEBUG(int argc, char **argv)
 }
 
 static int
+cmdDumpScreen(int argc, char **argv)
+{
+    printf("dumpscreen\n");
+    st7789vDumpScreen();
+    return 0;
+}
+
+static int
 cmdFMON(int argc, char **argv)
 {
     int i;
@@ -511,17 +519,17 @@ commandHandler(int argc, char **argv)
         const char *description;
     };
     static struct commandInfo commandTable[] = {
-      { "boot",       cmdBOOT,           "Reboot FPGA"                        },
-      { "debug",      cmdDEBUG,          "Set debug flags"                    },
-      { "dumpscreen", st7789vDumpScreen, "Perform screen dump via console"    },
-      { "eyescan",    eyescanCommand,    "Perform transceiver eye scan"       },
-      { "fmon",       cmdFMON,           "Show clock frequencies"             },
-      { "log",        cmdLOG,            "Replay startup console output"      },
-      { "mac",        cmdMAC,            "Set Ethernet MAC address"           },
-      { "net",        cmdNET,            "Set network parameters"             },
-      { "pll",        cmdPLL,            "Set PLL phase alignment targets"    },
-      { "reg",        cmdREG,            "Show GPIO register(s)"              },
-      { "tod",        cmdNTP,            "Set time-of-day (NTP) host address" },
+      { "boot",       cmdBOOT,        "Reboot FPGA"                        },
+      { "debug",      cmdDEBUG,       "Set debug flags"                    },
+      { "dumpscreen", cmdDumpScreen,  "Perform screen dump via console"    },
+      { "eyescan",    eyescanCommand, "Perform transceiver eye scan"       },
+      { "fmon",       cmdFMON,        "Show clock frequencies"             },
+      { "log",        cmdLOG,         "Replay startup console output"      },
+      { "mac",        cmdMAC,         "Set Ethernet MAC address"           },
+      { "net",        cmdNET,         "Set network parameters"             },
+      { "pll",        cmdPLL,         "Set PLL phase alignment targets"    },
+      { "reg",        cmdREG,         "Show GPIO register(s)"              },
+      { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
     };
 
     if (argc <= 0)
