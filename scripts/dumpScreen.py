@@ -21,7 +21,7 @@ class dumpScreen():
     re_ttyUSB_string = "^(\/dev\/ttyUSB)\d{1,2}"
     re_IP_address = "^(\d{1,3}).\d{1,3}.\d{1,3}.\d{1,3}"
     re_undesired_serial_text = "[a-zA-z].*?\\r"
-    dump_screen_command = 'd 1000000\r'.encode('ascii')
+    dump_screen_command = 'dumpscreen\r\n'.encode('ascii')
     reading_timeout = 120  # seconds
     filename = None
 
@@ -174,7 +174,7 @@ class dumpScreen():
     def getScreen(self):
         """ Get Marble screen using serial or socket and save it on disk.
         """
-        command_feedback = 'Debug flags: 0x1000000\r\n'
+        command_feedback = self.dump_screen_command.decode('ascii')
         command_start_pattern = 'P3\r\n'
         screen_info = None
         pixel_buffer = []
