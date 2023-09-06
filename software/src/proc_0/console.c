@@ -511,16 +511,17 @@ commandHandler(int argc, char **argv)
         const char *description;
     };
     static struct commandInfo commandTable[] = {
-      { "boot",    cmdBOOT,        "Reboot FPGA"                        },
-      { "debug",   cmdDEBUG,       "Set debug flags"                    },
-      { "eyescan", eyescanCommand, "Perform transceiver eye scan"       },
-      { "fmon",    cmdFMON,        "Show clock frequencies"             },
-      { "log",     cmdLOG,         "Replay startup console output"      },
-      { "mac",     cmdMAC,         "Set Ethernet MAC address"           },
-      { "net",     cmdNET,         "Set network parameters"             },
-      { "pll",     cmdPLL,         "Set PLL phase alignment targets"    },
-      { "reg",     cmdREG,         "Show GPIO register(s)"              },
-      { "tod",     cmdNTP,         "Set time-of-day (NTP) host address" },
+      { "boot",       cmdBOOT,           "Reboot FPGA"                        },
+      { "debug",      cmdDEBUG,          "Set debug flags"                    },
+      { "dumpscreen", st7789vDumpScreen, "Perform screen dump via console"    },
+      { "eyescan",    eyescanCommand,    "Perform transceiver eye scan"       },
+      { "fmon",       cmdFMON,           "Show clock frequencies"             },
+      { "log",        cmdLOG,            "Replay startup console output"      },
+      { "mac",        cmdMAC,            "Set Ethernet MAC address"           },
+      { "net",        cmdNET,            "Set network parameters"             },
+      { "pll",        cmdPLL,            "Set PLL phase alignment targets"    },
+      { "reg",        cmdREG,            "Show GPIO register(s)"              },
+      { "tod",        cmdNTP,            "Set time-of-day (NTP) host address" },
     };
 
     if (argc <= 0)
