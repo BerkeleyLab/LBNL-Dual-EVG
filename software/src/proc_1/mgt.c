@@ -123,7 +123,7 @@ mgtTxReset(int mgtBitmap)
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
                         warn("MGT CPLL lock fail - EVG%d Lane:%d ResetCmd:%x [reg %X - %X]",
-                             evg, lane, mgtBitmap, reg1Value, reg2Value);
+                             evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }
                     break;
@@ -152,7 +152,7 @@ mgtTxReset(int mgtBitmap)
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
                         warn("MGT Tx reset fail - EVG%d Lane:%d ResetCmd:%x [reg %X - %X]",
-                             evg, lane, mgtBitmap, reg1Value, reg2Value);
+                             evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }
                     break;
