@@ -53,6 +53,7 @@
 #define CSR_R_CPLL_LOCKED       0x00400000
 
 #define REG(base,chan)  ((base) + (GPIO_IDX_PER_MGTWRAPPER * (chan)))
+#define MGT_RESET_WAITING_TIME  100000 // us
 
 /*
  * Receiver alignment/loopback
@@ -118,6 +119,7 @@ mgtTxReset(int mgtBitmap)
 
             while (!locked) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > 100000) {
+                if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
                         warn("MGT CPLL lock fail (%d) %x %X %X", lane, mgtBitmap,
                                 GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane)),
@@ -143,6 +145,7 @@ mgtTxReset(int mgtBitmap)
 
             while (!txResetDone) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > 100000) {
+                if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
                         warn("MGT Tx reset fail (%d) %x %X %X", lane, mgtBitmap,
                                 GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane)),
