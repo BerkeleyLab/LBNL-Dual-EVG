@@ -119,6 +119,7 @@ mgtTxReset(int mgtBitmap)
             locked = GPIO_READ(csrIdx) & CSR_R_CPLL_LOCKED;
             reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
             reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
+
             while (!locked) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
