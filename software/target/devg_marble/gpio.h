@@ -80,6 +80,7 @@
 #define GPIO_IDX_MMC_MAILBOX             34 // Communicate with MMC
 #define GPIO_IDX_EVG_1_LOG_CSR           35 // EVG 1 event logger
 #define GPIO_IDX_EVG_2_LOG_CSR           36 // EVG 2 event logger
+#define GPIO_IDX_GITHASH                 37 // Git 32-bit hash
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access

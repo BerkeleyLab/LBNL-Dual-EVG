@@ -89,7 +89,6 @@ if ((CFG_EVG1_CLK_PER_HEARTBEAT % CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT)!=0)
     CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT_BAD();
 
 ///////////////////////////////////////////////////////////////////////////////
-`include "firmwareBuildDate.v"
 assign VCXO_EN = 0;
 assign PHY_RSTN = 1;
 
@@ -119,7 +118,11 @@ for (i = 0 ; i < GPIO_IDX_COUNT ; i = i + 1) begin : gpio_flatten
     assign GPIO_IN_FLATTENED[ (i*32)+31 : (i*32)+0 ] = GPIO_IN[i];
 end
 endgenerate
+
+`include "firmwareBuildDate.v"
 assign GPIO_IN[GPIO_IDX_FIRMWARE_BUILD_DATE] = FIRMWARE_BUILD_DATE;
+`include "gitHash.vh"
+assign GPIO_IN[GPIO_IDX_GITHASH] = GIT_REV_32BIT;
 
 //////////////////////////////////////////////////////////////////////////////
 // Front panel controls
