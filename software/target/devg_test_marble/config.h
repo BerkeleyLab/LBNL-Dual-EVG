@@ -9,7 +9,7 @@
 #define CFG_EVIO_FMC_COUNT                  2
 #define CFG_EVIO_DIAG_OUT_COUNT             2
 #define CFG_EVIO_FIREFLY_COUNT              6
-#define CFG_FAN_COUNT                       2
+#define CFG_FAN_COUNT                       4
 #define CFG_SEQUENCE_RAM_CAPACITY           1024
 //#define CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT 46208 /* Clock tree (N / E) */
 #define CFG_EVG1_CLK_PER_RF_COINCIDENCE     608
