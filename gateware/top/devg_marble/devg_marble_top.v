@@ -563,7 +563,8 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FAN_TACHOMETERS]),
     .GPIO_OUT(GPIO_OUT),
     .value(GPIO_IN[GPIO_IDX_FAN_TACHOMETERS]),
-    .tachs_a({FMC1_FAN2_TACH, FMC1_FAN1_TACH}));
+    .tachs_a({FMC2_FAN2_TACH, FMC2_FAN1_TACH,
+                FMC1_FAN2_TACH, FMC1_FAN1_TACH}));
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O

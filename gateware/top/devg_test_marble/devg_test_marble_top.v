@@ -587,8 +587,10 @@ freq_multi_count #(
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure fan speeds
-wire DUMMY1_FAN1_TACH = 1'b0;
-wire DUMMY1_FAN2_TACH = 1'b0;
+wire DUMMY_FMC2_FAN2_TACH = 1'b0;
+wire DUMMY_FMC2_FAN1_TACH = 1'b0;
+wire DUMMY_FMC1_FAN2_TACH = 1'b0;
+wire DUMMY_FMC1_FAN1_TACH = 1'b0;
 fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
           .FAN_COUNT(CFG_FAN_COUNT))
   fanTachs (
@@ -596,7 +598,8 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FAN_TACHOMETERS]),
     .GPIO_OUT(GPIO_OUT),
     .value(GPIO_IN[GPIO_IDX_FAN_TACHOMETERS]),
-    .tachs_a({DUMMY1_FAN2_TACH, DUMMY1_FAN1_TACH}));
+    .tachs_a({DUMMY_FMC2_FAN2_TACH, DUMMY_FMC2_FAN1_TACH,
+                DUMMY_FMC1_FAN2_TACH, DUMMY_FMC1_FAN1_TACH}));
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
