@@ -16,6 +16,11 @@
 #define MAX_EVENT_CODE      0x7E
 #define EVCODES_PER_LINE    10
 #define CHARS_PER_EVCODE    3
+#define EVCODE_HB           122
+#define EVCODE_C0(x)        ((int)((x%10)+48))
+#define EVCODE_C1(x)        ((int)((x/10)%10+48))
+#define EVCODE_C2(x)        ((int)((x/100)%100+48))
+
 
 #define CSR_R_EVCODE_MASK   0xFF
 #define CSR_R_FIFO_EMPTY    0x100
@@ -126,6 +131,10 @@ drawEventLog(int evgIdx, int redrawAll)
             }
             st7789vDrawChar(xBase, evp->yBase, evp->c0);
         }
+        /* Hearbeat icon flashing */
+        if (evCode == EVCODE_HB) {
+            drawHeartbeatIndicator(evgIdx, 1);
+        }
         /* Link on to tail */
         evp->forw = NULL;
         if (displayHead == NULL) {
@@ -143,6 +152,11 @@ drawEventLog(int evgIdx, int redrawAll)
     while (displayHead && ((int32_t)(now-displayHead->whenOn) > DISPLAY_USEC)) {
         st7789vFlood(displayHead->xBase, displayHead->yBase,
                      displayHead->floodWidth, st7789vCharHeight, ST7789V_BLACK);
+        if(displayHead->c2 == EVCODE_C2(EVCODE_HB) &&
+           displayHead->c1 == EVCODE_C1(EVCODE_HB) &&
+           displayHead->c0 == EVCODE_C0(EVCODE_HB)) {
+            drawHeartbeatIndicator(evgIdx, 0);
+           }
         displayHead->whenOn = 0;
         displayHead = displayHead->forw;
         if (displayHead) {
