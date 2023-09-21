@@ -52,5 +52,6 @@ void displayShowNetworkAddress(void);
 void displayShowFatal(const char *msg);
 void displayShowWarning(const char *msg);
 void displayShowStartup(const char *msg);
+void drawHeartbeatIndicator(int evgIdx, int hb);
 
 #endif  /* _DISPLAY_H_ */
