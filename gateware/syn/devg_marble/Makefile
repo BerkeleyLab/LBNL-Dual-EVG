@@ -169,7 +169,7 @@ system_top.xdc: $(SYSTEM_TOP_PINS_XDC) $(IP_CORES_XDCS) $(SYSTEM_TOP_TIM_XDC)
 %firmwareBuildDate.v: set_firmware_build_date.tcl
 	$(VIVADO_CMD) -source $< -tclargs $@
 
-$(TOP_LVL_DIR)/gitHash.vh:
+%gitHash.vh: gitHashVerilog.sh
 	sh $(GW_SCRIPTS_DIR)/gitHashVerilog.sh > $@
 
 %gpioIDX.vh: $(SW_TGT_DIR)/$(FPGA_APPLICATION)_$(HARDWARE)/config.h $(SW_TGT_DIR)/$(FPGA_APPLICATION)_$(HARDWARE)/gpio.h
