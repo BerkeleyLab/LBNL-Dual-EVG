@@ -88,6 +88,7 @@ axi_lite_generic_reg
 # Script-generated
 *softwareBuildDate.h
 *firmwareBuildDate.v
+*gitHash.vh
 *gpioIDX.vh
 
 ######################

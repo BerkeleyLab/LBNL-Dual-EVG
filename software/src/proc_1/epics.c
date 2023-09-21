@@ -165,6 +165,10 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
                 replyp->args[0] = SOFTWARE_BUILD_DATE;
                 break;
 
+            case EVG_PROTOCOL_CMD_LONGIN_IDX_GIT_HASH_ID:
+                replyp->args[0] = GPIO_READ(GPIO_IDX_GITHASH);
+                break;
+
             default: return -1;
             }
             break;

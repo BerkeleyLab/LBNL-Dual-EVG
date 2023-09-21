@@ -90,7 +90,8 @@ main(void)
     startupScreen();
 
     /* Announce our presence */
-    printf("\nFirmware POSIX seconds: %u\n",
+    printf("\nGit ID (32-bit): 0x%08x\n", GPIO_READ(GPIO_IDX_GITHASH));
+    printf("Firmware POSIX seconds: %u\n",
                          (unsigned int)GPIO_READ(GPIO_IDX_FIRMWARE_BUILD_DATE));
     printf("Software POSIX seconds: %u\n", SOFTWARE_BUILD_DATE);
 
