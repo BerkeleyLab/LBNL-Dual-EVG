@@ -61,15 +61,15 @@ module devg_test_marble_top #(
     input  PMOD1_6,
     input  PMOD1_7,
 
-    // Display
+    // LED board
     output PMOD2_0,
-    inout  PMOD2_1,
+    output PMOD2_1,
     output PMOD2_2,
     output PMOD2_3,
     output PMOD2_4,
     output PMOD2_5,
-    input  PMOD2_6,
-    input  PMOD2_7,
+    output PMOD2_6,
+    output PMOD2_7,
 
     output TWI_SCL,
     inout  TWI_SDA,
@@ -139,29 +139,48 @@ assign GPIO_IN[GPIO_IDX_USER_GPIO_CSR] = {
         28'b0, gpsPPSvalid, fmcPPSvalid };
 
 /////////////////////////////////////////////////////////////////////////////
-// Display
-wire DISPLAY_SPI_SDA_O, DISPLAY_SPI_SDA_T, DISPLAY_SPI_SDA_I;
-IOBUF DISPLAY_MOSI_Buf(.IO(PMOD2_1),
-                       .I(DISPLAY_SPI_SDA_O),
-                       .T(DISPLAY_SPI_SDA_T),
-                       .O(DISPLAY_SPI_SDA_I));
-st7789v #(.CLK_RATE(SYSCLK_FREQUENCY),
-          .COMMAND_QUEUE_ADDRESS_WIDTH(11),
-          .DEBUG("false"))
-  st7789v (.clk(sysClk),
-           .csrStrobe(GPIO_STROBES[GPIO_IDX_DISPLAY_CSR]),
-           .dataStrobe(GPIO_STROBES[GPIO_IDX_DISPLAY_DATA]),
-           .gpioOut(GPIO_OUT),
-           .status(GPIO_IN[GPIO_IDX_DISPLAY_CSR]),
-           .readData(GPIO_IN[GPIO_IDX_DISPLAY_DATA]),
-           .DISPLAY_BACKLIGHT_ENABLE(PMOD2_2),
-           .DISPLAY_RESET_N(PMOD2_4),
-           .DISPLAY_CMD_N(PMOD2_5),
-           .DISPLAY_CLK(PMOD2_3),
-           .DISPLAY_CS_N(PMOD2_0),
-           .DISPLAY_SDA_O(DISPLAY_SPI_SDA_O),
-           .DISPLAY_SDA_T(DISPLAY_SPI_SDA_T),
-           .DISPLAY_SDA_I(DISPLAY_SPI_SDA_I));
+// LEDs
+localparam HB_STRETCH_MS = 200;
+localparam HB_COUNTER_RELOAD = $rtoi(((TXCLK_NOMINAL_FREQUENCY/1.0e3)*HB_STRETCH_MS)) - 2;
+localparam HB_COUNTER_WIDTH = $clog2(HB_COUNTER_RELOAD+1) + 1;
+
+reg [HB_COUNTER_WIDTH-1:0] evg1HeartbeatStretchCounter = 0;
+wire evg1HeartbeatStretch = evg1HeartbeatStretchCounter[HB_COUNTER_WIDTH-1];
+always @(posedge evg1TxClk) begin
+    if (evg1HeartbeatRequest) begin
+        evg1HeartbeatStretchCounter <= ~0;
+    end
+    else if (evg1HeartbeatStretch) begin
+        evg1HeartbeatStretchCounter <= evg1HeartbeatStretchCounter -1;
+    end
+end
+
+reg [HB_COUNTER_WIDTH-1:0] evg2HeartbeatStretchCounter = 0;
+wire evg2HeartbeatStretch = evg2HeartbeatStretchCounter[HB_COUNTER_WIDTH-1];
+always @(posedge evg2TxClk) begin
+    if (evg2HeartbeatRequest) begin
+        evg2HeartbeatStretchCounter <= ~0;
+    end
+    else if (evg2HeartbeatStretch) begin
+        evg2HeartbeatStretchCounter <= evg2HeartbeatStretchCounter -1;
+    end
+end
+
+reg sysPPSToggle = 0;
+always @(posedge sysClk) begin
+    if (sysPPSmarker) begin
+        sysPPSToggle <= ~sysPPSToggle;
+    end
+end
+
+assign PMOD2_0 = evg1HeartbeatStretch;
+assign PMOD2_1 = evg2HeartbeatStretch;
+assign PMOD2_2 = sysPPSToggle;
+assign PMOD2_3 = 1'b0;
+assign PMOD2_4 = 1'b0;
+assign PMOD2_5 = 1'b0;
+assign PMOD2_6 = 1'b0;
+assign PMOD2_7 = 1'b0;
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
