@@ -51,11 +51,11 @@ module devg_test_marble_top #(
     input  FPGA_MOSI,
     output FPGA_MISO,
 
-    // Optional GPS receiver
-    input  PMOD1_0, // 3D-Fix (unused)
-    input  PMOD1_1, // RxData (unused)
-    input  PMOD1_2, // TxData
-    input  PMOD1_3, // PPS
+    // BNC board
+    input  PMOD1_0,
+    input  PMOD1_1,
+    input  PMOD1_2,
+    input  PMOD1_3,
     input  PMOD1_4,
     input  PMOD1_5,
     input  PMOD1_6,
@@ -303,7 +303,7 @@ ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) fmcPPScheck (
     .pps_a(fmcPPS_a),
     .ppsValid(fmcPPSvalid));
 
-wire gpsPPS_a = PMOD1_3;
+wire gpsPPS_a = 1'b0;
 wire gpsPPSvalid;
 ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) gpsPPScheck (
     .clk(sysClk),
@@ -728,7 +728,7 @@ bd bd_i (
     .gps_uart_dcdn(1'b0),
     .gps_uart_dsrn(1'b0),
     .gps_uart_ri(1'b0),
-    .gps_uart_rxd(PMOD1_2),
+    .gps_uart_rxd(1'b0),
 
     // Yes, these assignments look reversed.  See comment on port declarations.
     .console_rxd(FPGA_TxD),
