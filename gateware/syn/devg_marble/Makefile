@@ -223,6 +223,7 @@ CLEAN += *.prm
 CLEAN += system_top.xdc
 CLEAN += $(TOP_LVL_DIR)/firmwareBuildDate.v
 CLEAN += $(TOP_LVL_DIR)/gpioIDX.vh
+CLEAN += $(TOP_LVL_DIR)/gitHash.vh
 CLEAN += $(IP_CORES_CUSTOM)
 CLEAN += $(VFLAGS_COMMAND_FILE)
 # Not adding it to VFLAGS_COMMAND_FILE because iverilog gives an error:
