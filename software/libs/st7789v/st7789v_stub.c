@@ -121,6 +121,10 @@ void
 st7789vDumpScreen(void)
 {}
 
+void
+startupScreen(void)
+{}
+
 #ifdef ST7789_GRAB_SCREEN
 #include "ffs.h"
 static int
