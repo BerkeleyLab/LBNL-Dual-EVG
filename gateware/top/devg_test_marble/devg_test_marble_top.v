@@ -68,6 +68,8 @@ module devg_test_marble_top #(
     output PMOD2_3,
     output PMOD2_4,
     output PMOD2_5,
+
+    // Buttons
     output PMOD2_6,
     output PMOD2_7,
 
@@ -137,50 +139,6 @@ end
 assign GPIO_IN[GPIO_IDX_USER_GPIO_CSR] = {
         Reset_RecoveryModeSwitch, DisplayModeSwitch,
         28'b0, gpsPPSvalid, fmcPPSvalid };
-
-/////////////////////////////////////////////////////////////////////////////
-// LEDs
-localparam HB_STRETCH_MS = 200;
-localparam HB_COUNTER_RELOAD = $rtoi(((TXCLK_NOMINAL_FREQUENCY/1.0e3)*HB_STRETCH_MS)) - 2;
-localparam HB_COUNTER_WIDTH = $clog2(HB_COUNTER_RELOAD+1) + 1;
-
-reg [HB_COUNTER_WIDTH-1:0] evg1HeartbeatStretchCounter = 0;
-wire evg1HeartbeatStretch = evg1HeartbeatStretchCounter[HB_COUNTER_WIDTH-1];
-always @(posedge evg1TxClk) begin
-    if (evg1HeartbeatRequest) begin
-        evg1HeartbeatStretchCounter <= ~0;
-    end
-    else if (evg1HeartbeatStretch) begin
-        evg1HeartbeatStretchCounter <= evg1HeartbeatStretchCounter -1;
-    end
-end
-
-reg [HB_COUNTER_WIDTH-1:0] evg2HeartbeatStretchCounter = 0;
-wire evg2HeartbeatStretch = evg2HeartbeatStretchCounter[HB_COUNTER_WIDTH-1];
-always @(posedge evg2TxClk) begin
-    if (evg2HeartbeatRequest) begin
-        evg2HeartbeatStretchCounter <= ~0;
-    end
-    else if (evg2HeartbeatStretch) begin
-        evg2HeartbeatStretchCounter <= evg2HeartbeatStretchCounter -1;
-    end
-end
-
-reg sysPPSToggle = 0;
-always @(posedge sysClk) begin
-    if (sysPPSmarker) begin
-        sysPPSToggle <= ~sysPPSToggle;
-    end
-end
-
-assign PMOD2_0 = evg1HeartbeatStretch;
-assign PMOD2_1 = evg2HeartbeatStretch;
-assign PMOD2_2 = sysPPSToggle;
-assign PMOD2_3 = 1'b0;
-assign PMOD2_4 = 1'b0;
-assign PMOD2_5 = 1'b0;
-assign PMOD2_6 = 1'b0;
-assign PMOD2_7 = 1'b0;
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -311,6 +269,59 @@ clkIntervalCounters #(.CLK_RATE(SYSCLK_FREQUENCY))
     .microsecondsSinceBoot(GPIO_IN[GPIO_IDX_MICROSECONDS_SINCE_BOOT]),
     .secondsSinceBoot(GPIO_IN[GPIO_IDX_SECONDS_SINCE_BOOT]),
     .PPS(sysPPSmarker));
+
+/////////////////////////////////////////////////////////////////////////////
+// LEDs
+wire evg1HeartbeatStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
+    .STRETCH_MS(100),
+    .RETRIGGERABLE("true"))
+  evg1HeartbeatPulseStretcher (
+    .clk(evg1TxClk),
+    .pulse(evg1HeartbeatRequest),
+    .pulseStretch(evg1HeartbeatStretch)
+);
+
+wire evg2HeartbeatStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
+    .STRETCH_MS(100),
+    .RETRIGGERABLE("true"))
+  evg2HeartbeatPulseStretcher (
+    .clk(evg2TxClk),
+    .pulse(evg2HeartbeatRequest),
+    .pulseStretch(evg2HeartbeatStretch)
+);
+
+wire ppsStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
+    .STRETCH_MS(500),
+    .RETRIGGERABLE("false"))
+  ppsPulseStretcher (
+    .clk(sysClk),
+    .pulse(sysPPSmarker),
+    .pulseStretch(ppsStretch)
+);
+
+// LEDs
+assign PMOD2_0 = evg1HeartbeatStretch;
+assign PMOD2_1 = evg2HeartbeatStretch;
+assign PMOD2_2 = ppsStretch;
+assign PMOD2_3 = ppsToggle;
+
+// Unused
+assign PMOD2_4 = 1'b0;
+assign PMOD2_5 = 1'b0;
+
+// Buttons
+assign PMOD2_6 = 1'b1;
+assign PMOD2_7 = 1'b1;
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Validate PPS signal sources
