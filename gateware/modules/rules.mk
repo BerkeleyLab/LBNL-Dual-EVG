@@ -1,7 +1,7 @@
 VFLAGS_DEP += -I. -y.
 VFLAGS += -I. -y.
 
-TEST_BENCH = debounceFallingEdge_tb
+TEST_BENCH = debounceFallingEdge_tb clkIntervalCounters_tb
 
 TGT_ := $(TEST_BENCH)
 NO_CHECK =
