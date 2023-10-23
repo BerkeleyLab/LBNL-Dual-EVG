@@ -270,58 +270,6 @@ clkIntervalCounters #(.CLK_RATE(SYSCLK_FREQUENCY))
     .secondsSinceBoot(GPIO_IN[GPIO_IDX_SECONDS_SINCE_BOOT]),
     .PPS(sysPPSmarker));
 
-/////////////////////////////////////////////////////////////////////////////
-// LEDs
-wire evg1HeartbeatStretch;
-
-pulseStretcher #(
-    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
-    .STRETCH_MS(100),
-    .RETRIGGERABLE("true"))
-  evg1HeartbeatPulseStretcher (
-    .clk(evg1TxClk),
-    .pulse(evg1HeartbeatRequest),
-    .pulseStretch(evg1HeartbeatStretch)
-);
-
-wire evg2HeartbeatStretch;
-
-pulseStretcher #(
-    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
-    .STRETCH_MS(100),
-    .RETRIGGERABLE("true"))
-  evg2HeartbeatPulseStretcher (
-    .clk(evg2TxClk),
-    .pulse(evg2HeartbeatRequest),
-    .pulseStretch(evg2HeartbeatStretch)
-);
-
-wire ppsStretch;
-
-pulseStretcher #(
-    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
-    .STRETCH_MS(500),
-    .RETRIGGERABLE("false"))
-  ppsPulseStretcher (
-    .clk(sysClk),
-    .pulse(sysPPSmarker),
-    .pulseStretch(ppsStretch)
-);
-
-// LEDs
-assign PMOD2_0 = evg1HeartbeatStretch;
-assign PMOD2_1 = evg2HeartbeatStretch;
-assign PMOD2_2 = ppsStretch;
-assign PMOD2_3 = ppsToggle;
-
-// Unused
-assign PMOD2_4 = 1'b0;
-assign PMOD2_5 = 1'b0;
-
-// Buttons
-assign PMOD2_6 = 1'b1;
-assign PMOD2_7 = 1'b1;
-
 //////////////////////////////////////////////////////////////////////////////
 // Validate PPS signal sources
 wire DUMMY1_auxInput = 1'b1;
@@ -435,7 +383,7 @@ assign evg1RxClksIn = {4{evg1RxClk}};
 assign evg1TxClksIn = {4{evg1TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg1HwTrigger;
-wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg1DiagnosticIn = 0;
+wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg1DiagnosticIn;
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -548,7 +496,7 @@ assign evg2RxClksIn = {4{evg2RxClk}};
 assign evg2TxClksIn = {4{evg2TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg2HwTrigger;
-wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg2DiagnosticIn = 0;
+wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg2DiagnosticIn;
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -658,16 +606,84 @@ assign bncDirToBuff[3] = 1'b0; // output
 // EVG 1
 assign evg1HwTrigger = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
                         bncDataFromBuff[0]};
+assign evg1DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
+                        bncDataFromBuff[0]};
 assign bncDataToBuff[1] = evg1DiagnosticOut;
 
 // EVG 2
 assign evg2HwTrigger[0] = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
+                        bncDataFromBuff[2]};
+assign evg2DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
                         bncDataFromBuff[2]};
 assign bncDataToBuff[3] = evg2DiagnosticOut;
 
 // Unused as channels 0 and 2 are inputs
 assign bncDataToBuff[0] = 1'b0;
 assign bncDataToBuff[2] = 1'b0;
+
+/////////////////////////////////////////////////////////////////////////////
+// LEDs
+wire evg1HeartbeatStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
+    .STRETCH_MS(100),
+    .RETRIGGERABLE("true"))
+  evg1HeartbeatPulseStretcher (
+    .clk(evg1TxClk),
+    .pulse(evg1HeartbeatRequest),
+    .pulseStretch(evg1HeartbeatStretch)
+);
+
+wire evg2HeartbeatStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
+    .STRETCH_MS(100),
+    .RETRIGGERABLE("true"))
+  evg2HeartbeatPulseStretcher (
+    .clk(evg2TxClk),
+    .pulse(evg2HeartbeatRequest),
+    .pulseStretch(evg2HeartbeatStretch)
+);
+
+wire evg1TriggerStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .STRETCH_MS(100),
+    .RETRIGGERABLE("false"))
+  evg1TriggerStretcher (
+    .clk(sysClk),
+    .pulse(evg1DiagnosticIn[0]),
+    .pulseStretch(evg1TriggerStretch)
+);
+
+wire evg2TriggerStretch;
+
+pulseStretcher #(
+    .CLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .STRETCH_MS(100),
+    .RETRIGGERABLE("false"))
+  evg2TriggerStretcher (
+    .clk(sysClk),
+    .pulse(evg2DiagnosticIn[0]),
+    .pulseStretch(evg2TriggerStretch)
+);
+
+// LEDs
+assign PMOD2_0 = evg1HeartbeatStretch;
+assign PMOD2_1 = evg2HeartbeatStretch;
+assign PMOD2_2 = evg1TriggerStretch;
+assign PMOD2_3 = evg2TriggerStretch;
+
+// Unused
+assign PMOD2_4 = 1'b0;
+assign PMOD2_5 = 1'b0;
+
+// Buttons
+assign PMOD2_6 = 1'b1;
+assign PMOD2_7 = 1'b1;
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure clock rates
