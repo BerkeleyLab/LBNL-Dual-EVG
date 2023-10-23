@@ -14,7 +14,8 @@ include ../../../dir_list.mk
 TARGET ?= devg_marble
 FPGA_APPLICATION ?= devg
 
-TARGET_PLATFORM_DIR = $(PLATFORM_DIR)/$(FPGA_VENDOR)/$(FPGA_PLATFORM)/$(FPGA_APPLICATION)
+VENDOR_PLATFORM_DIR = $(PLATFORM_DIR)/$(FPGA_VENDOR)
+TARGET_PLATFORM_DIR = $(VENDOR_PLATFORM_DIR)/$(FPGA_PLATFORM)/$(FPGA_APPLICATION)
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 XPR             = $(GW_DEVG_TGT_DIR)/_xilinx/$(TARGET)_top/$(TARGET)_top.xpr
 
@@ -23,6 +24,7 @@ all: $(TARGET)_top.bit $(TARGET)_top.mmi
 
 # Search for .v files here
 vpath %.v $(MODULES_DIR)
+vpath %.v $(VENDOR_PLATFORM_DIR)
 # Bedrock .v files
 vpath %.v $(DSP_DIR)
 vpath %.v $(BADGER_DIR)
@@ -105,6 +107,7 @@ VFLAGS_DEP += -y$(BADGER_DIR)/tests
 VFLAGS_DEP += -y.
 VFLAGS_DEP += -y$(MODULES_DIR)
 VFLAGS_DEP += -y$(TOP_LVL_DIR)
+VFLAGS_DEP += -y$(VENDOR_PLATFORM_DIR)
 VFLAGS_DEP += -y$(PLATFORM_7SERIES_MGT_DIR)
 VFLAGS_DEP += $(addprefix -y, $(IP_CORES_SRCS_DIRS))
 VFLAGS_DEP += $(addprefix -y, $(BD_SRCS_DIRS))
