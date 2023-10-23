@@ -82,7 +82,7 @@ __ST7789V_HDR_FILES =\
 
 ifeq ($(TARGET),devg_test_marble)
 	__ST7789V_SRC_FILES += \
-		st7789v.c
+		st7789v_stub.c
 endif
 
 ST7789V_SRC_FILES = $(addprefix $(ST7789V_DIR)/, $(__ST7789V_SRC_FILES))
@@ -101,7 +101,7 @@ LIB_FLAGS = $(addprefix -L, $(LIB_DIRS))
 LIBS = -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
 
 ifeq ($(TARGET),devg_test_marble)
-	USER_FLAGS += -D__TARGET_DEVG_MARBLE__
+	USER_FLAGS += -D__TARGET_DEVG_TEST_MARBLE__
 else
 	USER_FLAGS += -D__TARGET_NOT_RECOGNIZED__
 endif

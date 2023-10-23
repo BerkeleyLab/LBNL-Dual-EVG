@@ -59,8 +59,8 @@
 #define GPIO_IDX_FMC1_FIREFLY            13 // FMC1 Firefly control/status
 #define GPIO_IDX_FMC2_FIREFLY            14 // FMC2 Firefly control/status
 #define GPIO_IDX_QSPI_FLASH_CSR          15 // Boot flash I/O
-#define GPIO_IDX_DISPLAY_CSR             16 // LCD CSR
-#define GPIO_IDX_DISPLAY_DATA            17 // LCD Data
+#define GPIO_IDX_UNUSED_1                16 // Unused
+#define GPIO_IDX_UNUSED_2                17 // Unused
 #define GPIO_IDX_FAN_TACHOMETERS         18 // LCD Data
 #define GPIO_IDX_EVG_1_COINC_CSR         19 // EVG 1 coincidence measure/control
 #define GPIO_IDX_EVG_1_SEQ_CSR           20 // EVG 1 sequencer control

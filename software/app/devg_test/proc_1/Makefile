@@ -75,7 +75,7 @@ LIB_FLAGS = $(addprefix -L, $(LIB_DIRS))
 LIBS = -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
 
 ifeq ($(TARGET),devg_test_marble)
-	USER_FLAGS += -D__TARGET_DEVG_MARBLE__
+	USER_FLAGS += -D__TARGET_DEVG_TEST_MARBLE__
 else
 	USER_FLAGS += -D__TARGET_NOT_RECOGNIZED__
 endif
