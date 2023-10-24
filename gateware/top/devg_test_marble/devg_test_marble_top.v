@@ -687,16 +687,18 @@ assign PMOD2_7 = 1'b1;
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure clock rates
-reg   [2:0] frequencyMonitorSelect;
+localparam FREQ_COUNTERS_NUM = 9;
+localparam FREQ_SEL_WIDTH = $clog2(FREQ_COUNTERS_NUM+1);
+reg   [FREQ_SEL_WIDTH-1:0] frequencyMonitorSelect;
 wire [29:0] measuredFrequency;
 always @(posedge sysClk) begin
     if (GPIO_STROBES[GPIO_IDX_FREQ_MONITOR_CSR]) begin
-        frequencyMonitorSelect <= GPIO_OUT[2:0];
+        frequencyMonitorSelect <= GPIO_OUT[FREQ_SEL_WIDTH-1:0];
     end
 end
 assign GPIO_IN[GPIO_IDX_FREQ_MONITOR_CSR] = { 2'b0, measuredFrequency };
 freq_multi_count #(
-        .NF(9),  // number of frequency counters in a block
+        .NF(FREQ_COUNTERS_NUM),  // number of frequency counters in a block
         .NG(1),  // number of frequency counter blocks
         .gw(4),  // Gray counter width
         .cw(1),  // macro-cycle counter width
