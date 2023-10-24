@@ -374,6 +374,16 @@ mgtWrapper #(.EVG(1),
 end
 endgenerate
 
+wire evg1GtTxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][30];
+wire evg1GtRxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][29];
+wire evg1CpllReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][28];
+wire evg1GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][27];
+wire evg1GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][26];
+wire evg1GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][25];
+wire evg1TxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][24];
+wire evg1RxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][23];
+wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
+
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 clocks
 BUFG evg1RxBuf (.I(evg1RxClksOut[0]), .O(evg1RxClk));
@@ -486,6 +496,16 @@ mgtWrapper #(.EVG(2),
     .rx_n(qsfp2RxN[i]));
 end
 endgenerate
+
+wire evg2GtTxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][30];
+wire evg2GtRxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][29];
+wire evg2CpllReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][28];
+wire evg2GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][27];
+wire evg2GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][26];
+wire evg2GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][25];
+wire evg2TxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][24];
+wire evg2RxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][23];
+wire evg2CpllLock = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][22];
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG2 clocks
@@ -631,6 +651,7 @@ pulseStretcher #(
     .RETRIGGERABLE("true"))
   evg1HeartbeatPulseStretcher (
     .clk(evg1TxClk),
+    .rst_a(!evg1TxResetDone),
     .pulse(evg1HeartbeatRequest),
     .pulseStretch(evg1HeartbeatStretch)
 );
@@ -643,6 +664,7 @@ pulseStretcher #(
     .RETRIGGERABLE("true"))
   evg2HeartbeatPulseStretcher (
     .clk(evg2TxClk),
+    .rst_a(!evg2TxResetDone),
     .pulse(evg2HeartbeatRequest),
     .pulseStretch(evg2HeartbeatStretch)
 );
@@ -655,6 +677,7 @@ pulseStretcher #(
     .RETRIGGERABLE("false"))
   evg1TriggerStretcher (
     .clk(sysClk),
+    .rst_a(1'b0),
     .pulse(evg1DiagnosticIn[0]),
     .pulseStretch(evg1TriggerStretch)
 );
@@ -667,6 +690,7 @@ pulseStretcher #(
     .RETRIGGERABLE("false"))
   evg2TriggerStretcher (
     .clk(sysClk),
+    .rst_a(1'b0),
     .pulse(evg2DiagnosticIn[0]),
     .pulseStretch(evg2TriggerStretch)
 );
