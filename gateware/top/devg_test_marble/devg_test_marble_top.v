@@ -3,6 +3,7 @@
 module devg_test_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
+    parameter ILA_CHIPSCOPE_DBG       = "FALSE",
     parameter SYSCLK_FREQUENCY        = 100000000,
     parameter TXCLK_NOMINAL_FREQUENCY = 125000000
     ) (
@@ -889,5 +890,51 @@ bd bd_i (
     .console_rxd(FPGA_TxD),
     .console_txd(FPGA_RxD));
 `endif // `ifndef SIMULATE
+
+generate
+if (ILA_CHIPSCOPE_DBG != "TRUE" && ILA_CHIPSCOPE_DBG != "FALSE") begin
+    ILA_CHIPSCOPE_DBG_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (ILA_CHIPSCOPE_DBG == "TRUE") begin
+
+wire [255:0] probe;
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(sysClk),
+    .probe0(probe)
+);
+`endif
+
+assign probe[31:0] = 0;
+
+assign probe[32] = evg1GtTxReset;
+assign probe[33] = evg1GtRxReset;
+assign probe[34] = evg1CpllReset;
+assign probe[35] = evg1GtRxIsAligned;
+assign probe[36] = evg1GtTxFSMResetDone;
+assign probe[37] = evg1GtRxFSMResetDone;
+assign probe[38] = evg1TxResetDone;
+assign probe[39] = evg1RxResetDone;
+assign probe[40] = evg1CpllLock;
+
+assign probe[63:41] = 0;
+
+assign probe[64] = evg2GtTxReset;
+assign probe[65] = evg2GtRxReset;
+assign probe[66] = evg2CpllReset;
+assign probe[67] = evg2GtRxIsAligned;
+assign probe[68] = evg2GtTxFSMResetDone;
+assign probe[69] = evg2GtRxFSMResetDone;
+assign probe[70] = evg2TxResetDone;
+assign probe[71] = evg2RxResetDone;
+assign probe[72] = evg2CpllLock;
+
+assign probe[255:73] = 0;
+
+end // end if
+endgenerate
 
 endmodule
