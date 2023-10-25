@@ -3,6 +3,7 @@
 module devg_test_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
+    parameter ILA_CHIPSCOPE_DBG       = "FALSE",
     parameter SYSCLK_FREQUENCY        = 100000000,
     parameter TXCLK_NOMINAL_FREQUENCY = 125000000
     ) (
@@ -374,6 +375,16 @@ mgtWrapper #(.EVG(1),
 end
 endgenerate
 
+wire evg1GtTxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][30];
+wire evg1GtRxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][29];
+wire evg1CpllReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][28];
+wire evg1GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][27];
+wire evg1GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][26];
+wire evg1GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][25];
+wire evg1TxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][24];
+wire evg1RxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][23];
+wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
+
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 clocks
 BUFG evg1RxBuf (.I(evg1RxClksOut[0]), .O(evg1RxClk));
@@ -486,6 +497,16 @@ mgtWrapper #(.EVG(2),
     .rx_n(qsfp2RxN[i]));
 end
 endgenerate
+
+wire evg2GtTxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][30];
+wire evg2GtRxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][29];
+wire evg2CpllReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][28];
+wire evg2GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][27];
+wire evg2GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][26];
+wire evg2GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][25];
+wire evg2TxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][24];
+wire evg2RxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][23];
+wire evg2CpllLock = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][22];
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG2 clocks
@@ -631,6 +652,7 @@ pulseStretcher #(
     .RETRIGGERABLE("true"))
   evg1HeartbeatPulseStretcher (
     .clk(evg1TxClk),
+    .rst_a(!evg1TxResetDone),
     .pulse(evg1HeartbeatRequest),
     .pulseStretch(evg1HeartbeatStretch)
 );
@@ -643,6 +665,7 @@ pulseStretcher #(
     .RETRIGGERABLE("true"))
   evg2HeartbeatPulseStretcher (
     .clk(evg2TxClk),
+    .rst_a(!evg2TxResetDone),
     .pulse(evg2HeartbeatRequest),
     .pulseStretch(evg2HeartbeatStretch)
 );
@@ -655,6 +678,7 @@ pulseStretcher #(
     .RETRIGGERABLE("false"))
   evg1TriggerStretcher (
     .clk(sysClk),
+    .rst_a(1'b0),
     .pulse(evg1DiagnosticIn[0]),
     .pulseStretch(evg1TriggerStretch)
 );
@@ -667,6 +691,7 @@ pulseStretcher #(
     .RETRIGGERABLE("false"))
   evg2TriggerStretcher (
     .clk(sysClk),
+    .rst_a(1'b0),
     .pulse(evg2DiagnosticIn[0]),
     .pulseStretch(evg2TriggerStretch)
 );
@@ -687,16 +712,18 @@ assign PMOD2_7 = 1'b1;
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure clock rates
-reg   [2:0] frequencyMonitorSelect;
+localparam FREQ_COUNTERS_NUM = 9;
+localparam FREQ_SEL_WIDTH = $clog2(FREQ_COUNTERS_NUM+1);
+reg   [FREQ_SEL_WIDTH-1:0] frequencyMonitorSelect;
 wire [29:0] measuredFrequency;
 always @(posedge sysClk) begin
     if (GPIO_STROBES[GPIO_IDX_FREQ_MONITOR_CSR]) begin
-        frequencyMonitorSelect <= GPIO_OUT[2:0];
+        frequencyMonitorSelect <= GPIO_OUT[FREQ_SEL_WIDTH-1:0];
     end
 end
 assign GPIO_IN[GPIO_IDX_FREQ_MONITOR_CSR] = { 2'b0, measuredFrequency };
 freq_multi_count #(
-        .NF(9),  // number of frequency counters in a block
+        .NF(FREQ_COUNTERS_NUM),  // number of frequency counters in a block
         .NG(1),  // number of frequency counter blocks
         .gw(4),  // Gray counter width
         .cw(1),  // macro-cycle counter width
@@ -863,5 +890,51 @@ bd bd_i (
     .console_rxd(FPGA_TxD),
     .console_txd(FPGA_RxD));
 `endif // `ifndef SIMULATE
+
+generate
+if (ILA_CHIPSCOPE_DBG != "TRUE" && ILA_CHIPSCOPE_DBG != "FALSE") begin
+    ILA_CHIPSCOPE_DBG_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (ILA_CHIPSCOPE_DBG == "TRUE") begin
+
+wire [255:0] probe;
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(sysClk),
+    .probe0(probe)
+);
+`endif
+
+assign probe[31:0] = 0;
+
+assign probe[32] = evg1GtTxReset;
+assign probe[33] = evg1GtRxReset;
+assign probe[34] = evg1CpllReset;
+assign probe[35] = evg1GtRxIsAligned;
+assign probe[36] = evg1GtTxFSMResetDone;
+assign probe[37] = evg1GtRxFSMResetDone;
+assign probe[38] = evg1TxResetDone;
+assign probe[39] = evg1RxResetDone;
+assign probe[40] = evg1CpllLock;
+
+assign probe[63:41] = 0;
+
+assign probe[64] = evg2GtTxReset;
+assign probe[65] = evg2GtRxReset;
+assign probe[66] = evg2CpllReset;
+assign probe[67] = evg2GtRxIsAligned;
+assign probe[68] = evg2GtTxFSMResetDone;
+assign probe[69] = evg2GtRxFSMResetDone;
+assign probe[70] = evg2TxResetDone;
+assign probe[71] = evg2RxResetDone;
+assign probe[72] = evg2CpllLock;
+
+assign probe[255:73] = 0;
+
+end // end if
+endgenerate
 
 endmodule

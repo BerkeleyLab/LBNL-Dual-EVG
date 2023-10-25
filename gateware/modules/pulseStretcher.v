@@ -11,6 +11,7 @@ module pulseStretcher #(
     parameter RETRIGGERABLE = "true"
     ) (
     input      clk,
+    input      rst_a,
     input      pulse,
     output reg pulseStretch = 0);
 
@@ -20,8 +21,12 @@ localparam COUNTER_WIDTH = $clog2(COUNTER_RELOAD+1);
 reg [COUNTER_WIDTH:0] stretchCounter = ~0;
 wire stretchDone = stretchCounter[COUNTER_WIDTH];
 
-always @(posedge clk) begin
-    if (pulse && ((RETRIGGERABLE == "true") ||
+always @(posedge clk or posedge rst_a) begin
+    if (rst_a) begin
+        stretchCounter <= ~0;
+        pulseStretch <= 0;
+    end
+    else if (pulse && ((RETRIGGERABLE == "true") ||
                   (RETRIGGERABLE == "false" && !pulseStretch))) begin
         stretchCounter <= COUNTER_RELOAD;
         pulseStretch <= 1;
