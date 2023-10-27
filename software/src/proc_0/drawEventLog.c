@@ -153,10 +153,10 @@ drawEventLog(int evgIdx, int redrawAll)
         st7789vFlood(displayHead->xBase, displayHead->yBase,
                      displayHead->floodWidth, st7789vCharHeight, ST7789V_BLACK);
         if(displayHead->c2 == EVCODE_C2(EVCODE_HB) &&
-           displayHead->c1 == EVCODE_C1(EVCODE_HB) &&
-           displayHead->c0 == EVCODE_C0(EVCODE_HB)) {
+                displayHead->c1 == EVCODE_C1(EVCODE_HB) &&
+                displayHead->c0 == EVCODE_C0(EVCODE_HB)) {
             drawHeartbeatIndicator(evgIdx, 0);
-           }
+        }
         displayHead->whenOn = 0;
         displayHead = displayHead->forw;
         if (displayHead) {
