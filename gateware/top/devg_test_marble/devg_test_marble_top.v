@@ -681,8 +681,8 @@ pulseStretcher #(
     .RETRIGGERABLE("false"))
   ppsStretcher (
     .clk(sysClk),
-    .rst_a(1'b0),
-    .pulse(bncPPS_a),
+    .rst_a(!sysReset_n),
+    .pulse(!bncPPS_a),
     .pulseStretch(ppsStretch)
 );
 
@@ -694,7 +694,7 @@ pulseStretcher #(
     .RETRIGGERABLE("false"))
   powerlineStretcher (
     .clk(sysClk),
-    .rst_a(1'b0),
+    .rst_a(!sysReset_n),
     .pulse(bncPowerline_a),
     .pulseStretch(powerlineStretch)
 );
