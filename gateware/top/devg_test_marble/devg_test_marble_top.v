@@ -139,7 +139,7 @@ always @(posedge sysClk) begin
 end
 assign GPIO_IN[GPIO_IDX_USER_GPIO_CSR] = {
         Reset_RecoveryModeSwitch, DisplayModeSwitch,
-        28'b0, gpsPPSvalid, fmcPPSvalid };
+        28'b0, gpsPPSvalid, bncPPSvalid };
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -227,10 +227,11 @@ coincidenceRecorder #(
 
 //////////////////////////////////////////////////////////////////////////////
 // Debounce timing markers
+wire bncPowerline_a;
 wire powerlineMarker;
 debounceFallingEdge debouncePowerline (
     .clk(sysClk),
-    .inputActiveLow(1'b1),
+    .inputActiveLow(bncPowerline_a),
     .debouncedActiveHigh(powerlineMarker));
 
 //////////////////////////////////////////////////////////////////////////////
@@ -273,13 +274,12 @@ clkIntervalCounters #(.CLK_RATE(SYSCLK_FREQUENCY))
 
 //////////////////////////////////////////////////////////////////////////////
 // Validate PPS signal sources
-wire DUMMY1_auxInput = 1'b1;
-wire fmcPPS_a = !DUMMY1_auxInput;
-wire fmcPPSvalid;
-ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) fmcPPScheck (
+wire bncPPS_a;
+wire bncPPSvalid;
+ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) bncPPScheck (
     .clk(sysClk),
-    .pps_a(fmcPPS_a),
-    .ppsValid(fmcPPSvalid));
+    .pps_a(bncPPS_a),
+    .ppsValid(bncPPSvalid));
 
 wire gpsPPS_a = 1'b0;
 wire gpsPPSvalid;
@@ -288,7 +288,7 @@ ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) gpsPPScheck (
     .pps_a(gpsPPS_a),
     .ppsValid(gpsPPSvalid));
 
-wire bestPPS_a = gpsPPSvalid ? gpsPPS_a : (fmcPPSvalid ? fmcPPS_a : sysPPSmarker);
+wire bestPPS_a = gpsPPSvalid ? gpsPPS_a : (bncPPSvalid ? bncPPS_a : sysPPSmarker);
 
 //////////////////////////////////////////////////////////////////////////////
 // NTP server support
@@ -620,27 +620,34 @@ endgenerate
 
 // fixed direction assignments
 assign bncDirToBuff[0] = 1'b1; // input
-assign bncDirToBuff[1] = 1'b0; // output
-assign bncDirToBuff[2] = 1'b1; // input
+assign bncDirToBuff[1] = 1'b1; // input
+assign bncDirToBuff[2] = 1'b0; // output
 assign bncDirToBuff[3] = 1'b0; // output
 
-// EVG 1
+// PPS
+
+assign bncPPS_a = !bncDataFromBuff[0];
 assign evg1HwTrigger = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
                         bncDataFromBuff[0]};
 assign evg1DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
                         bncDataFromBuff[0]};
-assign bncDataToBuff[1] = evg1DiagnosticOut;
+
+// 60Hz
+assign bncPowerline_a = bncDataFromBuff[1];
+assign evg2HwTrigger[0] = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
+                        bncDataFromBuff[1]};
+assign evg2DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
+                        bncDataFromBuff[1]};
+
+// EVG 1
+assign bncDataToBuff[2] = evg1DiagnosticOut;
 
 // EVG 2
-assign evg2HwTrigger[0] = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
-                        bncDataFromBuff[2]};
-assign evg2DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
-                        bncDataFromBuff[2]};
 assign bncDataToBuff[3] = evg2DiagnosticOut;
 
-// Unused as channels 0 and 2 are inputs
+// Unused as channels 0 and 1 are inputs
 assign bncDataToBuff[0] = 1'b0;
-assign bncDataToBuff[2] = 1'b0;
+assign bncDataToBuff[1] = 1'b0;
 
 /////////////////////////////////////////////////////////////////////////////
 // LEDs
@@ -670,37 +677,37 @@ pulseStretcher #(
     .pulseStretch(evg2HeartbeatStretch)
 );
 
-wire evg1TriggerStretch;
+wire ppsStretch;
 
 pulseStretcher #(
     .CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .STRETCH_MS(100),
     .RETRIGGERABLE("false"))
-  evg1TriggerStretcher (
+  ppsStretcher (
     .clk(sysClk),
     .rst_a(1'b0),
-    .pulse(evg1DiagnosticIn[0]),
-    .pulseStretch(evg1TriggerStretch)
+    .pulse(bncPPS_a),
+    .pulseStretch(ppsStretch)
 );
 
-wire evg2TriggerStretch;
+wire powerlineStretch;
 
 pulseStretcher #(
     .CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .STRETCH_MS(100),
     .RETRIGGERABLE("false"))
-  evg2TriggerStretcher (
+  powerlineStretcher (
     .clk(sysClk),
     .rst_a(1'b0),
-    .pulse(evg2DiagnosticIn[0]),
-    .pulseStretch(evg2TriggerStretch)
+    .pulse(bncPowerline_a),
+    .pulseStretch(powerlineStretch)
 );
 
 // LEDs
 assign PMOD2_0 = evg1HeartbeatStretch;
 assign PMOD2_1 = evg2HeartbeatStretch;
-assign PMOD2_2 = evg1TriggerStretch;
-assign PMOD2_3 = evg2TriggerStretch;
+assign PMOD2_2 = ppsStretch;
+assign PMOD2_3 = powerlineStretch;
 
 // Unused
 assign PMOD2_4 = 1'b0;
