@@ -627,17 +627,13 @@ assign bncDirToBuff[3] = 1'b0; // output
 // PPS
 
 assign bncPPS_a = !bncDataFromBuff[0];
-assign evg1HwTrigger = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
-                        bncDataFromBuff[0]};
-assign evg1DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
-                        bncDataFromBuff[0]};
+assign evg1HwTrigger = {CFG_HARDWARE_TRIGGER_COUNT{1'b0}};
+assign evg1DiagnosticIn = {CFG_EVIO_DIAG_IN_COUNT{1'b0}};
 
 // 60Hz
 assign bncPowerline_a = bncDataFromBuff[1];
-assign evg2HwTrigger[0] = {{CFG_HARDWARE_TRIGGER_COUNT-1{1'b0}},
-                        bncDataFromBuff[1]};
-assign evg2DiagnosticIn = {{CFG_EVIO_DIAG_IN_COUNT-1{1'b0}},
-                        bncDataFromBuff[1]};
+assign evg2HwTrigger = {CFG_HARDWARE_TRIGGER_COUNT{1'b0}};
+assign evg2DiagnosticIn = {CFG_EVIO_DIAG_IN_COUNT{1'b0}};
 
 // EVG 1
 assign bncDataToBuff[2] = evg1DiagnosticOut;
