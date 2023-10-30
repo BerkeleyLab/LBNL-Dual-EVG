@@ -8,11 +8,12 @@ APP          ?= devg_test
 
 TARGET       = $(APP)_$(PLATFORM)
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
+GIT_COMMIT   = $(shell git rev-parse --short=8 --verify HEAD || echo "NOCOMMIT")
 PROC_0_ELF   = $(THIS_DIR)/proc_0/$(TARGET)_proc_0.elf
 PROC_1_ELF   = $(THIS_DIR)/proc_1/$(TARGET)_proc_1.elf
 
 BIT          ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.bit
-DEPLOY_BIT   ?= $(THIS_DIR)/download.bit
+DEPLOY_BIT   ?= $(THIS_DIR)/$(TARGET).$(GIT_COMMIT).bit
 MMI          ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.mmi
 
 .PHONY: all sw
