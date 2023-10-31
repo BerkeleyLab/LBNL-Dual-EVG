@@ -270,8 +270,8 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt19_val_rx_refclk">REFCLK1_Q4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt19_val_tx_refclk">REFCLK1_Q4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt1_val">true</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt1_val_rx_refclk">REFCLK0_Q0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt1_val_tx_refclk">REFCLK0_Q0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt1_val_rx_refclk">REFCLK1_Q0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt1_val_tx_refclk">REFCLK1_Q0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt20_val">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt20_val_rx_refclk">REFCLK1_Q5</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.gt20_val_tx_refclk">REFCLK1_Q5</spirit:configurableElementValue>
@@ -875,8 +875,8 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt19_val_rx_refclk">REFCLK1_Q4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt19_val_tx_refclk">REFCLK1_Q4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt1_val">true</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt1_val_rx_refclk">REFCLK0_Q0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt1_val_tx_refclk">REFCLK0_Q0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt1_val_rx_refclk">REFCLK1_Q0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt1_val_tx_refclk">REFCLK1_Q0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt20_val">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt20_val_rx_refclk">REFCLK1_Q5</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.gt20_val_tx_refclk">REFCLK1_Q5</spirit:configurableElementValue>
