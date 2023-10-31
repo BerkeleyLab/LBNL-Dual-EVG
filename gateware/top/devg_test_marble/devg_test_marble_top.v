@@ -463,7 +463,7 @@ wire [3:0] evg2RxClksIn;
 wire [3:0] evg2TxClksIn;
 
 wire evg2RefClkUnbuf;
-IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_2_P), .IB(MGT_CLK_2_N), .O(evg2RefClkUnbuf));
+IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_3_P), .IB(MGT_CLK_3_N), .O(evg2RefClkUnbuf));
 
 generate
 for (i = 0 ; i < 4 ; i = i + 1) begin : evg2_mgt_fanout
