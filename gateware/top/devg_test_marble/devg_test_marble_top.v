@@ -677,7 +677,7 @@ pulseStretcher #(
   evg1HeartbeatPulseStretcher (
     .clk(evg1TxClk),
     .rst_a(!evg1TxResetDone),
-    .pulse(evg1HeartbeatRequest),
+    .pulse_a(evg1HeartbeatRequest),
     .pulseStretch(evg1HeartbeatStretch)
 );
 
@@ -690,7 +690,7 @@ pulseStretcher #(
   evg2HeartbeatPulseStretcher (
     .clk(evg2TxClk),
     .rst_a(!evg2TxResetDone),
-    .pulse(evg2HeartbeatRequest),
+    .pulse_a(evg2HeartbeatRequest),
     .pulseStretch(evg2HeartbeatStretch)
 );
 
@@ -703,7 +703,7 @@ pulseStretcher #(
   ppsStretcher (
     .clk(sysClk),
     .rst_a(!sysReset_n),
-    .pulse(!bncPPS_a),
+    .pulse_a(!bncPPS_a),
     .pulseStretch(ppsStretch)
 );
 
@@ -716,7 +716,7 @@ pulseStretcher #(
   powerlineStretcher (
     .clk(sysClk),
     .rst_a(!sysReset_n),
-    .pulse(bncPowerline_a),
+    .pulse_a(bncPowerline_a),
     .pulseStretch(powerlineStretch)
 );
 
