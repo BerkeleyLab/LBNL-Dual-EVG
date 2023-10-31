@@ -4,6 +4,7 @@ module devg_test_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
     parameter ILA_CHIPSCOPE_DBG       = "FALSE",
+    parameter FALLBACK_TO_SYS_PPS     = "FALSE",
     parameter SYSCLK_FREQUENCY        = 100000000,
     parameter TXCLK_NOMINAL_FREQUENCY = 125000000
     ) (
@@ -288,7 +289,27 @@ ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) gpsPPScheck (
     .pps_a(gpsPPS_a),
     .ppsValid(gpsPPSvalid));
 
-wire bestPPS_a = gpsPPSvalid ? gpsPPS_a : (bncPPSvalid ? bncPPS_a : sysPPSmarker);
+generate
+if (FALLBACK_TO_SYS_PPS != "TRUE" && FALLBACK_TO_SYS_PPS != "FALSE") begin
+    FALLBACK_TO_SYS_PPS_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (FALLBACK_TO_SYS_PPS == "TRUE") begin
+
+wire bestPPS_a = bncPPSvalid ? bncPPS_a : (gpsPPSvalid ? gpsPPS_a : sysPPSmarker);
+
+end
+endgenerate
+
+generate
+if (FALLBACK_TO_SYS_PPS == "FALSE") begin
+
+wire bestPPS_a = bncPPSvalid ? bncPPS_a : gpsPPS_a;
+
+end
+endgenerate
 
 //////////////////////////////////////////////////////////////////////////////
 // NTP server support
