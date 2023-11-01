@@ -295,10 +295,11 @@ if (FALLBACK_TO_SYS_PPS != "TRUE" && FALLBACK_TO_SYS_PPS != "FALSE") begin
 end
 endgenerate
 
+wire bestPPS_a;
 generate
 if (FALLBACK_TO_SYS_PPS == "TRUE") begin
 
-wire bestPPS_a = bncPPSvalid ? bncPPS_a : (gpsPPSvalid ? gpsPPS_a : sysPPSmarker);
+assign bestPPS_a = bncPPSvalid ? bncPPS_a : (gpsPPSvalid ? gpsPPS_a : sysPPSmarker);
 
 end
 endgenerate
@@ -306,7 +307,7 @@ endgenerate
 generate
 if (FALLBACK_TO_SYS_PPS == "FALSE") begin
 
-wire bestPPS_a = bncPPSvalid ? bncPPS_a : gpsPPS_a;
+assign bestPPS_a = bncPPSvalid ? bncPPS_a : gpsPPS_a;
 
 end
 endgenerate
