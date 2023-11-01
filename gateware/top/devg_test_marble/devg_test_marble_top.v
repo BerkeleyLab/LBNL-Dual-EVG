@@ -648,7 +648,7 @@ assign bncDirToBuff[3] = 1'b0; // output
 
 // PPS
 
-assign bncPPS_a = !bncDataFromBuff[0];
+assign bncPPS_a = bncDataFromBuff[0];
 assign evg1HwTrigger = {CFG_HARDWARE_TRIGGER_COUNT{1'b0}};
 assign evg1DiagnosticIn = {CFG_EVIO_DIAG_IN_COUNT{1'b0}};
 
