@@ -21,3 +21,6 @@
 // FIXME: Alternate values to work with ALS SR
 #define CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT 10250
 #define CFG_EVG1_CLK_PER_HEARTBEAT          124640000
+
+// Use FMC for 115 MGT quad. 0 = FMC, 1 = QSFP 2
+#define CFG_MGT_FMC_OR_QSFP                0

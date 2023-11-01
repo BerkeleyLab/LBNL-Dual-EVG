@@ -42,8 +42,8 @@
  *
  * QSFP:x/y specify fibers x and y on the 'squid'.
  *
- * Bank 115-[0-3] are X0Y[0-3] 
- * Bank 116-[0-3] are X0Y[4-7] 
+ * Bank 115-[0-3] are X0Y[0-3]
+ * Bank 116-[0-3] are X0Y[4-7]
  *
  * QSFP1 is J17, QSFP2 is J8.
  */
@@ -70,8 +70,6 @@
                          MGT_CONFIG_SET_MUX1 | MGT_CONFIG_SET_FMC)
 /* MGT6:QSFP2:2/11, MGT4:QSFP2:3/10, FMC on */
 # define MGT_CONFIG_QSFP (MGT_CONFIG_SET_MUX3 | MGT_CONFIG_SET_FMC)
-
-#define MGT_CONFIGURATION MGT_CONFIG_FMC
 
 void
 mmcMailboxWrite(unsigned int address, int value)
@@ -139,7 +137,9 @@ showMMCfirmware(void)
 void
 mmcMailboxInit(void)
 {
-    mmcMailboxWriteAndWait(MADDR_MGT_CONFIG, MGT_CONFIGURATION);
+    int mgtCfg = (CFG_MGT_FMC_OR_QSFP == 0)? MGT_CONFIG_FMC : MGT_CONFIG_QSFP;
+
+    mmcMailboxWriteAndWait(MADDR_MGT_CONFIG, mgtCfg);
     microsecondSpin(100);
     printf("Microcontroller:\n");
     showLM75temperature(28, MADDR_U28_TEMP);
