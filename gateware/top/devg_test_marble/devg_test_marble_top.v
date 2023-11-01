@@ -933,7 +933,14 @@ ila_td256_s4096_cap ila_td256_s4096_cap_inst (
 );
 `endif
 
-assign probe[31:0] = 0;
+assign probe[0] = bncPPS_a;
+assign probe[1] = bncPPSvalid;
+assign probe[2] = bestPPS_a;
+assign probe[3] = ppsToggle;
+assign probe[4] = ppsMarker;
+assign probe[5] = ppsMarkerValid;
+
+assign probe[31:6] = 0;
 
 assign probe[32] = evg1GtTxReset;
 assign probe[33] = evg1GtRxReset;
