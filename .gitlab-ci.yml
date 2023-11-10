@@ -70,7 +70,7 @@ sw_devg_marble:
       - software/app/devg/proc_1/devg_marble_proc_1.elf
       - software/app/devg/proc_0/devg_marble_proc_0.elf.size
       - software/app/devg/proc_1/devg_marble_proc_1.elf.size
-      - software/app/devg/devg_marble_top*.bit
+      - software/app/devg/devg_marble*.bit
 
 sw_devg_test_marble:
   before_script:
@@ -90,4 +90,4 @@ sw_devg_test_marble:
       - software/app/devg_test/proc_1/devg_test_marble_proc_1.elf
       - software/app/devg_test/proc_0/devg_test_marble_proc_0.elf.size
       - software/app/devg_test/proc_1/devg_test_marble_proc_1.elf.size
-      - software/app/devg_test/devg_test_marble_top*.bit
+      - software/app/devg_test/devg_test_marble*.bit
