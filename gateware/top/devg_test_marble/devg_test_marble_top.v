@@ -775,8 +775,8 @@ freq_multi_count #(
         .rw($clog2(SYSCLK_FREQUENCY*4/3)), // reference counter width
         .uw(30)) // unknown counter width
   frequencyCounters (
-    .unk_clk({evg2RxClks[1], evg2RxClks[2], evg2RxClks[3],
-              evg1RxClks[1], evg1RxClks[2], evg1RxClks[3],
+    .unk_clk({evg2RxClks[3], evg2RxClks[2], evg2RxClks[1],
+              evg1RxClks[3], evg1RxClks[2], evg1RxClks[1],
               ethernetRxClk, ethernetTxClk,
               evg2RxClks[0], evg2TxClk, evg2RefClk,
               evg1RxClks[0], evg1TxClk, evg1RefClk,
