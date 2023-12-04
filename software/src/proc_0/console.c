@@ -238,12 +238,18 @@ cmdFMON(int argc, char **argv)
     static const char *names[] = { "System",
                                    "EVG 1 MGT reference",
                                    "EVG 1 Tx",
-                                   "EVG 1 Rx",
+                                   "EVG 1 Rx 0",
                                    "EVG 2 MGT reference",
                                    "EVG 2 Tx",
-                                   "EVG 2 Rx",
+                                   "EVG 2 Rx 0",
                                    "Ethernet Tx",
-                                   "Ethernet Rx" };
+                                   "Ethernet Rx",
+                                   "EVG 1 Rx 1",
+                                   "EVG 1 Rx 2",
+                                   "EVG 1 Rx 3",
+                                   "EVG 2 Rx 1",
+                                   "EVG 2 Rx 2",
+                                   "EVG 2 Rx 3" };
     if (!ppsValid) {
         printf("Pulse per second signal missing -- Relative accuracy only.\n");
     }

@@ -102,7 +102,6 @@ wire sysClk, refClk125, refClk125d90, clkLatencySampler;
 wire ethernetRxClk, ethernetTxClk;
 wire evg1RefClk, evg2RefClk;
 wire evg1TxClk, evg2TxClk;
-wire evg1RxClk, evg2RxClk;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Resets
@@ -361,6 +360,8 @@ wire [3:0] evg1RxClksOut;
 wire [3:0] evg1TxClksOut;
 wire [3:0] evg1RxClksIn;
 wire [3:0] evg1TxClksIn;
+wire [3:0] evg1RxClks;
+wire [3:0] evg2RxClks;
 
 wire evg1RefClkUnbuf;
 IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
@@ -394,6 +395,15 @@ mgtWrapper #(.EVG(1),
     .evgRxClkOut(evg1RxClksOut[i]),
     .rx_p(qsfp1RxP[i]),
     .rx_n(qsfp1RxN[i]));
+
+// each MGT has its own rxClk which is disciplined
+// by the CDR circuitry
+BUFG
+  evg1RxBuf (
+    .I(evg1RxClksOut[i]),
+    .O(evg1RxClks[i]));
+
+assign evg1RxClksIn[i] = evg1RxClks[i];
 end
 endgenerate
 
@@ -408,11 +418,11 @@ wire evg1RxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][23];
 wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
 
 //////////////////////////////////////////////////////////////////////////////
-// Buffer EVG1 clocks
-BUFG evg1RxBuf (.I(evg1RxClksOut[0]), .O(evg1RxClk));
+// Buffer EVG1 Tx clocks
+
+// MGT 0 shares txClk with all others
 BUFG evg1TxBuf (.I(evg1TxClksOut[0]), .O(evg1TxClk));
 
-assign evg1RxClksIn = {4{evg1RxClk}};
 assign evg1TxClksIn = {4{evg1TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg1HwTrigger;
@@ -517,6 +527,16 @@ mgtWrapper #(.EVG(2),
     .evgRxClkOut(evg2RxClksOut[i]),
     .rx_p(qsfp2RxP[i]),
     .rx_n(qsfp2RxN[i]));
+
+// each MGT has its own rxClk which is disciplined
+// by the CDR circuitry
+BUFG
+  evg2RxBuf (
+    .I(evg2RxClksOut[i]),
+    .O(evg2RxClks[i]));
+
+assign evg2RxClksIn[i] = evg2RxClks[i];
+
 end
 endgenerate
 
@@ -532,10 +552,10 @@ wire evg2CpllLock = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][22];
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG2 clocks
-BUFG evg2RxBuf (.I(evg2RxClksOut[0]), .O(evg2RxClk));
+
+// MGT 0 shares txClk with all others
 BUFG evg2TxBuf (.I(evg2TxClksOut[0]), .O(evg2TxClk));
 
-assign evg2RxClksIn = {4{evg2RxClk}};
 assign evg2TxClksIn = {4{evg2TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg2HwTrigger;
@@ -737,7 +757,7 @@ assign PMOD2_7 = 1'b1;
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure clock rates
-localparam FREQ_COUNTERS_NUM = 9;
+localparam FREQ_COUNTERS_NUM = 15;
 localparam FREQ_SEL_WIDTH = $clog2(FREQ_COUNTERS_NUM+1);
 reg   [FREQ_SEL_WIDTH-1:0] frequencyMonitorSelect;
 wire [29:0] measuredFrequency;
@@ -755,9 +775,11 @@ freq_multi_count #(
         .rw($clog2(SYSCLK_FREQUENCY*4/3)), // reference counter width
         .uw(30)) // unknown counter width
   frequencyCounters (
-    .unk_clk({ethernetRxClk, ethernetTxClk,
-              evg2RxClk, evg2TxClk, evg2RefClk,
-              evg1RxClk, evg1TxClk, evg1RefClk,
+    .unk_clk({evg2RxClks[3], evg2RxClks[2], evg2RxClks[1],
+              evg1RxClks[3], evg1RxClks[2], evg1RxClks[1],
+              ethernetRxClk, ethernetTxClk,
+              evg2RxClks[0], evg2TxClk, evg2RefClk,
+              evg1RxClks[0], evg1TxClk, evg1RefClk,
               sysClk}),
     .refclk(sysClk),
     .refMarker(ppsMarkerValid ? ppsMarker : sysPPSmarker),
