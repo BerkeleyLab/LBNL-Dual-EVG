@@ -513,6 +513,131 @@ cmdREG(int argc, char **argv)
     return 0;
 }
 
+static int
+cmdTLOG(int argc, char **argv, int evgNumber)
+{
+    uint32_t csr;
+    static int isActive, isFirstHB, todBitCount;
+    static int rAddr;
+    static int addrMask;
+    uint32_t gpioIdxEventLogCsr, gpioIdxEventLogTicks;
+    int pass = 0;
+
+    /* GPIO_IDX selection corresponding to EVG 1 or 2 */
+    switch (evgNumber) {
+    case 0:
+        gpioIdxEventLogCsr = GPIO_IDX_EVG_1_TLOG_CSR;
+        gpioIdxEventLogTicks = GPIO_IDX_EVG_1_TLOG_TICKS;
+        break;
+    case 1:
+        gpioIdxEventLogCsr = GPIO_IDX_EVG_2_TLOG_CSR;
+        gpioIdxEventLogTicks = GPIO_IDX_EVG_2_TLOG_TICKS;
+        break;
+    default:
+        return 0;
+    }
+    /* argc determinates the operation to perform */
+    if (argc < 0) {
+        if (isActive) {
+            GPIO_WRITE(gpioIdxEventLogCsr, 0);
+            isActive = 0;
+        }
+        return 0;
+    }
+    if (argc > 0) {
+        csr = GPIO_READ(gpioIdxEventLogCsr);
+        addrMask = ~(~0UL << ((csr >> 24) & 0xF));
+        GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000);
+        rAddr = 0;
+        isActive = 1;
+        isFirstHB = 1;
+        todBitCount = 0;
+        return 0;
+    }
+    if (isActive) {
+        int wAddr, wAddrOld;
+        static uint32_t lastHbTicks, lastEvTicks, todShift;
+        csr = GPIO_READ(gpioIdxEventLogCsr);
+        wAddrOld = csr & addrMask;
+        for (;;) {
+            csr = GPIO_READ(gpioIdxEventLogCsr);
+            wAddr = csr & addrMask;
+            if (wAddr == wAddrOld) break;
+            if (++pass > 10) {
+                printf("Event logger unstable!\n");
+                isActive = 0;
+                return 0;
+            }
+            wAddrOld = wAddr;
+        }
+        for (pass = 0 ; rAddr < wAddr ; ) {
+            int event;
+            GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000 | rAddr);
+            rAddr = (rAddr + 1) & addrMask;
+            event = (GPIO_READ(gpioIdxEventLogCsr) >> 16) & 0xFF;
+            if (event == 112) {
+                todBitCount++;
+                todShift = (todShift << 1) | 0;
+            }
+            else if (event == 113) {
+                todBitCount++;
+                todShift = (todShift << 1) | 1;
+            }
+            else {
+                uint32_t ticks = GPIO_READ(gpioIdxEventLogTicks);
+                switch(event) {
+                case 122:
+                    if (isFirstHB) {
+                        printf("HB\n");
+                        isFirstHB = 0;
+                    }
+                    else {
+                        printf("HB %d\n", ticks - lastHbTicks);
+                    }
+                    lastHbTicks = ticks;
+                    break;
+
+                case 125:
+                    if (todBitCount == 32) {
+                        printf("PPS %d\n", todShift);
+                    }
+                    else {
+                        printf("PPS\n");
+                    }
+                    todBitCount = 0;
+                    break;
+
+                default:
+                    printf("%d %d\n", event, ticks - lastEvTicks);
+                    lastEvTicks = ticks;
+                    break;
+                }
+            }
+            if (++pass >= addrMask) {
+                printf("Event logger can't keep up.\n");
+                isActive = 0;
+                return 0;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static int
+cmdTLOGevg1(int argc, char **argv)
+{
+    cmdTLOG(argc, argv, 0);
+    return 0;
+}
+
+static int
+cmdTLOGevg2(int argc, char **argv)
+{
+    cmdTLOG(argc, argv, 1);
+    return 0;
+}
+
 static void
 commandHandler(int argc, char **argv)
 {
@@ -535,6 +660,8 @@ commandHandler(int argc, char **argv)
       { "net",        cmdNET,         "Set network parameters"             },
       { "pll",        cmdPLL,         "Set PLL phase alignment targets"    },
       { "reg",        cmdREG,         "Show GPIO register(s)"              },
+      { "tlog1",      cmdTLOGevg1,    "Timing system event logger (EVG1)"  },
+      { "tlog2",      cmdTLOGevg2,    "Timing system event logger (EVG2)"  },
       { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
     };
 
@@ -682,6 +809,8 @@ consoleCheck(void)
         }
     }
     else {
+        cmdTLOGevg1(0, NULL);
+        cmdTLOGevg2(0, NULL);
         return;
     }
     if ((c == '\001') || (c > '\177')) return;
@@ -696,6 +825,8 @@ consoleCheck(void)
         handleLine(line);
         return;
     }
+    cmdTLOGevg1(-1, NULL);
+    cmdTLOGevg2(-1, NULL);
     if (c == '\b') {
         if (idx) {
             printf("\b \b");
