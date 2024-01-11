@@ -4,8 +4,11 @@ module evLogger #(
     ) (
     input         sysClk,
     input  [31:0] GPIO_OUT,
-    input         csrStrobe,
-    output [31:0] status,
+    input         csrStrobeLogger1,
+    output [31:0] statusLogger1,
+    input         csrStrobeLogger2,
+    output [31:0] statusLogger2,
+    output [31:0] sysDataTicks,
 
     input        evgTxClk,
     input  [1:0] evgTxCharIsK,
@@ -17,13 +20,13 @@ module evLogger #(
 (*mark_debug=DEBUG*) wire       sysRdEnable;
 (*mark_debug=DEBUG*) wire       sysRdEmpty;
 (*mark_debug=DEBUG*) wire [7:0] sysRdData;
-assign sysRdEnable = csrStrobe && GPIO_OUT[8];
+assign sysRdEnable = csrStrobeLogger1 && GPIO_OUT[8];
 always @(posedge sysClk) begin
-    if (csrStrobe) begin
+    if (csrStrobeLogger1) begin
         sysReset <= GPIO_OUT[9];
     end
 end
-assign status = {22'b0, sysReset, sysRdEmpty, sysRdData};
+assign statusLogger1 = {22'b0, sysReset, sysRdEmpty, sysRdData};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Event stream clock domain
@@ -53,5 +56,15 @@ evLogFIFO evLogFIFO (
   .dout(sysRdData),
   .empty(sysRdEmpty));
 `endif // `ifndef SIMULATE
+
+evFIFO evFIFOtlog (
+    .sysClk(sysClk),
+    .sysCsrStrobe(csrStrobeLogger2),
+    .sysGpioOut(GPIO_OUT),
+    .sysCsr(statusLogger2),
+    .sysDataTicks(sysDataTicks),
+    .evClk(evgTxClk),
+    .evChar(evgTxData[7:0]),
+    .evCharIsK(evgTxCharIsK[0]));
 
 endmodule
