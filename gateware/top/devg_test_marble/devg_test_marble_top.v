@@ -464,7 +464,7 @@ evLogger #(.DEBUG("false"))
     .statusLogger1(GPIO_IN[GPIO_IDX_EVG_1_DISP_LOG_CSR]),
     .csrStrobeLogger2(GPIO_STROBES[GPIO_IDX_EVG_1_TLOG_CSR]),
     .statusLogger2(GPIO_IN[GPIO_IDX_EVG_1_TLOG_CSR]),
-    .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_1_TLOG_TICKS]),
+    .sysDataTicksLogger2(GPIO_IN[GPIO_IDX_EVG_1_TLOG_TICKS]),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK));
@@ -600,7 +600,7 @@ evLogger #(.DEBUG("false"))
     .statusLogger1(GPIO_IN[GPIO_IDX_EVG_2_DISP_LOG_CSR]),
     .csrStrobeLogger2(GPIO_STROBES[GPIO_IDX_EVG_2_TLOG_CSR]),
     .statusLogger2(GPIO_IN[GPIO_IDX_EVG_2_TLOG_CSR]),
-    .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_2_TLOG_TICKS]),
+    .sysDataTicksLogger2(GPIO_IN[GPIO_IDX_EVG_2_TLOG_TICKS]),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK));
