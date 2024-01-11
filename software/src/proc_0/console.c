@@ -733,7 +733,7 @@ consoleCheck(void)
      * remaining stuck here when the other processor started spewing.
      *
      * Emitting characters from other processor could mess up an eye scan
-     * but messsages from the other processor are important enough that
+     * but messages from the other processor are important enough that
      * this is acceptable.
      */
     for (int n = 0 ; n < 500 ; n++) {
