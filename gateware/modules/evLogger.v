@@ -62,7 +62,7 @@ evFIFO evFIFOtlog (
     .sysCsrStrobe(csrStrobeLogger2),
     .sysGpioOut(GPIO_OUT),
     .sysCsr(statusLogger2),
-    .sysDataTicks(sysDataTicks),
+    .sysDataTicks(sysDataTicksLogger2),
     .evClk(evgTxClk),
     .evChar(evgTxData[7:0]),
     .evCharIsK(evgTxCharIsK[0]));
