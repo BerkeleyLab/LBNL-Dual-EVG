@@ -8,7 +8,7 @@ module evLogger #(
     output [31:0] statusLogger1,
     input         csrStrobeLogger2,
     output [31:0] statusLogger2,
-    output [31:0] sysDataTicks,
+    output [31:0] sysDataTicksLogger2,
 
     input        evgTxClk,
     input  [1:0] evgTxCharIsK,
