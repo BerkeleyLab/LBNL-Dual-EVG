@@ -457,17 +457,24 @@ evg #(
     .evgSequenceStart(injectorSequenceStart));
 
 evLogger #(.DEBUG("false"))
-  evg1Logger (
+  evg1LoggerDisplay (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .csrStrobeLogger1(GPIO_STROBES[GPIO_IDX_EVG_1_DISP_LOG_CSR]),
-    .statusLogger1(GPIO_IN[GPIO_IDX_EVG_1_DISP_LOG_CSR]),
-    .csrStrobeLogger2(GPIO_STROBES[GPIO_IDX_EVG_1_TLOG_CSR]),
-    .statusLogger2(GPIO_IN[GPIO_IDX_EVG_1_TLOG_CSR]),
-    .sysDataTicksLogger2(GPIO_IN[GPIO_IDX_EVG_1_TLOG_TICKS]),
+    .csrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_DISP_LOG_CSR]),
+    .status(GPIO_IN[GPIO_IDX_EVG_1_DISP_LOG_CSR]),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK));
+
+evFIFO evg1FIFOtlog (
+  .sysClk(sysClk),
+  .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_TLOG_CSR]),
+  .sysGpioOut(GPIO_OUT),
+  .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_TLOG_CSR]),
+  .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_1_TLOG_TICKS]),
+  .evClk(evg1TxClk),
+  .evChar(evg1TxData[7:0]),
+  .evCharIsK(evg1TxCharIsK[0]));
 
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
@@ -593,17 +600,24 @@ evg #(
     .evgSequenceStart(swapoutSequenceStart));
 
 evLogger #(.DEBUG("false"))
-  evg2Logger (
+  evg2LoggerDisplay (
     .sysClk(sysClk),
     .GPIO_OUT(GPIO_OUT),
-    .csrStrobeLogger1(GPIO_STROBES[GPIO_IDX_EVG_2_DISP_LOG_CSR]),
-    .statusLogger1(GPIO_IN[GPIO_IDX_EVG_2_DISP_LOG_CSR]),
-    .csrStrobeLogger2(GPIO_STROBES[GPIO_IDX_EVG_2_TLOG_CSR]),
-    .statusLogger2(GPIO_IN[GPIO_IDX_EVG_2_TLOG_CSR]),
-    .sysDataTicksLogger2(GPIO_IN[GPIO_IDX_EVG_2_TLOG_TICKS]),
+    .csrStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_DISP_LOG_CSR]),
+    .status(GPIO_IN[GPIO_IDX_EVG_2_DISP_LOG_CSR]),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK));
+
+evFIFO evg2FIFOtlog (
+  .sysClk(sysClk),
+  .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_TLOG_CSR]),
+  .sysGpioOut(GPIO_OUT),
+  .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_TLOG_CSR]),
+  .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_2_TLOG_TICKS]),
+  .evClk(evg2TxClk),
+  .evChar(evg2TxData[7:0]),
+  .evCharIsK(evg2TxCharIsK[0]));
 
 /////////////////////////////////////////////////////////////////////////////
 // BNC board
