@@ -441,7 +441,7 @@ evFIFO evg1FIFOtlog (
   .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_1_TLOG_TICKS]),
   .evClk(evg1TxClk),
   .evChar(evg1TxData[7:0]),
-  .evCharIsK(evgTxCharIsK[0]));
+  .evCharIsK(evg1TxCharIsK[0]));
 
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
@@ -547,7 +547,7 @@ evFIFO evg2FIFOtlog (
   .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_2_TLOG_TICKS]),
   .evClk(evg2TxClk),
   .evChar(evg2TxData[7:0]),
-  .evCharIsK(evgTxCharIsK[0]));
+  .evCharIsK(evg2TxCharIsK[0]));
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure clock rates
