@@ -517,9 +517,9 @@ static int
 cmdTLOG(int argc, char **argv, int evgNumber)
 {
     uint32_t csr;
-    static int isActive, isFirstHB, todBitCount;
-    static int rAddr;
-    static int addrMask;
+    static int isActive[2], isFirstHB[2], todBitCount[2];
+    static int rAddr[2];
+    static int addrMask[2];
     uint32_t gpioIdxEventLogCsr, gpioIdxEventLogTicks;
     int pass = 0;
 
@@ -538,58 +538,58 @@ cmdTLOG(int argc, char **argv, int evgNumber)
     }
     /* argc determinates the operation to perform */
     if (argc < 0) {
-        if (isActive) {
+        if (isActive[evgNumber]) {
             GPIO_WRITE(gpioIdxEventLogCsr, 0);
-            isActive = 0;
+            isActive[evgNumber] = 0;
         }
         return 0;
     }
     if (argc > 0) {
         csr = GPIO_READ(gpioIdxEventLogCsr);
-        addrMask = ~(~0UL << ((csr >> 24) & 0xF));
+        addrMask[evgNumber] = ~(~0UL << ((csr >> 24) & 0xF));
         GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000);
-        rAddr = 0;
-        isActive = 1;
-        isFirstHB = 1;
-        todBitCount = 0;
+        rAddr[evgNumber] = 0;
+        isActive[evgNumber] = 1;
+        isFirstHB[evgNumber] = 1;
+        todBitCount[evgNumber] = 0;
         return 0;
     }
-    if (isActive) {
+    if (isActive[evgNumber]) {
         int wAddr, wAddrOld;
         static uint32_t lastHbTicks, lastEvTicks, todShift;
         csr = GPIO_READ(gpioIdxEventLogCsr);
-        wAddrOld = csr & addrMask;
+        wAddrOld = csr & addrMask[evgNumber];
         for (;;) {
             csr = GPIO_READ(gpioIdxEventLogCsr);
-            wAddr = csr & addrMask;
+            wAddr = csr & addrMask[evgNumber];
             if (wAddr == wAddrOld) break;
             if (++pass > 10) {
                 printf("Event logger unstable!\n");
-                isActive = 0;
+                isActive[evgNumber] = 0;
                 return 0;
             }
             wAddrOld = wAddr;
         }
-        for (pass = 0 ; rAddr < wAddr ; ) {
+        for (pass = 0 ; rAddr[evgNumber] != wAddr ; ) {
             int event;
-            GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000 | rAddr);
-            rAddr = (rAddr + 1) & addrMask;
+            GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000 | rAddr[evgNumber]);
+            rAddr[evgNumber] = (rAddr[evgNumber] + 1) & addrMask[evgNumber];
             event = (GPIO_READ(gpioIdxEventLogCsr) >> 16) & 0xFF;
             if (event == 112) {
-                todBitCount++;
+                todBitCount[evgNumber]++;
                 todShift = (todShift << 1) | 0;
             }
             else if (event == 113) {
-                todBitCount++;
+                todBitCount[evgNumber]++;
                 todShift = (todShift << 1) | 1;
             }
             else {
                 uint32_t ticks = GPIO_READ(gpioIdxEventLogTicks);
                 switch(event) {
                 case 122:
-                    if (isFirstHB) {
+                    if (isFirstHB[evgNumber]) {
                         printf("HB\n");
-                        isFirstHB = 0;
+                        isFirstHB[evgNumber] = 0;
                     }
                     else {
                         printf("HB %d\n", ticks - lastHbTicks);
@@ -598,13 +598,13 @@ cmdTLOG(int argc, char **argv, int evgNumber)
                     break;
 
                 case 125:
-                    if (todBitCount == 32) {
+                    if (todBitCount[evgNumber] == 32) {
                         printf("PPS %d\n", todShift);
                     }
                     else {
                         printf("PPS\n");
                     }
-                    todBitCount = 0;
+                    todBitCount[evgNumber] = 0;
                     break;
 
                 default:
@@ -613,9 +613,9 @@ cmdTLOG(int argc, char **argv, int evgNumber)
                     break;
                 }
             }
-            if (++pass >= addrMask) {
+            if (++pass >= addrMask[evgNumber]) {
                 printf("Event logger can't keep up.\n");
-                isActive = 0;
+                isActive[evgNumber] = 0;
                 return 0;
             }
         }
