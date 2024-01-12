@@ -440,7 +440,7 @@ evFIFO evg1FIFOtlog (
   .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_TLOG_CSR]),
   .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_1_TLOG_TICKS]),
   .evClk(evg1TxClk),
-  .evChar(evgTxData[7:0]),
+  .evChar(evg1TxData[7:0]),
   .evCharIsK(evgTxCharIsK[0]));
 
 /////////////////////////////////////////////////////////////////////////////
@@ -546,7 +546,7 @@ evFIFO evg2FIFOtlog (
   .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_TLOG_CSR]),
   .sysDataTicks(GPIO_IN[GPIO_IDX_EVG_2_TLOG_TICKS]),
   .evClk(evg2TxClk),
-  .evChar(evgTxData[7:0]),
+  .evChar(evg2TxData[7:0]),
   .evCharIsK(evgTxCharIsK[0]));
 
 /////////////////////////////////////////////////////////////////////////////
