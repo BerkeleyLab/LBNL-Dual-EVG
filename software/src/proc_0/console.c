@@ -534,6 +534,7 @@ cmdTLOG(int argc, char **argv, int evgNumber)
         gpioIdxEventLogTicks = GPIO_IDX_EVG_2_TLOG_TICKS;
         break;
     default:
+        warn("[!] Invalid EVG number - TLOG command aborted.");
         return 0;
     }
     /* argc determinates the operation to perform */
