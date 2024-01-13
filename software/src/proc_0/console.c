@@ -585,6 +585,7 @@ cmdTLOG(int argc, char **argv, int evgNumber)
             }
             else {
                 uint32_t ticks = GPIO_READ(gpioIdxEventLogTicks);
+                printf("EVG%1d - ", evgNumber+1);
                 switch(event) {
                 case 122:
                     if (isFirstHB[evgNumber]) {
