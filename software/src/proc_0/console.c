@@ -633,15 +633,13 @@ cmdTLOG(int argc, char **argv, int evgNumber)
 static int
 cmdTLOGevg1(int argc, char **argv)
 {
-    cmdTLOG(argc, argv, 0);
-    return 0;
+    return cmdTLOG(argc, argv, 0);
 }
 
 static int
 cmdTLOGevg2(int argc, char **argv)
 {
-    cmdTLOG(argc, argv, 1);
-    return 0;
+    return cmdTLOG(argc, argv, 1);
 }
 
 static void
