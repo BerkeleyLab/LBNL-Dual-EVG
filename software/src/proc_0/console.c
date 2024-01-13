@@ -545,6 +545,10 @@ cmdTLOG(int argc, char **argv, int evgNumber)
         return 0;
     }
     if (argc > 0) {
+        // Disable all the evFifo
+        GPIO_WRITE(GPIO_IDX_EVG_1_TLOG_CSR, 0);
+        GPIO_WRITE(GPIO_IDX_EVG_2_TLOG_CSR, 0);
+        // Enable only the target one
         csr = GPIO_READ(gpioIdxEventLogCsr);
         addrMask[evgNumber] = ~(~0UL << ((csr >> 24) & 0xF));
         GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000);
