@@ -24,7 +24,7 @@ if [ $SERIAL_NUMBER > 0 ]; then
     si570_configuration_string="s AA 270000000 40"
     echo "Marble PCB rev = 1.4 - Si570 parameters = {0xAA (0x55 7-bit), 270 MHz, 0x0}"
   else # considering Marble 1.3
-    si570_configuration_string="s EE 125000000 41"
+    si570_configuration_string="s EE 125000000 42"
     echo "Marble PCB rev = 1.3 - Si570 parameters = {0xEE (0x77 7-bit), 125 MHz, 0x1}"
   fi
 fi
