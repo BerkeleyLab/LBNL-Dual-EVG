@@ -218,6 +218,10 @@ align(struct evgInfo *evgp)
         }
         if ((pass % 100) == 0) {
             printf("Aligning EVG %d Tx:Ref (pass %d).\n", evgp->evgNumber,pass);
+            printf("EVG %d PLL Tx:Ref offset %d (want %d), pass %d.\n",
+                   evgp->evgNumber, phaseOffset,
+                   sharedMemory->systemParameters.pllPhaseShift[evgp->evgIndex],
+                   pass);
         }
         if (pass >= 1000) {
             warn("Can't align EVG %d -- Tx:Ref %d, want %d", evgp->evgNumber,
@@ -386,7 +390,7 @@ evgSequencerStatus(unsigned int idx)
         r0 = r1;
     }
 }
-        
+
 void
 evgSoftwareTrigger(unsigned int idx, int eventCode)
 {

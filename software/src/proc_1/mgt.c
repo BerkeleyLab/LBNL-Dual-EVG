@@ -81,18 +81,10 @@ writeResets(int mgtBitmap, uint32_t resets)
             GPIO_WRITE(csrIdx, CSR_W_ENABLE_RESETS | resets);
 
             if (debugFlags & DEBUGFLAG_SHOW_TX_RESETS) {
-                printf("TX resets (%d):%x 1:%08X 2:%08X\n", lane, mgtBitmap,
+                printf("TX resets - EVG%d Lane:%d 1:%08X 2:%08X\n", evg+1, lane,
                         GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane)),
                         GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane)));
             }
-        }
-    }
-
-    for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
-        if (debugFlags & DEBUGFLAG_SHOW_TX_RESETS) {
-            printf("TX resets (%d):%x 1:%08X 2:%08X\n", lane, mgtBitmap,
-                    GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane)),
-                    GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane)));
         }
     }
 }
