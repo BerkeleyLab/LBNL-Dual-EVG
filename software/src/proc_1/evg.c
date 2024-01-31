@@ -239,13 +239,23 @@ align(struct evgInfo *evgp)
 int
 evgAlign(void)
 {
-    struct evgInfo *evgp;
     int ret = 1;
-    for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
-        if (!align(evgp)) {
-            ret = 0;
+
+    if (CFG_MGT_TX_REF_ALIGN == 1) {
+        struct evgInfo *evgp;
+        for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
+            if (!align(evgp)) {
+                ret = 0;
+            }
         }
     }
+    else {
+        printf("Bypassing MGT Tx:Ref alignment\n");
+        // We still need to measure the phase difference
+        // for the coincidence procedure
+        findPhase();
+    }
+
     if (!sharedMemory->requestAlignment) {
         sharedMemory->requestAlignment = 1;
     }
