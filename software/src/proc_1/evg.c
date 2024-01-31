@@ -218,6 +218,10 @@ align(struct evgInfo *evgp)
         }
         if ((pass % 100) == 0) {
             printf("Aligning EVG %d Tx:Ref (pass %d).\n", evgp->evgNumber,pass);
+            printf("EVG %d PLL Tx:Ref offset %d (want %d), pass %d.\n",
+                   evgp->evgNumber, phaseOffset,
+                   sharedMemory->systemParameters.pllPhaseShift[evgp->evgIndex],
+                   pass);
         }
         if (pass >= 1000) {
             warn("Can't align EVG %d -- Tx:Ref %d, want %d", evgp->evgNumber,
@@ -235,13 +239,23 @@ align(struct evgInfo *evgp)
 int
 evgAlign(void)
 {
-    struct evgInfo *evgp;
     int ret = 1;
-    for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
-        if (!align(evgp)) {
-            ret = 0;
+
+    if (CFG_MGT_TX_REF_ALIGN == 1) {
+        struct evgInfo *evgp;
+        for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
+            if (!align(evgp)) {
+                ret = 0;
+            }
         }
     }
+    else {
+        printf("Bypassing MGT Tx:Ref alignment\n");
+        // We still need to measure the phase difference
+        // for the coincidence procedure
+        findPhase();
+    }
+
     if (!sharedMemory->requestAlignment) {
         sharedMemory->requestAlignment = 1;
     }
@@ -386,7 +400,7 @@ evgSequencerStatus(unsigned int idx)
         r0 = r1;
     }
 }
-        
+
 void
 evgSoftwareTrigger(unsigned int idx, int eventCode)
 {

@@ -72,23 +72,19 @@ writeResets(int mgtBitmap, uint32_t resets)
         csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
                         (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
 
+        if (!csrBaseIdx) {
+            continue;
+        }
+
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
             csrIdx = REG(csrBaseIdx, lane);
             GPIO_WRITE(csrIdx, CSR_W_ENABLE_RESETS | resets);
 
             if (debugFlags & DEBUGFLAG_SHOW_TX_RESETS) {
-                printf("TX resets (%d):%x 1:%08X 2:%08X\n", lane, mgtBitmap,
+                printf("TX resets - EVG%d Lane:%d 1:%08X 2:%08X\n", evg+1, lane,
                         GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane)),
                         GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane)));
             }
-        }
-    }
-
-    for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
-        if (debugFlags & DEBUGFLAG_SHOW_TX_RESETS) {
-            printf("TX resets (%d):%x 1:%08X 2:%08X\n", lane, mgtBitmap,
-                    GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane)),
-                    GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane)));
         }
     }
 }
@@ -114,6 +110,10 @@ mgtTxReset(int mgtBitmap)
         csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
                         (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
 
+        if (!csrBaseIdx) {
+            continue;
+        }
+
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
             csrIdx = REG(csrBaseIdx, lane);
             locked = GPIO_READ(csrIdx) & CSR_R_CPLL_LOCKED;
@@ -123,7 +123,7 @@ mgtTxReset(int mgtBitmap)
             while (!locked) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
-                        warn("MGT CPLL lock fail - EVG%d Lane:%d ResetCmd:%x [reg %X - %X]",
+                        warn("MGT CPLL lock fail - EVG%d Lane:%d ResetCmd:0x%x [reg 0x%08X - 0x%08X]",
                              evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }
@@ -143,6 +143,10 @@ mgtTxReset(int mgtBitmap)
         csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
                         (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
 
+        if (!csrBaseIdx) {
+            continue;
+        }
+
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
             csrIdx = REG(csrBaseIdx, lane);
             txResetDone = GPIO_READ(csrIdx) & CSR_R_TX_RESET_DONE;
@@ -152,7 +156,7 @@ mgtTxReset(int mgtBitmap)
             while (!txResetDone) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
-                        warn("MGT Tx reset fail - EVG%d Lane:%d ResetCmd:%x [reg %X - %X]",
+                        warn("MGT Tx reset fail - EVG%d Lane:%d ResetCmd:0x%x [reg 0x%08X - 0x%08X]",
                              evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }

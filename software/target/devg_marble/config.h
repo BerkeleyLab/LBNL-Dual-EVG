@@ -24,3 +24,7 @@
 
 // Use FMC for 115 MGT quad. 0 = FMC, 1 = QSFP 2
 #define CFG_MGT_FMC_OR_QSFP                0
+
+// Disable MGT Tx:Ref alignement, as we are using
+// Automatic MGT TX alignment
+#define CFG_MGT_TX_REF_ALIGN               0
