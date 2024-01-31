@@ -49,7 +49,7 @@ always @(posedge evgTxClk) begin
         evgHbExtender <= {1'b1, evgHbInterval[HB_EXTENDER_WIDTH-1:1]};
     end
     else begin
-        evgHbInterval <= evgHbInterval - 1;
+        evgHbInterval <= evgHbInterval + 1;
         if (evgHbExtenderMSB) begin
             evgHbExtender <= evgHbExtender - 1;
         end

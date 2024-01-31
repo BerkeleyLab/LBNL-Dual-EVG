@@ -513,6 +513,135 @@ cmdREG(int argc, char **argv)
     return 0;
 }
 
+static int
+cmdTLOG(int argc, char **argv, int evgNumber)
+{
+    uint32_t csr;
+    static int isActive[2], isFirstHB[2], todBitCount[2];
+    static int rAddr[2];
+    static int addrMask[2];
+    uint32_t gpioIdxEventLogCsr, gpioIdxEventLogTicks;
+    int pass = 0;
+
+    /* GPIO_IDX selection corresponding to EVG 1 or 2 */
+    switch (evgNumber) {
+    case 0:
+        gpioIdxEventLogCsr = GPIO_IDX_EVG_1_TLOG_CSR;
+        gpioIdxEventLogTicks = GPIO_IDX_EVG_1_TLOG_TICKS;
+        break;
+    case 1:
+        gpioIdxEventLogCsr = GPIO_IDX_EVG_2_TLOG_CSR;
+        gpioIdxEventLogTicks = GPIO_IDX_EVG_2_TLOG_TICKS;
+        break;
+    default:
+        warn("[!] Invalid EVG number - TLOG command aborted.");
+        return 0;
+    }
+    /* argc determinates the operation to perform */
+    if (argc < 0) {
+        if (isActive[evgNumber]) {
+            GPIO_WRITE(gpioIdxEventLogCsr, 0);
+            isActive[evgNumber] = 0;
+        }
+        return 0;
+    }
+    if (argc > 0) {
+        // Disable all the evFifo
+        GPIO_WRITE(GPIO_IDX_EVG_1_TLOG_CSR, 0);
+        GPIO_WRITE(GPIO_IDX_EVG_2_TLOG_CSR, 0);
+        // Enable only the target one
+        csr = GPIO_READ(gpioIdxEventLogCsr);
+        addrMask[evgNumber] = ~(~0UL << ((csr >> 24) & 0xF));
+        GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000);
+        rAddr[evgNumber] = 0;
+        isActive[evgNumber] = 1;
+        isFirstHB[evgNumber] = 1;
+        todBitCount[evgNumber] = 0;
+        return 0;
+    }
+    if (isActive[evgNumber]) {
+        int wAddr, wAddrOld;
+        static uint32_t lastHbTicks, lastEvTicks, todShift;
+        csr = GPIO_READ(gpioIdxEventLogCsr);
+        wAddrOld = csr & addrMask[evgNumber];
+        for (;;) {
+            csr = GPIO_READ(gpioIdxEventLogCsr);
+            wAddr = csr & addrMask[evgNumber];
+            if (wAddr == wAddrOld) break;
+            if (++pass > 10) {
+                printf("Event logger unstable!\n");
+                isActive[evgNumber] = 0;
+                return 0;
+            }
+            wAddrOld = wAddr;
+        }
+        for (pass = 0 ; rAddr[evgNumber] != wAddr ; ) {
+            int event;
+            GPIO_WRITE(gpioIdxEventLogCsr, 0x80000000 | rAddr[evgNumber]);
+            rAddr[evgNumber] = (rAddr[evgNumber] + 1) & addrMask[evgNumber];
+            event = (GPIO_READ(gpioIdxEventLogCsr) >> 16) & 0xFF;
+            if (event == 112) {
+                todBitCount[evgNumber]++;
+                todShift = (todShift << 1) | 0;
+            }
+            else if (event == 113) {
+                todBitCount[evgNumber]++;
+                todShift = (todShift << 1) | 1;
+            }
+            else {
+                uint32_t ticks = GPIO_READ(gpioIdxEventLogTicks);
+                printf("EVG%1d - ", evgNumber+1);
+                switch(event) {
+                case 122:
+                    if (isFirstHB[evgNumber]) {
+                        printf("HB\n");
+                        isFirstHB[evgNumber] = 0;
+                    }
+                    else {
+                        printf("HB %d\n", ticks - lastHbTicks);
+                    }
+                    lastHbTicks = ticks;
+                    break;
+
+                case 125:
+                    if (todBitCount[evgNumber] == 32) {
+                        printf("PPS %d\n", todShift);
+                    }
+                    else {
+                        printf("PPS\n");
+                    }
+                    todBitCount[evgNumber] = 0;
+                    break;
+
+                default:
+                    printf("%d %d\n", event, ticks - lastEvTicks);
+                    lastEvTicks = ticks;
+                    break;
+                }
+            }
+            if (++pass >= addrMask[evgNumber]) {
+                printf("Event logger can't keep up.\n");
+                isActive[evgNumber] = 0;
+                return 0;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static int
+cmdTLOGevg1(int argc, char **argv)
+{
+    return cmdTLOG(argc, argv, 0);
+}
+
+static int
+cmdTLOGevg2(int argc, char **argv)
+{
+    return cmdTLOG(argc, argv, 1);
+}
+
 static void
 commandHandler(int argc, char **argv)
 {
@@ -535,6 +664,8 @@ commandHandler(int argc, char **argv)
       { "net",        cmdNET,         "Set network parameters"             },
       { "pll",        cmdPLL,         "Set PLL phase alignment targets"    },
       { "reg",        cmdREG,         "Show GPIO register(s)"              },
+      { "tlog1",      cmdTLOGevg1,    "Timing system event logger (EVG1)"  },
+      { "tlog2",      cmdTLOGevg2,    "Timing system event logger (EVG2)"  },
       { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
     };
 
@@ -606,7 +737,7 @@ consoleCheck(void)
      * remaining stuck here when the other processor started spewing.
      *
      * Emitting characters from other processor could mess up an eye scan
-     * but messsages from the other processor are important enough that
+     * but messages from the other processor are important enough that
      * this is acceptable.
      */
     for (int n = 0 ; n < 500 ; n++) {
@@ -682,6 +813,8 @@ consoleCheck(void)
         }
     }
     else {
+        cmdTLOGevg1(0, NULL);
+        cmdTLOGevg2(0, NULL);
         return;
     }
     if ((c == '\001') || (c > '\177')) return;
@@ -696,6 +829,8 @@ consoleCheck(void)
         handleLine(line);
         return;
     }
+    cmdTLOGevg1(-1, NULL);
+    cmdTLOGevg2(-1, NULL);
     if (c == '\b') {
         if (idx) {
             printf("\b \b");

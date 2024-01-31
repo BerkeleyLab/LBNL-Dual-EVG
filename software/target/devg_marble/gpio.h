@@ -78,9 +78,13 @@
 #define GPIO_IDX_NTP_SERVER_SECONDS      32 // NTP server seconds (R/W)
 #define GPIO_IDX_NTP_SERVER_FRACTION     33 // NTP fractional seconds (R)
 #define GPIO_IDX_MMC_MAILBOX             34 // Communicate with MMC
-#define GPIO_IDX_EVG_1_LOG_CSR           35 // EVG 1 event logger
-#define GPIO_IDX_EVG_2_LOG_CSR           36 // EVG 2 event logger
+#define GPIO_IDX_EVG_1_DISP_LOG_CSR      35 // EVG 1 display event logger
+#define GPIO_IDX_EVG_2_DISP_LOG_CSR      36 // EVG 2 display event logger
 #define GPIO_IDX_GITHASH                 37 // Git 32-bit hash
+#define GPIO_IDX_EVG_1_TLOG_CSR          38 // EVG 1 tlog event logger control
+#define GPIO_IDX_EVG_1_TLOG_TICKS        39 // EVG 1 tlog event logger ticks
+#define GPIO_IDX_EVG_2_TLOG_CSR          40 // EVG 2 tlog event logger control
+#define GPIO_IDX_EVG_2_TLOG_TICKS        41 // EVG 2 tlog event logger ticks
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
