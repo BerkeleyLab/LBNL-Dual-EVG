@@ -127,8 +127,8 @@ evg1mgt evg1mgt_i (
     .soft_reset_tx_in(gtTxReset), // input wire soft_reset_tx_in
     .soft_reset_rx_in(gtRxReset), // input wire soft_reset_rx_in
     .dont_reset_on_data_error_in(1'b1), // input wire dont_reset_on_data_error_in
-    .gt0_tx_fsm_reset_done_out(tx_fsm_reset_done_out), // output wire gt0_tx_fsm_reset_done_out
-    .gt0_rx_fsm_reset_done_out(rx_fsm_reset_done_out), // output wire gt0_rx_fsm_reset_done_out
+    .gt0_tx_fsm_reset_done_out(tx_fsm_reset_done), // output wire gt0_tx_fsm_reset_done_out
+    .gt0_rx_fsm_reset_done_out(rx_fsm_reset_done), // output wire gt0_rx_fsm_reset_done_out
     .gt0_data_valid_in(1'b1), // input wire gt0_data_valid_in
     .gt0_cpllfbclklost_out(), // output wire gt0_cpllfbclklost_out
     .gt0_cplllock_out(cpllLock), // output wire gt0_cplllock_out
@@ -295,8 +295,8 @@ evg2mgt evg2mgt_i (
     .soft_reset_tx_in(gtTxReset), // input wire soft_reset_tx_in
     .soft_reset_rx_in(gtRxReset), // input wire soft_reset_rx_in
     .dont_reset_on_data_error_in(1'b1), // input wire dont_reset_on_data_error_in
-    .gt0_tx_fsm_reset_done_out(tx_fsm_reset_done_out), // output wire gt0_tx_fsm_reset_done_out
-    .gt0_rx_fsm_reset_done_out(rx_fsm_reset_done_out), // output wire gt0_rx_fsm_reset_done_out
+    .gt0_tx_fsm_reset_done_out(tx_fsm_reset_done), // output wire gt0_tx_fsm_reset_done_out
+    .gt0_rx_fsm_reset_done_out(rx_fsm_reset_done), // output wire gt0_rx_fsm_reset_done_out
     .gt0_data_valid_in(1'b1), // input wire gt0_data_valid_in
     .gt0_cpllfbclklost_out(), // output wire gt0_cpllfbclklost_out
     .gt0_cplllock_out(cpllLock), // output wire gt0_cplllock_out
