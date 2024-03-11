@@ -4,7 +4,7 @@ module devg_test_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
     parameter ILA_CHIPSCOPE_DBG       = "FALSE",
-    parameter FALLBACK_TO_SYS_PPS     = "FALSE",
+    parameter FALLBACK_TO_SYS_PPS     = "TRUE",
     parameter SYSCLK_FREQUENCY        = 100000000,
     parameter TXCLK_NOMINAL_FREQUENCY = 125000000
     ) (
