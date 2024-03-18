@@ -110,7 +110,7 @@ sprintf(char *buf, const char *fmt, ...)
  * Hang on to startup messages.
  * Buffer to limit the number of transmitted packets.
  */
-#define STARTBUF_SIZE   2000
+#define STARTBUF_SIZE   5000
 static char startBuf[STARTBUF_SIZE];
 static int startIdx = 0;
 static int isStartup = 1;
