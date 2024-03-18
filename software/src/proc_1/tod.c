@@ -328,9 +328,6 @@ todCrank(void)
             if (!reportedMissingPPS++) {
                 warn("No PPS");
             }
-            if ((reportedMissingPPS % 60) == 0) {
-                printf("Still no PPS -- can't proceed\n");
-            }
         }
         break;
 
