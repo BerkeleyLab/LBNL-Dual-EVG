@@ -48,6 +48,21 @@ gw_devg_test_marble:
       - gateware/syn/devg_test_marble/_xilinx/devg_test_marble_top/*.runs/impl_1/*.rpt
       - gateware/syn/devg_test_marble/bd.xsa
 
+gw_devg_test_marble_internal_pps:
+  before_script:
+    - cd gateware/syn/devg_test_marble_internal_pps && ls /non-free
+  stage: gateware
+  script:
+    - make clean && PATH=$XILINX_VIVADO/bin:$PATH make devg_test_marble_top.bit && PATH=$XILINX_VIVADO/bin:$PATH make devg_test_marble_top.mmi
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 7 days
+    paths:
+      - gateware/syn/devg_test_marble_internal_pps/devg_test_marble_top.bit
+      - gateware/syn/devg_test_marble_internal_pps/devg_test_marble_top.mmi
+      - gateware/syn/devg_test_marble_internal_pps/_xilinx/devg_test_marble_top/*.runs/impl_1/*.rpt
+      - gateware/syn/devg_test_marble_internal_pps/bd.xsa
+
 # Software jobs
 # Gitlab doesn't seem to suport the usage of variables in
 # a "dependencies" or "needs" statement. So, unroll the job
@@ -81,6 +96,26 @@ sw_devg_test_marble:
   # Get artifacts from this job, needed to compile the sofware
   needs:
     - job: gw_devg_test_marble
+      artifacts: true
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 7 days
+    paths:
+      - software/app/devg_test/proc_0/devg_test_marble_proc_0.elf
+      - software/app/devg_test/proc_1/devg_test_marble_proc_1.elf
+      - software/app/devg_test/proc_0/devg_test_marble_proc_0.elf.size
+      - software/app/devg_test/proc_1/devg_test_marble_proc_1.elf.size
+      - software/app/devg_test/devg_test_marble*.bit
+
+sw_devg_test_marble_internal_pps:
+  before_script:
+    - cd software/app/devg_test
+  stage: software
+  script:
+    - make TARGET=devg_test_marble clean && PATH=$XILINX_VITIS/bin:$XILINX_VITIS/gnu/microblaze/lin/bin:$PATH make TARGET=devg_test_marble
+  # Get artifacts from this job, needed to compile the sofware
+  needs:
+    - job: gw_devg_test_marble_internal_pps
       artifacts: true
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
