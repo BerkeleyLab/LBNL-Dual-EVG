@@ -37,7 +37,7 @@ TOP_LVL_DIR = ../../top/$(TARGET)
 vpath %.v $(TOP_LVL_DIR)
 vpath %.xdc $(TOP_LVL_DIR)
 
-VIVADO_SYNTH_EXTRA_TCL = prop.tcl ipcores_repos.tcl prio_xci_files.tcl
+VIVADO_SYNTH_EXTRA_TCL += prop.tcl ipcores_repos.tcl prio_xci_files.tcl
 
 include $(BUILD_DIR)/top_rules.mk
 
