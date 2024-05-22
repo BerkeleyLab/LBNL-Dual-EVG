@@ -817,6 +817,8 @@ consoleCheck(void)
         cmdTLOGevg2(0, NULL);
         return;
     }
+    cmdTLOGevg1(-1, NULL);
+    cmdTLOGevg2(-1, NULL);
     if ((c == '\001') || (c > '\177')) return;
     if (c == '\t') c = ' ';
     else if (c == '\177') c = '\b';
@@ -829,8 +831,6 @@ consoleCheck(void)
         handleLine(line);
         return;
     }
-    cmdTLOGevg1(-1, NULL);
-    cmdTLOGevg2(-1, NULL);
     if (c == '\b') {
         if (idx) {
             printf("\b \b");
