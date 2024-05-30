@@ -88,7 +88,7 @@ end
 wire [DISTRIBUTED_BUS_WIDTH-1:0] dBus = {{DISTRIBUTED_BUS_WIDTH-3{1'b0}},
                                         evgDiag,
                                         evgPing,
-                                        evgHbExtenderMSB};
+                                        1'b0};
 
 evgSource #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
