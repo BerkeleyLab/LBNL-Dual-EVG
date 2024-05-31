@@ -27,7 +27,6 @@ module evg #(
     output wire [GPIO_WIDTH-1:0] sysSoftwareTriggerStatus,
 
     input [HARDWARE_TRIGGER_COUNT-1:0] hwTriggers_a,
-    input                              diagnosticIn_a,
 
     (*mark_debug=DEBUG*) input              evgTxClk,
     (*mark_debug=DEBUG*) output wire [15:0] evgTxData,
