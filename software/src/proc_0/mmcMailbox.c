@@ -71,6 +71,9 @@
 /* MGT6:QSFP2:2/11, MGT4:QSFP2:3/10, FMC on */
 # define MGT_CONFIG_QSFP (MGT_CONFIG_SET_MUX3 | MGT_CONFIG_SET_FMC)
 
+/* MGTMUX config masks the result with 0x55 on the MMC side */
+# define MGT_CONFIG_RESULT_MASK    0x55
+
 void
 mmcMailboxWrite(unsigned int address, int value)
 {
@@ -80,13 +83,13 @@ mmcMailboxWrite(unsigned int address, int value)
     }
 }
 
-void
-mmcMailboxWriteAndWait(unsigned int address, int value)
+static void
+mmcMailboxWriteAndWait(unsigned int address, int value, int result)
 {
     uint32_t then;
     mmcMailboxWrite(address, value);
     then = MICROSECONDS_SINCE_BOOT();
-    while ((GPIO_READ(GPIO_IDX_MMC_MAILBOX) & CSR_DATA_MASK) != 0) {
+    while ((GPIO_READ(GPIO_IDX_MMC_MAILBOX) & CSR_DATA_MASK) != result) {
         if ((MICROSECONDS_SINCE_BOOT() - then) > 5000000) {
             warn("mmcMailboxWriteAndWait(0x%02x) timed out", address);
             return;
@@ -139,7 +142,8 @@ mmcMailboxInit(void)
 {
     int mgtCfg = (CFG_MGT_FMC_OR_QSFP == 0)? MGT_CONFIG_FMC : MGT_CONFIG_QSFP;
 
-    mmcMailboxWriteAndWait(MADDR_MGT_CONFIG, mgtCfg);
+    mmcMailboxWriteAndWait(MADDR_MGT_CONFIG, mgtCfg,
+            mgtCfg & MGT_CONFIG_RESULT_MASK);
     microsecondSpin(100);
     printf("Microcontroller:\n");
     showLM75temperature(28, MADDR_U28_TEMP);
