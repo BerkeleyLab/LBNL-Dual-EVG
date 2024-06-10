@@ -27,7 +27,6 @@ module evg #(
     output wire [GPIO_WIDTH-1:0] sysSoftwareTriggerStatus,
 
     input [HARDWARE_TRIGGER_COUNT-1:0] hwTriggers_a,
-    input                              diagnosticIn_a,
 
     (*mark_debug=DEBUG*) input              evgTxClk,
     (*mark_debug=DEBUG*) output wire [15:0] evgTxData,
@@ -36,28 +35,22 @@ module evg #(
     (*mark_debug=DEBUG*) input              evgSequenceStart);
 
 //
-// Place 50% duty cycle heartbeat on LSB of distributed
+// Place 1 clock cycle heartbeat on LSB of distributed
 // bus as required by user timing receivers.  Assume that
 // hearbeat interval is no more than four seconds or so.
 //
-localparam HB_EXTENDER_WIDTH = $clog2(TXCLK_NOMINAL_FREQUENCY) + 2;
-reg [HB_EXTENDER_WIDTH-1:0] evgHbInterval = 0, evgHbExtender = 0;
-wire evgHbExtenderMSB = evgHbExtender[HB_EXTENDER_WIDTH-1];
+reg evgHeartbeat = 0;
 always @(posedge evgTxClk) begin
     if (evgHeartbeatRequest) begin
-        evgHbInterval <= 0;
-        evgHbExtender <= {1'b1, evgHbInterval[HB_EXTENDER_WIDTH-1:1]};
+        evgHeartbeat <= 1;
     end
     else begin
-        evgHbInterval <= evgHbInterval + 1;
-        if (evgHbExtenderMSB) begin
-            evgHbExtender <= evgHbExtender - 1;
-        end
+        evgHeartbeat <= 0;
     end
 end
 
 //
-// Place ~100 kHz, 50% duty cycle on bit 1 of distributed
+// Place 1 clock cycle ~100 kHz on bit 1 of distributed
 // bus for use as round-trip latency measurement 'ping'.
 //
 localparam PING_COUNTER_RELOAD = ((TXCLK_NOMINAL_FREQUENCY / 100000) / 2) - 2;
@@ -67,28 +60,18 @@ wire evgPingCounterDone = evgPingCounter[PING_COUNTER_WIDTH-1];
 reg evgPing = 0;
 always @(posedge evgTxClk) begin
     if (evgPingCounterDone) begin
+        evgPing <= 1;
         evgPingCounter <= PING_COUNTER_RELOAD;
-        evgPing <= !evgPing;
     end
     else begin
+        evgPing <= 0;
         evgPingCounter <= evgPingCounter - 1;
     end
 end
 
-//
-// Place diagnostic input on bit 2 of distributed bus.
-//
-(*ASYN_REG="true"*) reg evgDiag_m;
-reg evgDiag;
-always @(posedge evgTxClk) begin
-    evgDiag_m <= diagnosticIn_a;
-    evgDiag   <= evgDiag_m;
-end
-
-wire [DISTRIBUTED_BUS_WIDTH-1:0] dBus = {{DISTRIBUTED_BUS_WIDTH-3{1'b0}},
-                                        evgDiag,
+wire [DISTRIBUTED_BUS_WIDTH-1:0] dBus = {{DISTRIBUTED_BUS_WIDTH-2{1'b0}},
                                         evgPing,
-                                        evgHbExtenderMSB};
+                                        evgHeartbeat};
 
 evgSource #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),

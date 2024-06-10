@@ -64,10 +64,9 @@ reg [COMMA_INHIBIT_COUNTER_WIDTH-1:0] commaInhibitCounter = 0;
 wire commaInhibitCounterDone=commaInhibitCounter[COMMA_INHIBIT_COUNTER_WIDTH-1];
 
 // Transmitter stream
-// Override distributed bus bit 3 with PPS toggle
 reg [7:0] evgTxCode    = 0;
 reg       evgTxCodeIsK = 0;
-assign evgTxData = { evgDistributedBus[7:4],evgPPStoggle,evgDistributedBus[2:0],
+assign evgTxData = { evgDistributedBus,
                      evgTxCode };
 assign evgTxCharIsK = { 1'b0, evgTxCodeIsK };
 
