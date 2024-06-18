@@ -222,17 +222,9 @@ mgtInit(void)
 void
 mgtCrank(void)
 {
-    static int evgCheck = 0;
     static uint32_t whenChecked;
     uint32_t seconds;
     int mgtLOLBitmap = 0;
-
-    if (evgCheck == (EVG_COUNT - 1)) {
-        evgCheck = 0;
-    }
-    else {
-        evgCheck++;
-    }
 
     if (debugFlags & DEBUGFLAG_TX_RESET) {
         debugFlags &= ~DEBUGFLAG_TX_RESET;
@@ -240,12 +232,13 @@ mgtCrank(void)
         evgAlign();
     }
 
+    /* Check all EVGs LOL every few seconds */
     seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
-    if ((seconds - whenChecked) > 5) {
+    if ((seconds - whenChecked) > 4) {
         whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
-        if ((mgtLOLBitmap = mgtLossOfLock(0x1 << evgCheck))) {
-            warn("MGT CPLL LOL detected %d at %u seconds. Resetting EVG EVG%d",
-                    mgtLOLBitmap, whenChecked, evgCheck+1);
+        if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
+            warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
+                    mgtLOLBitmap, whenChecked);
             mgtTxReset(mgtLOLBitmap);
             evgAlign();
         }
