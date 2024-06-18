@@ -110,9 +110,8 @@ mgtLossOfLock(int mgtBitmap)
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
             csrIdx = REG(csrBaseIdx, lane);
             lol = GPIO_READ(csrIdx) & CSR_R_CPLL_LOSS_OF_LOCK;
-
             if (lol) {
-                return mgtLOLBitmap |= mgtBit;
+                mgtLOLBitmap |= mgtBit;
             }
         }
     }
