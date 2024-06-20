@@ -13,6 +13,7 @@ module ntpClock #(
     (*mark_debug=DEBUG*) output reg  [31:0] seconds,
     (*mark_debug=DEBUG*) output wire [31:0] fraction,
     (*mark_debug=DEBUG*) output reg  [31:0] posixSeconds,
+    (*mark_debug=DEBUG*) output reg  [31:0] posixSecondsNext,
     output wire                      [31:0] status);
 
 localparam NTP_SECONDS_AT_POSIX_EPOCH = 32'd2208988800; // 1970 - 1900 seconds
@@ -110,6 +111,7 @@ always @(posedge clk) begin
     if (writeStrobe) begin
         seconds <= writeData;
         posixSeconds <= writeData - NTP_SECONDS_AT_POSIX_EPOCH;
+        posixSecondsNext <= writeData - NTP_SECONDS_AT_POSIX_EPOCH + 1;
         if (ppsValid) secondsValid <= 1;
     end
     else begin
@@ -117,6 +119,7 @@ always @(posedge clk) begin
         if (ppsStrobe) begin
             seconds <= seconds + 1;
             posixSeconds <= posixSeconds + 1;
+            posixSecondsNext <= posixSecondsNext + 1;
         end
     end
 

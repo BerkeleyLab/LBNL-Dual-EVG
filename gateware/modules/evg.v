@@ -20,6 +20,7 @@ module evg #(
     input                  sysSoftwareTriggerCSRstrobe,
     input                  sysPPStoggle,
     input           [31:0] sysSeconds,
+    input           [31:0] sysSecondsNext,
 
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequenceReadback,
@@ -93,6 +94,7 @@ evgSource #(
     .sysSoftwareTriggerStatus(sysSoftwareTriggerStatus),
     .sysPPStoggle(sysPPStoggle),
     .sysSeconds(sysSeconds),
+    .sysSecondsNext(sysSecondsNext),
     .hwTriggers_a(hwTriggers_a),
     .evgHeartbeatRequest(evgHeartbeatRequest),
     .evgSequenceStart(evgSequenceStart),

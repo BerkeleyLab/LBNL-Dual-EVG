@@ -18,6 +18,7 @@ module evgSource #(
     input                  sysSoftwareTriggerCSRstrobe,
     input                  sysPPStoggle,
     input [GPIO_WIDTH-1:0] sysSeconds,
+    input [GPIO_WIDTH-1:0] sysSecondsNext,
 
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequenceReadback,
@@ -54,6 +55,7 @@ evgCore #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgCore (
     .sysPPStoggle(sysPPStoggle),
     .sysSeconds(sysSeconds),
+    .sysSecondsNext(sysSecondsNext),
     .evgHeartbeatRequest(evgHeartbeatRequest),
     .evgTxClk(evgTxClk),
     .evgTxData(evgTxData),

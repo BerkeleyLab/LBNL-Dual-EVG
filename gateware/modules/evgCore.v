@@ -11,6 +11,7 @@ module evgCore #(
     // Synchronization with external environment
     input        sysPPStoggle,
     input [31:0] sysSeconds,
+    input [31:0] sysSecondsNext,
     input        evgHeartbeatRequest,
 
     // Transmitter connections
@@ -101,7 +102,7 @@ always @(posedge evgTxClk) begin
             if (todStart) begin
                 todStart <= 0;
                 // Crosses clock domains, but won't be changing at this time.
-                todShiftReg <= sysSeconds;
+                todShiftReg <= sysSecondsNext;
             end
             else begin
                 todShiftReg <= {todShiftReg[TOD_SECONDS_WIDTH-2:0], 1'bx};

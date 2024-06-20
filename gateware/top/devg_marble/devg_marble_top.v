@@ -317,7 +317,7 @@ wire bestPPS_a = fmcPPSvalid ? fmcPPS_a : gpsPPS_a;
 //////////////////////////////////////////////////////////////////////////////
 // NTP server support
 wire ppsToggle, ppsMarker, ppsMarkerValid;
-wire [31:0] posixSeconds, ntpStatusReg;
+wire [31:0] posixSeconds, posixSecondsNext, ntpStatusReg;
 ntpClock #(.CLK_RATE(SYSCLK_FREQUENCY),
            .DEBUG("false"))
   ntpClock (
@@ -330,6 +330,7 @@ ntpClock #(.CLK_RATE(SYSCLK_FREQUENCY),
     .seconds(GPIO_IN[GPIO_IDX_NTP_SERVER_SECONDS]),
     .fraction(GPIO_IN[GPIO_IDX_NTP_SERVER_FRACTION]),
     .posixSeconds(posixSeconds),
+    .posixSecondsNext(posixSecondsNext),
     .status(ntpStatusReg));
 
 assign GPIO_IN[GPIO_IDX_NTP_SERVER_STATUS] = ntpStatusReg;
@@ -415,6 +416,7 @@ evg #(
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
     .sysPPStoggle(ppsToggle),
     .sysSeconds(posixSeconds),
+    .sysSecondsNext(posixSecondsNext),
     .hwTriggers_a(FMC1_hwTrigger),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
@@ -520,6 +522,7 @@ evg #(
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
     .sysPPStoggle(ppsToggle),
     .sysSeconds(posixSeconds),
+    .sysSecondsNext(posixSecondsNext),
     .hwTriggers_a(FMC2_hwTrigger),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
