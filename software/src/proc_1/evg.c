@@ -400,9 +400,6 @@ evgEnableSequence(unsigned int idx, int enable)
     return 1;
 }
 
-/*
- * Account for EVG->SYS clock domain crossing -- read until stable
- */
 uint32_t
 evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction)
 {
