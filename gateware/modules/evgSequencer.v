@@ -241,7 +241,7 @@ end
 // with NTP clock so the processor knows exactly when that happens.
 localparam STATUS_DPRAM_DATA_WIDTH = 32 + 64;
 reg [STATUS_DPRAM_DATA_WIDTH-1:0] statusDBuff [0:1];
-reg sysStatusDBuffWe = 0;
+wire sysStatusDBuffWe;
 
 wire [31:0] sysStatus;
 forwardData #(.DATA_WIDTH(32+1))
