@@ -35,8 +35,8 @@
 
 #define EVG_PROTOCOL_UDP_EPICS_PORT     58762
 #define EVG_PROTOCOL_UDP_STATUS_PORT    58763
-#define EVG_PROTOCOL_MAGIC              0xBD008426
-#define EVG_PROTOCOL_MAGIC_SWAPPED      0x268400BD
+#define EVG_PROTOCOL_MAGIC              0xBD018426
+#define EVG_PROTOCOL_MAGIC_SWAPPED      0x268401BD
 #define EVG_PROTOCOL_ARG_CAPACITY       350
 #define EVG_PROTOCOL_EVG_COUNT          2
 
@@ -50,8 +50,8 @@ struct evgPacket {
 struct evgStatusPacket {
     uint32_t    magic;
     uint32_t    pkNumber;
-    uint32_t    posixSeconds;
-    uint32_t    ntpFraction;
+    uint32_t    posixSeconds[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t    ntpFraction[EVG_PROTOCOL_EVG_COUNT];
     uint32_t    sequencerStatus[EVG_PROTOCOL_EVG_COUNT];
 };
 

@@ -57,7 +57,7 @@ void evgShowAlignment(void);
 int evgStashSequence(unsigned int idx, int isFirst, int count,
                                                           const uint32_t *seqp);
 int evgEnableSequence(unsigned int idx, int enable);
-uint32_t evgSequencerStatus(unsigned int idx);
+uint32_t evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction);
 
 void evgSoftwareTrigger(unsigned int idx, int eventCode);
 void evgHardwareTrigger(unsigned int idx, int eventCode);
