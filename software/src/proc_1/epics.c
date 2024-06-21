@@ -395,7 +395,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
         for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
             pk.sequencerStatus[i] = sentStatus[i] = currentStatus[i];
             pk.posixSeconds[i] = currentStatusSeconds[i] - NTP_POSIX_OFFSET;
-            pk.posixFraction[i] = currentStatusFraction[i];
+            pk.ntpFraction[i] = currentStatusFraction[i];
         }
         if (mustSwap) {
             bswap32(&pk.magic, sizeof(pk) / sizeof(int32_t));
