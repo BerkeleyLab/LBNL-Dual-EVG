@@ -404,8 +404,6 @@ uint32_t
 evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction)
 {
     struct evgInfo *evgp = evgPtr(idx);
-    int csrIdx;
-    uint32_t csr;
 
     if (evgp == NULL) return 0;
     return evgStatusRead(evgp, seconds, fraction);
