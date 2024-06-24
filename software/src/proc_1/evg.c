@@ -291,6 +291,8 @@ evgInit(void)
         // On startup force a valid intial value to the status
         // register
         GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
+        // Wait for register to be updated
+        microsecondSpin(1000);
 
         uint32_t csr = evgStatusRead(evgp, NULL, NULL);
         int addressWidth = (csr & SEQ_CSR_ADDRESS_WIDTH_MASK) >>
