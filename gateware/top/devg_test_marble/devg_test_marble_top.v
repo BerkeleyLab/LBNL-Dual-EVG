@@ -314,7 +314,8 @@ endgenerate
 //////////////////////////////////////////////////////////////////////////////
 // NTP server support
 wire ppsToggle, ppsMarker, ppsMarkerValid;
-wire [31:0] posixSeconds, ntpStatusReg;
+wire [31:0] posixSeconds, posixSecondsNext, ntpStatusReg;
+wire [31:0] ntpSeconds, ntpFraction;
 ntpClock #(.CLK_RATE(SYSCLK_FREQUENCY),
            .DEBUG("false"))
   ntpClock (
@@ -324,11 +325,14 @@ ntpClock #(.CLK_RATE(SYSCLK_FREQUENCY),
     .pps_a(bestPPS_a),
     .ppsToggle(ppsToggle),
     .ppsMarker(ppsMarker),
-    .seconds(GPIO_IN[GPIO_IDX_NTP_SERVER_SECONDS]),
-    .fraction(GPIO_IN[GPIO_IDX_NTP_SERVER_FRACTION]),
+    .seconds(ntpSeconds),
+    .fraction(ntpFraction),
     .posixSeconds(posixSeconds),
+    .posixSecondsNext(posixSecondsNext),
     .status(ntpStatusReg));
 
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_SECONDS] = ntpSeconds;
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_FRACTION] = ntpFraction;
 assign GPIO_IN[GPIO_IDX_NTP_SERVER_STATUS] = ntpStatusReg;
 assign ppsMarkerValid = ntpStatusReg[0];
 
@@ -443,11 +447,16 @@ evg #(
     .sysHardwareTriggerCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_1_HW_CSR]),
     .sysSoftwareTriggerCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_1_SW_CSR]),
     .sysSequencerStatus(GPIO_IN[GPIO_IDX_EVG_1_SEQ_CSR]),
+    .sysSequencerStatusNtpSeconds(GPIO_IN[GPIO_IDX_EVG_1_SEQ_SECONDS_CSR]),
+    .sysSequencerStatusNtpFraction(GPIO_IN[GPIO_IDX_EVG_1_SEQ_FRACTION_CSR]),
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_1_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
     .sysPPStoggle(ppsToggle),
     .sysSeconds(posixSeconds),
+    .sysSecondsNext(posixSecondsNext),
+    .sysNtpSeconds(ntpSeconds),
+    .sysNtpFraction(ntpFraction),
     .hwTriggers_a(evg1HwTrigger),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
@@ -585,11 +594,16 @@ evg #(
     .sysHardwareTriggerCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_2_HW_CSR]),
     .sysSoftwareTriggerCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_2_SW_CSR]),
     .sysSequencerStatus(GPIO_IN[GPIO_IDX_EVG_2_SEQ_CSR]),
+    .sysSequencerStatusNtpSeconds(GPIO_IN[GPIO_IDX_EVG_2_SEQ_SECONDS_CSR]),
+    .sysSequencerStatusNtpFraction(GPIO_IN[GPIO_IDX_EVG_2_SEQ_FRACTION_CSR]),
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_2_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
     .sysPPStoggle(ppsToggle),
     .sysSeconds(posixSeconds),
+    .sysSecondsNext(posixSecondsNext),
+    .sysNtpSeconds(ntpSeconds),
+    .sysNtpFraction(ntpFraction),
     .hwTriggers_a(evg2HwTrigger),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),

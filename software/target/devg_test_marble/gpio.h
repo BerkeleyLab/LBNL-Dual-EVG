@@ -85,6 +85,10 @@
 #define GPIO_IDX_EVG_1_TLOG_TICKS        39 // EVG 1 tlog event logger ticks
 #define GPIO_IDX_EVG_2_TLOG_CSR          40 // EVG 2 tlog event logger control
 #define GPIO_IDX_EVG_2_TLOG_TICKS        41 // EVG 2 tlog event logger ticks
+#define GPIO_IDX_EVG_1_SEQ_SECONDS_CSR   42 // EVG 1 sequencer status seconds
+#define GPIO_IDX_EVG_1_SEQ_FRACTION_CSR  43 // EVG 1 sequencer status fraction
+#define GPIO_IDX_EVG_2_SEQ_SECONDS_CSR   44 // EVG 2 sequencer status seconds
+#define GPIO_IDX_EVG_2_SEQ_FRACTION_CSR  45 // EVG 2 sequencer status fraction
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access

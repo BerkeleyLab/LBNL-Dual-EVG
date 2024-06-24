@@ -156,20 +156,13 @@ drawTime(int redraw)
 }
 
 /*
- * Account for EVG->SYS clock domain crossing -- read until stable
+ * Don't flip buffers here and just read what's there
  */
-uint32_t
-evgSequencerStatus(unsigned int idx)
+static uint32_t
+displayEvgSequencerStatus(unsigned int idx)
 {
     int csrIdx = idx ? GPIO_IDX_EVG_2_SEQ_CSR : GPIO_IDX_EVG_1_SEQ_CSR;
-    uint32_t r0, r1;
-
-    r0 = GPIO_READ(csrIdx);
-    for (;;) {
-        r1 = GPIO_READ(csrIdx);
-        if (r1 == r0) return r1;
-        r0 = r1;
-    }
+    return GPIO_READ(csrIdx);
 }
 
 static void
@@ -191,7 +184,7 @@ drawEVGstatus(int redrawAll)
         }
     }
     for (i = 0, xBase = 0 ; i < EVG_COUNT ; i++, xBase += xInc) {
-        uint32_t status = evgSequencerStatus(i) & (EVG_STATUS_MAP_1_ACTIVE |
+        uint32_t status = displayEvgSequencerStatus(i) & (EVG_STATUS_MAP_1_ACTIVE |
                                                    EVG_STATUS_START_COUNT_MASK);
         uint32_t now = MICROSECONDS_SINCE_BOOT();
         uint32_t diff;

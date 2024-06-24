@@ -14,7 +14,11 @@ module evgSequencer # (
     input              sysClk,
     input              sysCSRstrobe,
     input       [31:0] sysGPIO_OUT,
-    output wire [31:0] status,
+    input       [31:0] sysNtpSeconds,
+    input       [31:0] sysNtpFraction,
+    output reg  [31:0] status,
+    output reg  [31:0] statusNtpSeconds,
+    output reg  [31:0] statusNtpFraction,
     output reg  [31:0] sysSequenceReadback,
 
     // Synchronization
@@ -71,6 +75,10 @@ reg [1:0] sysSequenceDisableToggle = 0;
 (*mark_debug=DEBUG*)
 reg [1:0] sequenceDisableToggle = 0, sequenceDisableMatch = 0;
 reg [1:0] sequenceEnabled = 0;
+(*mark_debug=DEBUG*)
+reg sysStatusForceWEToggle = 0;
+(*ASYNC_REG="true"*) reg statusForceWEToggle_m = 0;
+reg statusForceWEToggle = 0, statusForceWEMatch = 0;
 
 // State machine
 reg [EVENTCODE_WIDTH-1:0] pendingEvent;
@@ -82,11 +90,24 @@ localparam START_REQUEST_COUNTER_WIDTH = 8;
 reg [START_REQUEST_COUNTER_WIDTH-1:0] startRequestsIgnored = 0,
                                       startRequestsAccepted = 0;
 
+// Status logic
+reg evgStatusBuffWeToggle = 0;
+
 always @(posedge evgTxClk) begin
     sequenceEnableToggle_m <= sysSequenceEnableToggle;
     sequenceEnableToggle   <= sequenceEnableToggle_m;
     sequenceDisableToggle_m <= sysSequenceDisableToggle;
     sequenceDisableToggle   <= sequenceDisableToggle_m;
+    statusForceWEToggle_m <= sysStatusForceWEToggle;
+    statusForceWEToggle   <= statusForceWEToggle_m;
+
+    // Force write enable to status register. Useful on startup
+    // to have a valid initial value
+    if (statusForceWEToggle != statusForceWEMatch) begin
+        evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+        statusForceWEMatch <= statusForceWEToggle;
+    end
+
     if (sequenceActive || !evgSequenceStart) begin
         // Enable status can change at startup so
         // hold off requests when starting.
@@ -127,10 +148,12 @@ always @(posedge evgTxClk) begin
                 evgSequenceEventTVALID <= 0;
                 sequenceBusy <= 0;
                 sequenceActive <= 0;
+                evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
             end
             else begin
                 if (pendingEvent == precompletionEvent) begin
                     sequenceBusy <= 0;
+                    evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
                 end
                 evgSequenceEventTVALID <= 1;
                 evgSequenceEventTDATA <= pendingEvent;
@@ -155,10 +178,18 @@ always @(posedge evgTxClk) begin
                 seqSelect <= sequenceEnabled[1];
                 sequenceEnabled[1] <= 0;
                 startRequestsAccepted <= startRequestsAccepted + 1;
+                evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
             end
         end
     end
 end
+
+wire [4:0] addressWidth = SEQUENCE_ADDRESS_WIDTH;
+wire [31:0] evgStatus = { 3'b0, addressWidth,
+                  startRequestsIgnored,
+                  startRequestsAccepted,
+                  3'b0, sequenceBusy,
+                  sequenceActive, seqSelect, sequenceEnabled };
 
 ///////////////////////////////////////////////////////////////////////////////
 // System clock domain
@@ -166,14 +197,8 @@ end
 reg [DPRAM_ADDRESS_WIDTH-1:0] sysWriteAddress;
 reg  [SEQUENCE_GAP_WIDTH-1:0] sysGapLatch;
 reg                           sysSequenceReadbackSelect;
-
-wire [4:0] addressWidth = SEQUENCE_ADDRESS_WIDTH;
-// Values are in EVG clock domain -- read with care
-assign status = { 3'b0, addressWidth,
-                  startRequestsIgnored,
-                  startRequestsAccepted,
-                  3'b0, sequenceBusy,
-                  sequenceActive, seqSelect, sequenceEnabled };
+reg                           sysStatusBuffReadToggle = 0;
+reg                           sysStatusBuffReadMatch = 0;
 
 always @(posedge sysClk) begin
     sysSequenceRAMrbk <= sequenceRAM[sysWriteAddress];
@@ -200,6 +225,12 @@ always @(posedge sysClk) begin
             sysWriteAddress <= sysWriteAddress + 1;
         end
         default: begin
+            if (sysGPIO_OUT[5]) begin
+                sysStatusForceWEToggle <= !sysStatusForceWEToggle;
+            end
+            if (sysGPIO_OUT[4]) begin
+                sysStatusBuffReadToggle <= !sysStatusBuffReadToggle;
+            end
             if (sysGPIO_OUT[3]) begin
                 sysSequenceDisableToggle[1] <= !sysSequenceDisableToggle[1];
             end
@@ -214,6 +245,35 @@ always @(posedge sysClk) begin
             end
         end
         endcase
+    end
+end
+
+// Status dual buffer
+// We want every change in status to be timestamped
+// with NTP clock so the processor knows exactly when that happens.
+localparam STATUS_BUFF_DATA_WIDTH = 32 + 64;
+reg [STATUS_BUFF_DATA_WIDTH-1:0] statusBuff = 0;
+reg  sysStatusBuffWeMatch = 0;
+wire sysStatusBuffWeToggle;
+
+wire [31:0] sysStatus;
+forwardData #(.DATA_WIDTH(32+1))
+  forwardSysNTPToEVG(
+      .inClk(evgTxClk),
+      .inData({evgStatusBuffWeToggle, evgStatus}),
+      .outClk(sysClk),
+      .outData({sysStatusBuffWeToggle, sysStatus})
+);
+
+always @(posedge sysClk) begin
+    if (sysStatusBuffWeToggle != sysStatusBuffWeMatch) begin
+        statusBuff <= {sysStatus, sysNtpSeconds, sysNtpFraction};
+        sysStatusBuffWeMatch <= sysStatusBuffWeToggle;
+    end
+
+    if (sysStatusBuffReadToggle != sysStatusBuffReadMatch) begin
+        {status, statusNtpSeconds, statusNtpFraction} <= statusBuff;
+        sysStatusBuffReadMatch <= sysStatusBuffReadToggle;
     end
 end
 

@@ -51,6 +51,7 @@
 #define CSR_R_TX_RESET_DONE     0x01000000
 #define CSR_R_RX_RESET_DONE     0x00800000
 #define CSR_R_CPLL_LOCKED       0x00400000
+#define CSR_R_CPLL_LOSS_OF_LOCK 0x00200000
 
 #define REG(base,chan)  ((base) + (GPIO_IDX_PER_MGTWRAPPER * (chan)))
 #define MGT_RESET_WAITING_TIME  100000 // us
@@ -87,6 +88,35 @@ writeResets(int mgtBitmap, uint32_t resets)
             }
         }
     }
+}
+
+int
+mgtLossOfLock(int mgtBitmap)
+{
+    int evg, lane, lol;
+    int mgtBit = 0, mgtLOLBitmap = 0;
+    uint32_t csrBaseIdx = 0;
+    uint32_t csrIdx = 0;
+
+    for (evg = 0 ; evg < EVG_COUNT; evg++) {
+        mgtBit = 0x1 << evg;
+        csrBaseIdx = (((mgtBitmap & mgtBit) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
+                        ((mgtBitmap & mgtBit) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
+
+        if (!csrBaseIdx) {
+            continue;
+        }
+
+        for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
+            csrIdx = REG(csrBaseIdx, lane);
+            lol = GPIO_READ(csrIdx) & CSR_R_CPLL_LOSS_OF_LOCK;
+            if (lol) {
+                mgtLOLBitmap |= mgtBit;
+            }
+        }
+    }
+
+    return mgtLOLBitmap;
 }
 
 void
@@ -192,17 +222,26 @@ mgtInit(void)
 void
 mgtCrank(void)
 {
-    static int nextCheck = 0;
-    if (nextCheck == (EVG_COUNT - 1)) {
-        nextCheck = 0;
-    }
-    else {
-        nextCheck++;
-    }
+    static uint32_t whenChecked;
+    uint32_t seconds;
+    int mgtLOLBitmap = 0;
+
     if (debugFlags & DEBUGFLAG_TX_RESET) {
         debugFlags &= ~DEBUGFLAG_TX_RESET;
         mgtTxReset(0x3);
         evgAlign();
+    }
+
+    /* Check all EVGs LOL every few seconds */
+    seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+    if ((seconds - whenChecked) > 4) {
+        whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+        if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
+            warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
+                    mgtLOLBitmap, whenChecked);
+            mgtTxReset(mgtLOLBitmap);
+            evgAlign();
+        }
     }
 }
 

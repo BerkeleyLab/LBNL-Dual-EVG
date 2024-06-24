@@ -354,6 +354,8 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     static int mustSend, mustSwap;
     static uint32_t whenSubscribed, whenSent;
     uint32_t currentStatus[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t currentStatusSeconds[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t currentStatusFraction[EVG_PROTOCOL_EVG_COUNT];
     static uint32_t sentStatus[EVG_PROTOCOL_EVG_COUNT];
 
     if (replyHandle) {
@@ -379,7 +381,8 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     }
     if ((now - whenSent) < SHORTEST_US) return;
     for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
-        currentStatus[i] = evgSequencerStatus(i);
+        currentStatus[i] = evgSequencerStatus(i, &currentStatusSeconds[i],
+                &currentStatusFraction[i]);
         if (currentStatus[i] != sentStatus[i]) {
             mustSend = 1;
         }
@@ -387,20 +390,12 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     if (mustSend) {
         static struct evgStatusPacket pk;
         static uint32_t pkNumber;
-        uint32_t seconds;
         pk.magic = EVG_PROTOCOL_MAGIC;
         pk.pkNumber = ++pkNumber;
-        seconds = GPIO_READ(GPIO_IDX_NTP_SERVER_SECONDS);
-        for (;;) {
-            uint32_t s;
-            pk.ntpFraction = GPIO_READ(GPIO_IDX_NTP_SERVER_FRACTION);
-            s = GPIO_READ(GPIO_IDX_NTP_SERVER_SECONDS);
-            if (s == seconds) break;
-            seconds = s;
-        }
-        pk.posixSeconds = seconds - NTP_POSIX_OFFSET;
         for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
             pk.sequencerStatus[i] = sentStatus[i] = currentStatus[i];
+            pk.posixSeconds[i] = currentStatusSeconds[i] - NTP_POSIX_OFFSET;
+            pk.ntpFraction[i] = currentStatusFraction[i];
         }
         if (mustSwap) {
             bswap32(&pk.magic, sizeof(pk) / sizeof(int32_t));

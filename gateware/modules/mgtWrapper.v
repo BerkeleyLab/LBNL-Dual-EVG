@@ -44,7 +44,7 @@ localparam LOOPBACK = LOOPBACK_OFF;
 localparam DRP_DATA_WIDTH = 16;
 localparam DRP_ADDR_WIDTH = 9;
 localparam RESET_CONTROL_WIDTH = 3;
-localparam RESET_STATUS_WIDTH = 9;
+localparam RESET_STATUS_WIDTH = 10;
 
 (*mark_debug=DEBUG*) wire gtTxReset, gtRxReset, cpllReset;
 wire rx_fsm_reset_done, rxResetDone, tx_fsm_reset_done, txResetDone, cpllLock;
@@ -62,7 +62,8 @@ wire [RESET_STATUS_WIDTH-1:0] resetStatus = { gtTxReset,
                                               rx_fsm_reset_done,
                                               txResetDone,
                                               rxResetDone,
-                                              cpllLock };
+                                              cpllLock,
+                                              lossOfLock };
 
 wire drp_en, drp_we, drp_rdy;
 wire [DRP_ADDR_WIDTH-1:0] drp_addr;
@@ -86,6 +87,26 @@ drpControl #(.DRP_DATA_WIDTH(DRP_DATA_WIDTH),
     .drp_addr(drp_addr),
     .drp_di(drp_di),
     .drp_do(drp_do));
+
+//////////////////////////////////////////////////////////////////////////////
+// PLL loss of lock detection
+localparam LOLS_NEEDED = 500; // arbitrary number
+localparam LOL_COUNTER_RELOAD = LOLS_NEEDED - 1;
+localparam LOL_COUNTER_WIDTH = $clog2(LOL_COUNTER_RELOAD+1) + 1;
+(*mark_debug=DEBUG*) reg [LOL_COUNTER_WIDTH-1:0] lolCounter =
+                                                           LOL_COUNTER_RELOAD;
+wire lossOfLock = lolCounter[LOL_COUNTER_WIDTH-1];
+(*ASYNC_REG="true"*) reg cpllLock_m = 0, cpllLockReg = 0;
+always @(posedge sysClk) begin
+    cpllLock_m <= cpllLock;
+    cpllLockReg <= cpllLock_m;
+    if (cpllLockReg) begin
+        lolCounter <= LOL_COUNTER_RELOAD;
+    end
+    else if (!lossOfLock) begin
+        lolCounter <= lolCounter - 1;
+    end
+end
 
 //////////////////////////////////////////////////////////////////////////////
 // Receiver alignment detection

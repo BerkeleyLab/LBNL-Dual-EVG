@@ -49,6 +49,8 @@
 #define SEQ_CSR_IGNORED_CYCLES_SHIFT    16
 #define SEQ_CSR_ACCEPTED_CYCLES_MASK    0xFF00
 #define SEQ_CSR_ACCEPTED_CYCLES_SHIFT   8
+#define SEQ_CSR_FORCE_UPDATE_STATUS_REG 0x20
+#define SEQ_CSR_FLIP_STATUS_REG         0x10
 #define SEQ_CSR_DISABLE_SEQ(n)          (0x4<<(n))
 #define SEQ_CSR_ENABLE_SEQ(n)           (0x1<<(n))
 
@@ -56,6 +58,8 @@
 
 static struct evgInfo {
     uint16_t    csrIdx;
+    uint16_t    csrSecondsIdx;
+    uint16_t    csrFractionIdx;
     uint16_t    rbkIdx;
     uint16_t    hwIdx;
     uint16_t    swIdx;
@@ -70,6 +74,8 @@ static struct evgInfo {
     uint8_t     isValid;
 } evgs[EVG_COUNT] = {
     { .csrIdx   = GPIO_IDX_EVG_1_SEQ_CSR,
+      .csrSecondsIdx = GPIO_IDX_EVG_1_SEQ_SECONDS_CSR,
+      .csrFractionIdx = GPIO_IDX_EVG_1_SEQ_FRACTION_CSR,
       .rbkIdx   = GPIO_IDX_EVG_1_SEQ_RBK,
       .hwIdx    = GPIO_IDX_EVG_1_HW_CSR,
       .swIdx    = GPIO_IDX_EVG_1_SW_CSR,
@@ -77,6 +83,8 @@ static struct evgInfo {
       .evgIndex  = 0,
       .evgNumber = 1 },
     { .csrIdx   = GPIO_IDX_EVG_2_SEQ_CSR,
+      .csrSecondsIdx = GPIO_IDX_EVG_2_SEQ_SECONDS_CSR,
+      .csrFractionIdx = GPIO_IDX_EVG_2_SEQ_FRACTION_CSR,
       .rbkIdx   = GPIO_IDX_EVG_2_SEQ_RBK,
       .hwIdx    = GPIO_IDX_EVG_2_HW_CSR,
       .swIdx    = GPIO_IDX_EVG_2_SW_CSR,
@@ -84,6 +92,18 @@ static struct evgInfo {
       .evgIndex  = 1,
       .evgNumber = 2 },
 };
+
+static uint32_t
+evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
+{
+    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FLIP_STATUS_REG);
+    if (seconds)
+        *seconds = GPIO_READ(evgp->csrSecondsIdx);
+    if (fraction)
+        *fraction = GPIO_READ(evgp->csrFractionIdx);
+
+    return GPIO_READ(evgp->csrIdx);
+}
 
 static int
 convertSequence(const char *csv, uint32_t *dest, int16_t *precompletionEvent)
@@ -268,7 +288,11 @@ evgInit(void)
     int i;
     struct evgInfo *evgp;
     for (i = 0, evgp = evgs ; i < EVG_COUNT ; i++, evgp++) {
-        uint32_t csr = GPIO_READ(evgp->csrIdx);
+        // On startup force a valid intial value to the status
+        // register
+        GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
+
+        uint32_t csr = evgStatusRead(evgp, NULL, NULL);
         int addressWidth = (csr & SEQ_CSR_ADDRESS_WIDTH_MASK) >>
                                                     SEQ_CSR_ADDRESS_WIDTH_SHIFT;
         evgp->capacity = (1 << addressWidth);
@@ -381,24 +405,13 @@ evgEnableSequence(unsigned int idx, int enable)
     return 1;
 }
 
-/*
- * Account for EVG->SYS clock domain crossing -- read until stable
- */
 uint32_t
-evgSequencerStatus(unsigned int idx)
+evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction)
 {
     struct evgInfo *evgp = evgPtr(idx);
-    int csrIdx;
-    uint32_t r0, r1;
 
     if (evgp == NULL) return 0;
-    csrIdx = evgp->csrIdx;
-    r0 = GPIO_READ(csrIdx);
-    for (;;) {
-        r1 = GPIO_READ(csrIdx);
-        if (r1 == r0) return r1;
-        r0 = r1;
-    }
+    return evgStatusRead(evgp, seconds, fraction);
 }
 
 void

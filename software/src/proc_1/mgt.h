@@ -36,6 +36,7 @@
 #define _MGT_H_
 
 void mgtInit(void);
+int mgtLossOfLock(int mgtBitmap);
 void mgtTxReset(int mgtBitmap);
 void mgtTxStutter(int evgNumber);
 int mgtFetchLatency(unsigned int evgIdx);
