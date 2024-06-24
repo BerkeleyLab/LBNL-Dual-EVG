@@ -91,10 +91,9 @@ reg [START_REQUEST_COUNTER_WIDTH-1:0] startRequestsIgnored = 0,
                                       startRequestsAccepted = 0;
 
 // Status logic
-reg evgStatusDBuffWe = 0;
+reg evgStatusDBuffWeToggle = 0;
 
 always @(posedge evgTxClk) begin
-    evgStatusDBuffWe <= 0;
     sequenceEnableToggle_m <= sysSequenceEnableToggle;
     sequenceEnableToggle   <= sequenceEnableToggle_m;
     sequenceDisableToggle_m <= sysSequenceDisableToggle;
@@ -105,7 +104,7 @@ always @(posedge evgTxClk) begin
     // Force write enable to status register. Useful on startup
     // to have a valid initial value
     if (statusForceWEToggle != statusForceWEMatch) begin
-        evgStatusDBuffWe <= 1;
+        evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
         statusForceWEMatch <= statusForceWEToggle;
     end
 
@@ -114,19 +113,19 @@ always @(posedge evgTxClk) begin
         // hold off requests when starting.
         if (sequenceDisableToggle[1] != sequenceDisableMatch[1]) begin
             sequenceEnabled[1] <= 0;
-            evgStatusDBuffWe <= 1;
+            evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
         end
         else if (sequenceEnableToggle[1] != sequenceEnableMatch[1]) begin
             sequenceEnabled[1] <= 1;
-            evgStatusDBuffWe <= 1;
+            evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
         end
         if (sequenceDisableToggle[0] != sequenceDisableMatch[0]) begin
             sequenceEnabled[0] <= 0;
-            evgStatusDBuffWe <= 1;
+            evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
         end
         else if (sequenceEnableToggle[0] != sequenceEnableMatch[0]) begin
             sequenceEnabled[0] <= 1;
-            evgStatusDBuffWe <= 1;
+            evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
         end
         sequenceEnableMatch <= sequenceEnableToggle;
         sequenceDisableMatch <= sequenceDisableToggle;
@@ -135,7 +134,7 @@ always @(posedge evgTxClk) begin
     if (sequenceActive) begin
         if (evgSequenceStart) begin
             startRequestsIgnored <= startRequestsIgnored + 1;
-            evgStatusDBuffWe <= 1;
+            evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
         end
         if (startDelay[0]) begin
             // Sequence read address valid at this point
@@ -154,12 +153,12 @@ always @(posedge evgTxClk) begin
                 evgSequenceEventTVALID <= 0;
                 sequenceBusy <= 0;
                 sequenceActive <= 0;
-                evgStatusDBuffWe <= 1;
+                evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
             end
             else begin
                 if (pendingEvent == precompletionEvent) begin
                     sequenceBusy <= 0;
-                    evgStatusDBuffWe <= 1;
+                    evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
                 end
                 evgSequenceEventTVALID <= 1;
                 evgSequenceEventTDATA <= pendingEvent;
@@ -184,7 +183,7 @@ always @(posedge evgTxClk) begin
                 seqSelect <= sequenceEnabled[1];
                 sequenceEnabled[1] <= 0;
                 startRequestsAccepted <= startRequestsAccepted + 1;
-                evgStatusDBuffWe <= 1;
+                evgStatusDBuffWeToggle <= !evgStatusDBuffWeToggle;
             end
         end
     end
@@ -258,20 +257,22 @@ end
 // with NTP clock so the processor knows exactly when that happens.
 localparam STATUS_DPRAM_DATA_WIDTH = 32 + 64;
 reg [STATUS_DPRAM_DATA_WIDTH-1:0] statusDBuff [0:1];
-wire sysStatusDBuffWe;
+reg  sysStatusDBuffWeMatch = 0;
+wire sysStatusDBuffWeToggle;
 
 wire [31:0] sysStatus;
 forwardData #(.DATA_WIDTH(32+1))
   forwardSysNTPToEVG(
       .inClk(evgTxClk),
-      .inData({evgStatusDBuffWe, evgStatus}),
+      .inData({evgStatusDBuffWeToggle, evgStatus}),
       .outClk(sysClk),
-      .outData({sysStatusDBuffWe, sysStatus})
+      .outData({sysStatusDBuffWeToggle, sysStatus})
 );
 
 always @(posedge sysClk) begin
-    if (sysStatusDBuffWe) begin
+    if (sysStatusDBuffWeToggle != sysStatusDBuffWeMatch) begin
         statusDBuff[sysStatusDBuffWrite] <= {sysStatus, sysNtpSeconds, sysNtpFraction};
+        sysStatusDBuffWeMatch <= sysStatusDBuffWeToggle;
     end
     {status, statusNtpSeconds, statusNtpFraction} <= statusDBuff[!sysStatusDBuffWrite];
 end
