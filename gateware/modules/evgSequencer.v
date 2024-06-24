@@ -113,19 +113,15 @@ always @(posedge evgTxClk) begin
         // hold off requests when starting.
         if (sequenceDisableToggle[1] != sequenceDisableMatch[1]) begin
             sequenceEnabled[1] <= 0;
-            evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
         end
         else if (sequenceEnableToggle[1] != sequenceEnableMatch[1]) begin
             sequenceEnabled[1] <= 1;
-            evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
         end
         if (sequenceDisableToggle[0] != sequenceDisableMatch[0]) begin
             sequenceEnabled[0] <= 0;
-            evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
         end
         else if (sequenceEnableToggle[0] != sequenceEnableMatch[0]) begin
             sequenceEnabled[0] <= 1;
-            evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
         end
         sequenceEnableMatch <= sequenceEnableToggle;
         sequenceDisableMatch <= sequenceDisableToggle;
@@ -134,7 +130,6 @@ always @(posedge evgTxClk) begin
     if (sequenceActive) begin
         if (evgSequenceStart) begin
             startRequestsIgnored <= startRequestsIgnored + 1;
-            evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
         end
         if (startDelay[0]) begin
             // Sequence read address valid at this point
