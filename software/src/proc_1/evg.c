@@ -49,6 +49,7 @@
 #define SEQ_CSR_IGNORED_CYCLES_SHIFT    16
 #define SEQ_CSR_ACCEPTED_CYCLES_MASK    0xFF00
 #define SEQ_CSR_ACCEPTED_CYCLES_SHIFT   8
+#define SEQ_CSR_FORCE_UPDATE_STATUS_REG 0x20
 #define SEQ_CSR_FLIP_STATUS_REG         0x10
 #define SEQ_CSR_DISABLE_SEQ(n)          (0x4<<(n))
 #define SEQ_CSR_ENABLE_SEQ(n)           (0x1<<(n))
@@ -287,6 +288,10 @@ evgInit(void)
     int i;
     struct evgInfo *evgp;
     for (i = 0, evgp = evgs ; i < EVG_COUNT ; i++, evgp++) {
+        // On startup force a valid intial value to the status
+        // register
+        GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
+
         uint32_t csr = evgStatusRead(evgp, NULL, NULL);
         int addressWidth = (csr & SEQ_CSR_ADDRESS_WIDTH_MASK) >>
                                                     SEQ_CSR_ADDRESS_WIDTH_SHIFT;
