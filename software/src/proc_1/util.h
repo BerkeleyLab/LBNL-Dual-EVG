@@ -68,6 +68,7 @@
 #define DEBUGFLAG_DUMP_MGT_SWITCH   0x2000000
 #define DEBUGFLAG_DUMP_CROSSPOINT   0x4000000
 #define DEBUGFLAG_TX_RESET          0x40000000
+#define DEBUGFLAG_NO_RESYNC_ON_LOL  0x80000000
 
 void warn(const char *fmt, ...);
 void bswap32(uint32_t *b, int n);

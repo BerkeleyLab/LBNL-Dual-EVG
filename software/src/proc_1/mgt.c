@@ -232,15 +232,17 @@ mgtCrank(void)
         evgAlign();
     }
 
-    /* Check all EVGs LOL every few seconds */
-    seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
-    if ((seconds - whenChecked) > 4) {
-        whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
-        if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
-            warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
-                    mgtLOLBitmap, whenChecked);
-            mgtTxReset(mgtLOLBitmap);
-            evgAlign();
+    if (!(debugFlags & DEBUGFLAG_NO_RESYNC_ON_LOL)) {
+        /* Check all EVGs LOL every few seconds */
+        seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+        if ((seconds - whenChecked) > 4) {
+            whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+            if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
+                warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
+                        mgtLOLBitmap, whenChecked);
+                mgtTxReset(mgtLOLBitmap);
+                evgAlign();
+            }
         }
     }
 }
