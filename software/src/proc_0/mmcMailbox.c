@@ -147,13 +147,13 @@ getU29temperature(void) {
     return t*5 + (t&0x1)*5;
 }
 
-int
+uint16_t
 getMMCPG3Count()
 {
     return mmcMailboxRead16(MADDR_PG3_COUNT);
 }
 
-int
+uint16_t
 getMMCPG4Count()
 {
     return mmcMailboxRead16(MADDR_PG4_COUNT);
@@ -190,11 +190,11 @@ static int
 mmcMailboxIsValid()
 {
     uint32_t then, check;
-    int counter;
+    uint16_t counter;
 
     counter = getMMCPG3Count();
     check = then = MICROSECONDS_SINCE_BOOT();
-    while (getMMCPG3Count() < counter+1) {
+    while (getMMCPG3Count() == counter) {
         if ((check = (MICROSECONDS_SINCE_BOOT() - then)) > MMC_UPDATE_TIMEOUT) {
             warn("mmcMailboxIsValid() timed out reading PG3 count");
             return 0;
