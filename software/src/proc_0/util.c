@@ -53,10 +53,8 @@ fatal(const char *fmt, ...)
     va_list args;
     unsigned int now, then = MICROSECONDS_SINCE_BOOT();
     unsigned int limit = 0;
-    static int enterCount = 0;
     unsigned int a[4];
 
-    enterCount++;
     for (;;) {
         if (((now = MICROSECONDS_SINCE_BOOT()) - then) >= limit) {
             va_start(args, fmt);
@@ -71,10 +69,9 @@ fatal(const char *fmt, ...)
             then = now;
             limit = 10000000;
         }
-        if (enterCount == 1) {
-            consoleCheck();
-            checkForReset();
-        }
+
+        consoleCheck();
+        checkForReset();
     }
 }
 
