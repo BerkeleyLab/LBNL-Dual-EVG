@@ -48,6 +48,37 @@ static char msgBuf[120];
  * bloating the text size by about 60 kB).
  */
 void
+fatal(const char *fmt, ...)
+{
+    va_list args;
+    unsigned int now, then = MICROSECONDS_SINCE_BOOT();
+    unsigned int limit = 0;
+    static int enterCount = 0;
+    unsigned int a[4];
+
+    enterCount++;
+    for (;;) {
+        if (((now = MICROSECONDS_SINCE_BOOT()) - then) >= limit) {
+            va_start(args, fmt);
+            a[0] = va_arg(args, unsigned int);
+            a[1] = va_arg(args, unsigned int);
+            a[2] = va_arg(args, unsigned int);
+            a[3] = va_arg(args, unsigned int);
+            sprintf(msgBuf, fmt, a[0], a[1], a[2], a[3]);
+            va_end(args);
+            printf("*** Fatal error: %s\n", msgBuf);
+            displayShowFatal(msgBuf);
+            then = now;
+            limit = 10000000;
+        }
+        if (enterCount == 1) {
+            consoleCheck();
+            checkForReset();
+        }
+    }
+}
+
+void
 warn(const char *fmt, ...)
 {
     va_list args;
