@@ -96,11 +96,21 @@ main(void)
     printf("Software POSIX seconds: %u\n", SOFTWARE_BUILD_DATE);
 
     /*
-     * Start things
+     * Initialize mailbox
+     */
+    if(!mmcMailboxInit()) {
+        fatal("MMC mailbox not working");
+    }
+
+    /*
+     * Boot, default configuration
      */
     bootFlashInit();
     systemParametersReadback();
-    mmcMailboxInit();
+
+    /*
+     * Start things
+     */
     iicChunkInit();
     iicProcInit();
     iicFMCinit();

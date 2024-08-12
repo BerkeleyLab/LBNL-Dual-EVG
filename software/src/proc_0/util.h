@@ -71,6 +71,7 @@
 #define DEBUGFLAG_TX_RESET          0x40000000
 
 void warn(const char *fmt, ...);
+void fatal(const char *fmt, ...);
 void bswap32(uint32_t *b, int n);
 void microsecondSpin(unsigned int us);
 void showReg(unsigned int i);
