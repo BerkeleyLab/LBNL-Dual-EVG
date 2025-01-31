@@ -1,12 +1,21 @@
 // Keep track of NTP time
 
 module ntpClock #(
-    parameter CLK_RATE = 100000000,
+    parameter CLK_RATE = 125000000,
     parameter DEBUG    = "false"
     ) (
-    input                                   clk,
+    input                                   sysClk,
     (*mark_debug=DEBUG*) input              writeStrobe,
     input                            [31:0] writeData,
+    output wire                             sysPpsToggle,
+    output wire                             sysPpsMarker,
+    output wire                      [31:0] sysSeconds,
+    output wire                      [31:0] sysFraction,
+    output wire                      [31:0] sysPosixSeconds,
+    output wire                      [31:0] sysPosixSecondsNext,
+    output wire                      [31:0] sysStatus,
+
+    input                                   clk,
     input                                   pps_a,
     output reg                              ppsToggle = 0,
     output wire                             ppsMarker,
@@ -15,6 +24,34 @@ module ntpClock #(
     (*mark_debug=DEBUG*) output reg  [31:0] posixSeconds,
     (*mark_debug=DEBUG*) output reg  [31:0] posixSecondsNext,
     output wire                      [31:0] status);
+
+//
+// CSR
+//
+reg sysCsrToggle = 0;
+reg [31:0] sysCsrSeconds = 0;
+always @(posedge sysClk) begin
+    if (writeStrobe) begin
+        sysCsrToggle <= ~sysCsrToggle;
+        sysCsrSeconds <= writeData;
+    end
+end
+
+//
+// sysClk to clk
+//
+wire csrToggle;
+wire [31:0] csrSeconds;
+forwardData #(.DATA_WIDTH(1+32))
+  forwardCSRtoClk (
+    .inClk(sysClk),
+    .inData({   sysCsrToggle,
+                sysCsrSeconds
+            }),
+    .outClk(clk),
+    .outData({  csrToggle,
+                csrSeconds
+             }));
 
 localparam NTP_SECONDS_AT_POSIX_EPOCH = 32'd2208988800; // 1970 - 1900 seconds
 localparam FRACTION_WIDEN = 12;
@@ -80,7 +117,12 @@ wire ppsValid = ppsValidCounter[2];
 reg secondsValid = 0;
 assign status = { ppsToggle, 29'b0, secondsValid, ppsValid };
 
+reg csrStrobe = 0, csrToggle_d1 = 0;
 always @(posedge clk) begin
+    // sysClk to clk
+    csrToggle_d1 <= csrToggle;
+    csrStrobe <= csrToggle_d1 ^ csrToggle;
+
     // Watch for rising PPS edge
     pps_m <= pps_a;
     pps   <= pps_m;
@@ -108,10 +150,10 @@ always @(posedge clk) begin
     end
 
     // Update integer seconds
-    if (writeStrobe) begin
-        seconds <= writeData;
-        posixSeconds <= writeData - NTP_SECONDS_AT_POSIX_EPOCH;
-        posixSecondsNext <= writeData - NTP_SECONDS_AT_POSIX_EPOCH + 1;
+    if (csrStrobe) begin
+        seconds <= csrSeconds;
+        posixSeconds <= csrSeconds - NTP_SECONDS_AT_POSIX_EPOCH;
+        posixSecondsNext <= csrSeconds - NTP_SECONDS_AT_POSIX_EPOCH + 1;
         if (ppsValid) secondsValid <= 1;
     end
     else begin
@@ -197,5 +239,34 @@ always @(posedge clk) begin
         fractionIncrement <= quotient;
     end
 end
+
+//
+// clk to sysClk
+//
+wire sysPpsValid, sysSecondsValid;
+forwardData #(.DATA_WIDTH(1+1+1+1+32+32+32+32))
+  forwardTimestampToSys (
+    .inClk(clk),
+    .inData({   ppsValid,
+                secondsValid,
+                ppsToggle,
+                ppsMarker,
+                seconds,
+                fraction,
+                posixSeconds,
+                posixSecondsNext
+            }),
+    .outClk(sysClk),
+    .outData({  sysPpsValid,
+                sysSecondsValid,
+                sysPpsToggle,
+                sysPpsMarker,
+                sysSeconds,
+                sysFraction,
+                sysPosixSeconds,
+                sysPosixSecondsNext
+             }));
+
+assign sysStatus = { sysPpsToggle, 29'b0, sysSecondsValid, sysPpsValid };
 
 endmodule
