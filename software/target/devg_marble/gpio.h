@@ -89,6 +89,9 @@
 #define GPIO_IDX_EVG_1_SEQ_FRACTION_CSR  43 // EVG 1 sequencer status fraction
 #define GPIO_IDX_EVG_2_SEQ_SECONDS_CSR   44 // EVG 2 sequencer status seconds
 #define GPIO_IDX_EVG_2_SEQ_FRACTION_CSR  45 // EVG 2 sequencer status fraction
+#define GPIO_IDX_NTP_SERVER_F2_STATUS    46 // NTP server F2 status (R)
+#define GPIO_IDX_NTP_SERVER_F2_SECONDS   47 // NTP server F2 seconds (R/W)
+#define GPIO_IDX_NTP_SERVER_F2_FRACTION  48 // NTP F2 fractional seconds (R)
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
