@@ -18,11 +18,6 @@ module evg #(
     input                  sysSequencerCSRstrobe,
     input                  sysHardwareTriggerCSRstrobe,
     input                  sysSoftwareTriggerCSRstrobe,
-    input                  sysPPStoggle,
-    input           [31:0] sysSeconds,
-    input           [31:0] sysSecondsNext,
-    input           [31:0] sysNtpSeconds,
-    input           [31:0] sysNtpFraction,
 
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpSeconds,
@@ -37,7 +32,14 @@ module evg #(
     (*mark_debug=DEBUG*) output wire [15:0] evgTxData,
     (*mark_debug=DEBUG*) output wire  [1:0] evgTxCharIsK,
     (*mark_debug=DEBUG*) input              evgHeartbeatRequest,
-    (*mark_debug=DEBUG*) input              evgSequenceStart);
+    (*mark_debug=DEBUG*) input              evgSequenceStart,
+
+    input                                   evgPPStoggle,
+    input                            [31:0] evgSeconds,
+    input                            [31:0] evgSecondsNext,
+    input                            [31:0] evgNtpSeconds,
+    input                            [31:0] evgNtpFraction
+);
 
 //
 // Place 1 clock cycle heartbeat on LSB of distributed
@@ -98,17 +100,18 @@ evgSource #(
     .sysSequenceReadback(sysSequenceReadback),
     .sysHardwareTriggerStatus(sysHardwareTriggerStatus),
     .sysSoftwareTriggerStatus(sysSoftwareTriggerStatus),
-    .sysPPStoggle(sysPPStoggle),
-    .sysSeconds(sysSeconds),
-    .sysSecondsNext(sysSecondsNext),
-    .sysNtpSeconds(sysNtpSeconds),
-    .sysNtpFraction(sysNtpFraction),
+    .evgPPStoggle(evgPPStoggle),
     .hwTriggers_a(hwTriggers_a),
     .evgHeartbeatRequest(evgHeartbeatRequest),
     .evgSequenceStart(evgSequenceStart),
     .evgDistributedBus(dBus),
     .evgTxClk(evgTxClk),
     .evgTxData(evgTxData),
-    .evgTxCharIsK(evgTxCharIsK));
+    .evgTxCharIsK(evgTxCharIsK),
+    .evgSeconds(evgSeconds),
+    .evgSecondsNext(evgSecondsNext),
+    .evgNtpSeconds(evgNtpSeconds),
+    .evgNtpFraction(evgNtpFraction)
+);
 
 endmodule

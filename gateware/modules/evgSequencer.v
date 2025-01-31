@@ -14,8 +14,6 @@ module evgSequencer # (
     input              sysClk,
     input              sysCSRstrobe,
     input       [31:0] sysGPIO_OUT,
-    input       [31:0] sysNtpSeconds,
-    input       [31:0] sysNtpFraction,
     output reg  [31:0] status,
     output reg  [31:0] statusNtpSeconds,
     output reg  [31:0] statusNtpFraction,
@@ -24,6 +22,10 @@ module evgSequencer # (
     // Synchronization
     input      evgTxClk,
     input      evgSequenceStart,
+
+    // NTP timestamp synchronous to evgTxClk
+    input       [31:0] evgNtpSeconds,
+    input       [31:0] evgNtpFraction,
 
     // Event requests
     output reg [EVENTCODE_WIDTH-1:0] evgSequenceEventTDATA,
@@ -92,6 +94,8 @@ reg [START_REQUEST_COUNTER_WIDTH-1:0] startRequestsIgnored = 0,
 
 // Status logic
 reg evgStatusBuffWeToggle = 0;
+reg [31:0] evgNtpSecondsLatch = 0;
+reg [31:0] evgNtpFractionLatch = 0;
 
 always @(posedge evgTxClk) begin
     sequenceEnableToggle_m <= sysSequenceEnableToggle;
@@ -105,6 +109,8 @@ always @(posedge evgTxClk) begin
     // to have a valid initial value
     if (statusForceWEToggle != statusForceWEMatch) begin
         evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+        evgNtpSecondsLatch <= evgNtpSeconds;
+        evgNtpFractionLatch <= evgNtpFraction;
         statusForceWEMatch <= statusForceWEToggle;
     end
 
@@ -149,11 +155,15 @@ always @(posedge evgTxClk) begin
                 sequenceBusy <= 0;
                 sequenceActive <= 0;
                 evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+                evgNtpSecondsLatch <= evgNtpSeconds;
+                evgNtpFractionLatch <= evgNtpFraction;
             end
             else begin
                 if (pendingEvent == precompletionEvent) begin
                     sequenceBusy <= 0;
                     evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+                    evgNtpSecondsLatch <= evgNtpSeconds;
+                    evgNtpFractionLatch <= evgNtpFraction;
                 end
                 evgSequenceEventTVALID <= 1;
                 evgSequenceEventTDATA <= pendingEvent;
@@ -179,6 +189,8 @@ always @(posedge evgTxClk) begin
                 sequenceEnabled[1] <= 0;
                 startRequestsAccepted <= startRequestsAccepted + 1;
                 evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+                evgNtpSecondsLatch <= evgNtpSeconds;
+                evgNtpFractionLatch <= evgNtpFraction;
             end
         end
     end
@@ -248,7 +260,7 @@ always @(posedge sysClk) begin
     end
 end
 
-// Status dual buffer
+// Status buffer
 // We want every change in status to be timestamped
 // with NTP clock so the processor knows exactly when that happens.
 localparam STATUS_BUFF_DATA_WIDTH = 32 + 64;
@@ -257,12 +269,13 @@ reg  sysStatusBuffWeMatch = 0;
 wire sysStatusBuffWeToggle;
 
 wire [31:0] sysStatus;
-forwardData #(.DATA_WIDTH(32+1))
+wire [31:0] sysNtpSeconds, sysNtpFraction;
+forwardData #(.DATA_WIDTH(1+32+32+32))
   forwardSysNTPToEVG(
       .inClk(evgTxClk),
-      .inData({evgStatusBuffWeToggle, evgStatus}),
+      .inData({evgStatusBuffWeToggle, evgStatus, evgNtpSecondsLatch, evgNtpFractionLatch}),
       .outClk(sysClk),
-      .outData({sysStatusBuffWeToggle, sysStatus})
+      .outData({sysStatusBuffWeToggle, sysStatus, sysNtpSeconds, sysNtpFraction})
 );
 
 always @(posedge sysClk) begin

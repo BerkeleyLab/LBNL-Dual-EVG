@@ -16,11 +16,6 @@ module evgSource #(
     input                  sysSequencerCSRstrobe,
     input                  sysHardwareTriggerCSRstrobe,
     input                  sysSoftwareTriggerCSRstrobe,
-    input                  sysPPStoggle,
-    input [GPIO_WIDTH-1:0] sysSeconds,
-    input [GPIO_WIDTH-1:0] sysSecondsNext,
-    input [GPIO_WIDTH-1:0] sysNtpSeconds,
-    input [GPIO_WIDTH-1:0] sysNtpFraction,
 
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpSeconds,
@@ -40,7 +35,14 @@ module evgSource #(
     // Transmitter connections
     input              evgTxClk,
     output wire [15:0] evgTxData,
-    output wire  [1:0] evgTxCharIsK);
+    output wire  [1:0] evgTxCharIsK,
+
+    input                  evgPPStoggle,
+    input [GPIO_WIDTH-1:0] evgSeconds,
+    input [GPIO_WIDTH-1:0] evgSecondsNext,
+    input [GPIO_WIDTH-1:0] evgNtpSeconds,
+    input [GPIO_WIDTH-1:0] evgNtpFraction
+);
 
 localparam EVENTCODE_WIDTH       = 8;
 
@@ -57,9 +59,9 @@ evgCore #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
           .TOD_SECONDS_WIDTH(TOD_SECONDS_WIDTH))
   evgCore (
-    .sysPPStoggle(sysPPStoggle),
-    .sysSeconds(sysSeconds),
-    .sysSecondsNext(sysSecondsNext),
+    .evgPPStoggle(evgPPStoggle),
+    .evgSeconds(evgSeconds),
+    .evgSecondsNext(evgSecondsNext),
     .evgHeartbeatRequest(evgHeartbeatRequest),
     .evgTxClk(evgTxClk),
     .evgTxData(evgTxData),
@@ -80,13 +82,13 @@ evgSequencer #(.SEQUENCE_RAM_CAPACITY(SEQUENCE_RAM_CAPACITY),
     .sysClk(sysClk),
     .sysCSRstrobe(sysSequencerCSRstrobe),
     .sysGPIO_OUT(sysGPIO_OUT),
-    .sysNtpSeconds(sysNtpSeconds),
-    .sysNtpFraction(sysNtpFraction),
     .status(sysSequencerStatus),
     .statusNtpSeconds(sysSequencerStatusNtpSeconds),
     .statusNtpFraction(sysSequencerStatusNtpFraction),
     .sysSequenceReadback(sysSequenceReadback),
     .evgTxClk(evgTxClk),
+    .evgNtpSeconds(evgNtpSeconds),
+    .evgNtpFraction(evgNtpFraction),
     .evgSequenceStart(evgSequenceStart),
     .evgSequenceEventTDATA(evgSequenceEventTDATA),
     .evgSequenceEventTVALID(evgSequenceEventTVALID));
