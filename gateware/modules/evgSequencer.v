@@ -300,7 +300,7 @@ genericFifo_2c #(
 
 wire sysStatusFifoValid = !sysStatusFifoEmpty;
 wire sysStatusFifoAlmostFull = (sysStatusFifoRDCount >= STATUS_FIFO_MAX-2);
-assign sysStatusFifoRE = sysStatusFifoREGPIO;
+assign sysStatusFifoRE = sysStatusFifoValid && sysStatusFifoREGPIO;
 
 //
 // Status FIFO CSR
