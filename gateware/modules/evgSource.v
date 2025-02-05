@@ -17,6 +17,9 @@ module evgSource #(
     input                  sysHardwareTriggerCSRstrobe,
     input                  sysSoftwareTriggerCSRstrobe,
 
+    input                        sysSequencerStatusFIFOCSRstrobe,
+    output wire [GPIO_WIDTH-1:0] sysSequencerStatusFifo,
+
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpSeconds,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpFraction,
@@ -81,8 +84,10 @@ evgSequencer #(.SEQUENCE_RAM_CAPACITY(SEQUENCE_RAM_CAPACITY),
    evgSequencer (
     .sysClk(sysClk),
     .sysCSRstrobe(sysSequencerCSRstrobe),
+    .sysCSRStatusFIFOstrobe(sysSequencerStatusFIFOCSRstrobe),
     .sysGPIO_OUT(sysGPIO_OUT),
     .status(sysSequencerStatus),
+    .statusFifo(sysSequencerStatusFifo),
     .statusNtpSeconds(sysSequencerStatusNtpSeconds),
     .statusNtpFraction(sysSequencerStatusNtpFraction),
     .sysSequenceReadback(sysSequenceReadback),

@@ -18,6 +18,7 @@ module evg #(
     input                  sysSequencerCSRstrobe,
     input                  sysHardwareTriggerCSRstrobe,
     input                  sysSoftwareTriggerCSRstrobe,
+    input                  sysSequencerStatusFIFOCSRstrobe,
 
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpSeconds,
@@ -25,6 +26,7 @@ module evg #(
     output wire [GPIO_WIDTH-1:0] sysSequenceReadback,
     output wire [GPIO_WIDTH-1:0] sysHardwareTriggerStatus,
     output wire [GPIO_WIDTH-1:0] sysSoftwareTriggerStatus,
+    output wire [GPIO_WIDTH-1:0] sysSequencerStatusFifo,
 
     input [HARDWARE_TRIGGER_COUNT-1:0] hwTriggers_a,
 
@@ -98,6 +100,8 @@ evgSource #(
     .sysSequencerStatusNtpSeconds(sysSequencerStatusNtpSeconds),
     .sysSequencerStatusNtpFraction(sysSequencerStatusNtpFraction),
     .sysSequenceReadback(sysSequenceReadback),
+    .sysSequencerStatusFIFOCSRstrobe(sysSequencerStatusFIFOCSRstrobe),
+    .sysSequencerStatusFifo(sysSequencerStatusFifo),
     .sysHardwareTriggerStatus(sysHardwareTriggerStatus),
     .sysSoftwareTriggerStatus(sysSoftwareTriggerStatus),
     .evgPPStoggle(evgPPStoggle),
