@@ -65,6 +65,7 @@
 #define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
 
 #define MONITOR_CHANNELS_PER_EVG    2
+#define SEQ_WARN_WAITING_TIME       1 // s
 
 static struct evgInfo {
     uint16_t    csrIdx;
@@ -109,16 +110,36 @@ static struct evgInfo {
       .evgNumber = 2 },
 };
 
+static void
+evgStatusFifoAcceptWr(struct evgInfo *evgp, int accept)
+{
+    uint32_t statusFifoWr = GPIO_READ(evgp->csrStatusFifoIdx);
+
+    statusFifoWr &= ~SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR;
+    if (accept) {
+        statusFifoWr |= SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR;
+    }
+
+    GPIO_WRITE(evgp->csrStatusFifoIdx, statusFifoWr);
+}
+
 static uint32_t
 evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
 {
     uint32_t statusFifo = GPIO_READ(evgp->csrStatusFifoIdx);
+    uint32_t now;
+    static uint32_t whenWarned;
 
-    if (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO) {
-        printf("EVG %d FIFO Rd Count: %d\n",
-                evgp->evgNumber,
-                (statusFifo & SEQ_CSR_RD_STATUS_FIFO_RD_COUNT) >>
-                SEQ_CSR_RD_STATUS_FIFO_RD_COUNT_SHIFT);
+    now = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+    if ((now - whenWarned) > SEQ_WARN_WAITING_TIME) {
+        if (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO) {
+            printf("EVG %d FIFO Rd Count: %d\n",
+                    evgp->evgNumber,
+                    (statusFifo & SEQ_CSR_RD_STATUS_FIFO_RD_COUNT) >>
+                    SEQ_CSR_RD_STATUS_FIFO_RD_COUNT_SHIFT);
+        }
+
+        whenWarned = now;
     }
 
     if (statusFifo & SEQ_CSR_RD_STATUS_FIFO_VALID) {
@@ -325,6 +346,11 @@ evgInit(void)
     int i;
     struct evgInfo *evgp;
     for (i = 0, evgp = evgs ; i < EVG_COUNT ; i++, evgp++) {
+        // Enable event capture
+        evgStatusFifoAcceptWr(evgp, 1);
+        // Wait for register to be updated
+        microsecondSpin(1000);
+
         // On startup force a valid intial value to the status
         // register
         GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
