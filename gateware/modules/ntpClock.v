@@ -240,6 +240,35 @@ always @(posedge clk) begin
     end
 end
 
+generate
+if (DEBUG == "true") begin
+
+wire [255:0] probe;
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(clk),
+    .probe0(probe)
+);
+`endif
+
+assign probe[0] = pps_a;
+assign probe[1] = pps_m;
+assign probe[2] = pps;
+assign probe[3] = ppsDebounceDone;
+assign probe[4] = ppsStrobe;
+assign probe[5] = ppsToggle;
+assign probe[6] = ppsValid;
+assign probe[7] = ppsMarker;
+
+assign probe[31:8] = 0;
+
+assign probe[40:32] = ppsDebounce;
+assign probe[48:41] = ppsMarkerCounter;
+assign probe[255:49] = 0;
+
+end
+endgenerate
+
 //
 // clk to sysClk
 //
