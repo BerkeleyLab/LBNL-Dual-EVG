@@ -450,7 +450,7 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("true"))
+    .DEBUG("false"))
   evg1 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
@@ -463,6 +463,8 @@ evg #(
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_1_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
+    .sysSequencerStatusFIFOCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR]),
+    .sysSequencerStatusFifo(GPIO_IN[GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR]),
     .hwTriggers_a(FMC1_hwTrigger),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
@@ -644,6 +646,8 @@ evg #(
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_2_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
+    .sysSequencerStatusFIFOCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR]),
+    .sysSequencerStatusFifo(GPIO_IN[GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR]),
     .hwTriggers_a(FMC2_hwTrigger),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
