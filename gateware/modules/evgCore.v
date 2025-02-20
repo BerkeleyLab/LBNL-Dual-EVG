@@ -9,15 +9,17 @@ module evgCore #(
     parameter TOD_SECONDS_WIDTH       = 32   // Y2038 issues?
     ) (
     // Synchronization with external environment
-    input        sysPPStoggle,
-    input [31:0] sysSeconds,
-    input [31:0] sysSecondsNext,
     input        evgHeartbeatRequest,
 
     // Transmitter connections
     input              evgTxClk,
     output wire [15:0] evgTxData,
     output wire  [1:0] evgTxCharIsK,
+
+    // NTP seconds synchronous to evgTxClk
+    input        evgPPStoggle,
+    input [31:0] evgSeconds,
+    input [31:0] evgSecondsNext,
 
     // Distributed bus
     input [7:0] evgDistributedBus,
@@ -40,8 +42,7 @@ localparam EVCODE_IDLE           = 8'h00;
 localparam EVCODE_K28_5          = 8'hBC;
 
 // PPS
-(*ASYNC_REG="true"*) reg evgPPStoggle_m = 0;
-reg evgPPStoggle = 0, evgPPStoggle_d = 0;
+reg evgPPStoggle_d = 0;
 
 // Time of day updates
 // Start transmission about 785 ms after PPS marker
@@ -85,8 +86,6 @@ assign evgSoftwareEventTREADY = !evgSequenceEventTVALID
 always @(posedge evgTxClk) begin
     // Request pulse-per-second (time of day update) transmission at PPS marker.
     // Start time of day transmission about 875 ms after PPS marker.
-    evgPPStoggle_m <= sysPPStoggle;
-    evgPPStoggle   <= evgPPStoggle_m;
     evgPPStoggle_d <= evgPPStoggle;
     if (evgPPStoggle != evgPPStoggle_d) begin
         if (!evgPPSrequest) begin
@@ -101,8 +100,7 @@ always @(posedge evgTxClk) begin
             todBitCounter <= todBitCounter - 1;
             if (todStart) begin
                 todStart <= 0;
-                // Crosses clock domains, but won't be changing at this time.
-                todShiftReg <= sysSecondsNext;
+                todShiftReg <= evgSecondsNext;
             end
             else begin
                 todShiftReg <= {todShiftReg[TOD_SECONDS_WIDTH-2:0], 1'bx};

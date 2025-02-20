@@ -54,10 +54,22 @@
 #define SEQ_CSR_DISABLE_SEQ(n)          (0x4<<(n))
 #define SEQ_CSR_ENABLE_SEQ(n)           (0x1<<(n))
 
+#define SEQ_CSR_RD_STATUS_FIFO_RD_COUNT        0x3F0000
+#define SEQ_CSR_RD_STATUS_FIFO_RD_COUNT_SHIFT  16
+#define SEQ_CSR_RD_STATUS_FIFO_EMPTY           0x8
+#define SEQ_CSR_RD_STATUS_FIFO_ALMOST_FULL     0x4
+#define SEQ_CSR_RD_STATUS_FIFO_ACCEPT_WR       0x2
+#define SEQ_CSR_RD_STATUS_FIFO_VALID           0x1
+
+#define SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR       0x2
+#define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
+
 #define MONITOR_CHANNELS_PER_EVG    2
+#define SEQ_WARN_WAITING_TIME       1 // s
 
 static struct evgInfo {
     uint16_t    csrIdx;
+    uint16_t    csrStatusFifoIdx;
     uint16_t    csrSecondsIdx;
     uint16_t    csrFractionIdx;
     uint16_t    rbkIdx;
@@ -72,8 +84,12 @@ static struct evgInfo {
     uint8_t     evgNumber;
     uint8_t     isWriting;
     uint8_t     isValid;
+    uint32_t    seqStatus;
+    uint32_t    seqSeconds;
+    uint32_t    seqFraction;
 } evgs[EVG_COUNT] = {
     { .csrIdx   = GPIO_IDX_EVG_1_SEQ_CSR,
+      .csrStatusFifoIdx = GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR,
       .csrSecondsIdx = GPIO_IDX_EVG_1_SEQ_SECONDS_CSR,
       .csrFractionIdx = GPIO_IDX_EVG_1_SEQ_FRACTION_CSR,
       .rbkIdx   = GPIO_IDX_EVG_1_SEQ_RBK,
@@ -83,6 +99,7 @@ static struct evgInfo {
       .evgIndex  = 0,
       .evgNumber = 1 },
     { .csrIdx   = GPIO_IDX_EVG_2_SEQ_CSR,
+      .csrStatusFifoIdx = GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR,
       .csrSecondsIdx = GPIO_IDX_EVG_2_SEQ_SECONDS_CSR,
       .csrFractionIdx = GPIO_IDX_EVG_2_SEQ_FRACTION_CSR,
       .rbkIdx   = GPIO_IDX_EVG_2_SEQ_RBK,
@@ -93,16 +110,57 @@ static struct evgInfo {
       .evgNumber = 2 },
 };
 
+static void
+evgStatusFifoAcceptWr(struct evgInfo *evgp, int accept)
+{
+    uint32_t statusFifoWr = GPIO_READ(evgp->csrStatusFifoIdx);
+
+    statusFifoWr &= ~SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR;
+    if (accept) {
+        statusFifoWr |= SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR;
+    }
+
+    GPIO_WRITE(evgp->csrStatusFifoIdx, statusFifoWr);
+}
+
 static uint32_t
 evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
 {
-    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FLIP_STATUS_REG);
-    if (seconds)
-        *seconds = GPIO_READ(evgp->csrSecondsIdx);
-    if (fraction)
-        *fraction = GPIO_READ(evgp->csrFractionIdx);
+    uint32_t statusFifo = GPIO_READ(evgp->csrStatusFifoIdx);
+    uint32_t now;
+    static uint32_t whenWarned;
 
-    return GPIO_READ(evgp->csrIdx);
+    now = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+    if ((now - whenWarned) > SEQ_WARN_WAITING_TIME) {
+        if (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO) {
+            printf("EVG %d FIFO Rd Count: %d\n",
+                    evgp->evgNumber,
+                    (statusFifo & SEQ_CSR_RD_STATUS_FIFO_RD_COUNT) >>
+                    SEQ_CSR_RD_STATUS_FIFO_RD_COUNT_SHIFT);
+        }
+
+        whenWarned = now;
+    }
+
+    if (statusFifo & SEQ_CSR_RD_STATUS_FIFO_VALID) {
+        evgp->seqStatus = GPIO_READ(evgp->csrIdx);
+        evgp->seqSeconds = GPIO_READ(evgp->csrSecondsIdx);
+        evgp->seqFraction = GPIO_READ(evgp->csrFractionIdx);
+
+        /* Acknowledge valid word from the FIFO */
+        uint32_t statusFifoWr = SEQ_CSR_WR_STATUS_FIFO_RE;
+        if (statusFifo & SEQ_CSR_RD_STATUS_FIFO_ACCEPT_WR) {
+            statusFifoWr |= SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR;
+        }
+        GPIO_WRITE(evgp->csrStatusFifoIdx, statusFifoWr);
+    }
+
+    if (seconds)
+        *seconds = evgp->seqSeconds;
+    if (fraction)
+        *fraction = evgp->seqFraction;
+
+    return evgp->seqStatus;
 }
 
 static int
@@ -288,6 +346,11 @@ evgInit(void)
     int i;
     struct evgInfo *evgp;
     for (i = 0, evgp = evgs ; i < EVG_COUNT ; i++, evgp++) {
+        // Enable event capture
+        evgStatusFifoAcceptWr(evgp, 1);
+        // Wait for register to be updated
+        microsecondSpin(1000);
+
         // On startup force a valid intial value to the status
         // register
         GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);

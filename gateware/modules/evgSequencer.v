@@ -13,17 +13,23 @@ module evgSequencer # (
     // software is aware of this and reads until the values are stable.
     input              sysClk,
     input              sysCSRstrobe,
+    input              sysCSRStatusFIFOstrobe,
     input       [31:0] sysGPIO_OUT,
-    input       [31:0] sysNtpSeconds,
-    input       [31:0] sysNtpFraction,
-    output reg  [31:0] status,
-    output reg  [31:0] statusNtpSeconds,
-    output reg  [31:0] statusNtpFraction,
+
+    output      [31:0] status,
+    output      [31:0] statusNtpSeconds,
+    output      [31:0] statusNtpFraction,
+
+    output wire [31:0] statusFifo,
     output reg  [31:0] sysSequenceReadback,
 
     // Synchronization
     input      evgTxClk,
     input      evgSequenceStart,
+
+    // NTP timestamp synchronous to evgTxClk
+    input       [31:0] evgNtpSeconds,
+    input       [31:0] evgNtpFraction,
 
     // Event requests
     output reg [EVENTCODE_WIDTH-1:0] evgSequenceEventTDATA,
@@ -91,7 +97,14 @@ reg [START_REQUEST_COUNTER_WIDTH-1:0] startRequestsIgnored = 0,
                                       startRequestsAccepted = 0;
 
 // Status logic
-reg evgStatusBuffWeToggle = 0;
+reg [31:0] evgNtpSecondsLatch = 0;
+reg [31:0] evgNtpFractionLatch = 0;
+
+// Status FIFO registers
+reg sysStatusFifoAcceptWr = 0;
+reg statusFifoWrEvent = 0;
+(*ASYNC_REG="true"*) reg statusFifoAcceptWr_m = 0;
+reg statusFifoAcceptWr = 0;
 
 always @(posedge evgTxClk) begin
     sequenceEnableToggle_m <= sysSequenceEnableToggle;
@@ -101,10 +114,16 @@ always @(posedge evgTxClk) begin
     statusForceWEToggle_m <= sysStatusForceWEToggle;
     statusForceWEToggle   <= statusForceWEToggle_m;
 
+    statusFifoAcceptWr_m <= sysStatusFifoAcceptWr;
+    statusFifoAcceptWr   <= statusFifoAcceptWr_m;
+
+    statusFifoWrEvent <= 0;
+
     // Force write enable to status register. Useful on startup
     // to have a valid initial value
     if (statusForceWEToggle != statusForceWEMatch) begin
-        evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+        {evgNtpSecondsLatch, evgNtpFractionLatch} <= {evgNtpSeconds, evgNtpFraction};
+        statusFifoWrEvent <= 1;
         statusForceWEMatch <= statusForceWEToggle;
     end
 
@@ -148,12 +167,14 @@ always @(posedge evgTxClk) begin
                 evgSequenceEventTVALID <= 0;
                 sequenceBusy <= 0;
                 sequenceActive <= 0;
-                evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+                {evgNtpSecondsLatch, evgNtpFractionLatch} <= {evgNtpSeconds, evgNtpFraction};
+                statusFifoWrEvent <= 1;
             end
             else begin
                 if (pendingEvent == precompletionEvent) begin
                     sequenceBusy <= 0;
-                    evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+                    {evgNtpSecondsLatch, evgNtpFractionLatch} <= {evgNtpSeconds, evgNtpFraction};
+                    statusFifoWrEvent <= 1;
                 end
                 evgSequenceEventTVALID <= 1;
                 evgSequenceEventTDATA <= pendingEvent;
@@ -178,7 +199,8 @@ always @(posedge evgTxClk) begin
                 seqSelect <= sequenceEnabled[1];
                 sequenceEnabled[1] <= 0;
                 startRequestsAccepted <= startRequestsAccepted + 1;
-                evgStatusBuffWeToggle <= !evgStatusBuffWeToggle;
+                {evgNtpSecondsLatch, evgNtpFractionLatch} <= {evgNtpSeconds, evgNtpFraction};
+                statusFifoWrEvent <= 1;
             end
         end
     end
@@ -197,7 +219,6 @@ wire [31:0] evgStatus = { 3'b0, addressWidth,
 reg [DPRAM_ADDRESS_WIDTH-1:0] sysWriteAddress;
 reg  [SEQUENCE_GAP_WIDTH-1:0] sysGapLatch;
 reg                           sysSequenceReadbackSelect;
-reg                           sysStatusBuffReadToggle = 0;
 reg                           sysStatusBuffReadMatch = 0;
 
 always @(posedge sysClk) begin
@@ -228,9 +249,6 @@ always @(posedge sysClk) begin
             if (sysGPIO_OUT[5]) begin
                 sysStatusForceWEToggle <= !sysStatusForceWEToggle;
             end
-            if (sysGPIO_OUT[4]) begin
-                sysStatusBuffReadToggle <= !sysStatusBuffReadToggle;
-            end
             if (sysGPIO_OUT[3]) begin
                 sysSequenceDisableToggle[1] <= !sysSequenceDisableToggle[1];
             end
@@ -248,32 +266,57 @@ always @(posedge sysClk) begin
     end
 end
 
-// Status dual buffer
-// We want every change in status to be timestamped
-// with NTP clock so the processor knows exactly when that happens.
-localparam STATUS_BUFF_DATA_WIDTH = 32 + 64;
-reg [STATUS_BUFF_DATA_WIDTH-1:0] statusBuff = 0;
-reg  sysStatusBuffWeMatch = 0;
-wire sysStatusBuffWeToggle;
+localparam STATUS_FIFO_AW = 5;
+localparam STATUS_FIFO_USERW = 0;
+localparam STATUS_FIFO_DATAW = 32 + 64;
+localparam STATUS_FIFO_DW = STATUS_FIFO_USERW + STATUS_FIFO_DATAW;
+localparam STATUS_FIFO_MAX = 2**STATUS_FIFO_AW-1;
 
-wire [31:0] sysStatus;
-forwardData #(.DATA_WIDTH(32+1))
-  forwardSysNTPToEVG(
-      .inClk(evgTxClk),
-      .inData({evgStatusBuffWeToggle, evgStatus}),
-      .outClk(sysClk),
-      .outData({sysStatusBuffWeToggle, sysStatus})
+wire signed [STATUS_FIFO_AW:0] statusFifoWRCount;
+wire signed [STATUS_FIFO_AW:0] sysStatusFifoRDCount;
+reg sysStatusFifoREGPIO = 0;
+wire statusFifoAlmostFull = (statusFifoWRCount >= STATUS_FIFO_MAX-2);
+wire statusFifoWE = statusFifoAcceptWr && statusFifoWrEvent && !statusFifoAlmostFull;
+wire sysStatusFifoRE;
+wire sysStatusFifoEmpty;
+
+genericFifo_2c #(
+    .dw(STATUS_FIFO_DW),
+    .aw(STATUS_FIFO_AW),
+    .fwft(1))
+  statusFifo_2c (
+    .wr_clk(evgTxClk),
+    .din({evgStatus, evgNtpSecondsLatch, evgNtpFractionLatch}),
+    .we(statusFifoWE),
+    .full(),
+    .wr_count(statusFifoWRCount),
+
+    .rd_clk(sysClk),
+    .dout({status, statusNtpSeconds, statusNtpFraction}),
+    .re(sysStatusFifoRE),
+    .empty(sysStatusFifoEmpty),
+    .rd_count(sysStatusFifoRDCount)
 );
 
-always @(posedge sysClk) begin
-    if (sysStatusBuffWeToggle != sysStatusBuffWeMatch) begin
-        statusBuff <= {sysStatus, sysNtpSeconds, sysNtpFraction};
-        sysStatusBuffWeMatch <= sysStatusBuffWeToggle;
-    end
+wire sysStatusFifoValid = !sysStatusFifoEmpty;
+wire sysStatusFifoAlmostFull = (sysStatusFifoRDCount >= STATUS_FIFO_MAX-2);
+assign sysStatusFifoRE = sysStatusFifoValid && sysStatusFifoREGPIO;
 
-    if (sysStatusBuffReadToggle != sysStatusBuffReadMatch) begin
-        {status, statusNtpSeconds, statusNtpFraction} <= statusBuff;
-        sysStatusBuffReadMatch <= sysStatusBuffReadToggle;
+//
+// Status FIFO CSR
+//
+assign statusFifo = {{16-(STATUS_FIFO_AW+1){1'b0}}, sysStatusFifoRDCount,
+    {16-1-1-1-1{1'b0}}, sysStatusFifoEmpty, sysStatusFifoAlmostFull, sysStatusFifoAcceptWr, sysStatusFifoValid};
+
+always @(posedge sysClk) begin
+    sysStatusFifoREGPIO <= 0;
+
+    if (sysCSRStatusFIFOstrobe) begin
+        if (sysGPIO_OUT[0]) begin
+            sysStatusFifoREGPIO <= 1;
+        end
+
+        sysStatusFifoAcceptWr <= sysGPIO_OUT[1];
     end
 end
 
