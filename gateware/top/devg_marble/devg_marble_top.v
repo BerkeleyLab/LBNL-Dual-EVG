@@ -315,29 +315,40 @@ ppsCheck #(.CLK_RATE(SYSCLK_FREQUENCY)) gpsPPScheck (
 wire bestPPS_a = fmcPPSvalid ? fmcPPS_a : gpsPPS_a;
 
 //////////////////////////////////////////////////////////////////////////////
-// NTP server support
-wire ppsToggle, ppsMarker, ppsMarkerValid;
-wire [31:0] posixSeconds, posixSecondsNext, ntpStatusReg;
-wire [31:0] ntpSeconds, ntpFraction;
-ntpClock #(.CLK_RATE(SYSCLK_FREQUENCY),
+// NTP server support for F1 domain
+wire [31:0] sysNtpSeconds_f1, sysNtpFraction_f1, sysPosixSeconds_f1, sysPosixSecondsNext_f1, sysNtpStatusReg_f1;
+wire [31:0] evgNtpSeconds_f1, evgNtpFraction_f1, evgPosixSeconds_f1, evgPosixSecondsNext_f1, evgNtpStatusReg_f1;
+wire evgPpsToggle_f1, evgPpsMarker_f1;
+wire sysPpsToggle_f1, sysPpsMarker_f1;
+ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
            .DEBUG("false"))
-  ntpClock (
-    .clk(sysClk),
+  ntpClock_f1 (
+    .sysClk(sysClk),
     .writeStrobe(GPIO_STROBES[GPIO_IDX_NTP_SERVER_SECONDS]),
     .writeData(GPIO_OUT),
-    .pps_a(bestPPS_a),
-    .ppsToggle(ppsToggle),
-    .ppsMarker(ppsMarker),
-    .seconds(ntpSeconds),
-    .fraction(ntpFraction),
-    .posixSeconds(posixSeconds),
-    .posixSecondsNext(posixSecondsNext),
-    .status(ntpStatusReg));
+    .sysPpsToggle(sysPpsToggle_f1),
+    .sysPpsMarker(sysPpsMarker_f1),
+    .sysSeconds(sysNtpSeconds_f1),
+    .sysFraction(sysNtpFraction_f1),
+    .sysPosixSeconds(sysPosixSeconds_f1),
+    .sysPosixSecondsNext(sysPosixSecondsNext_f1),
+    .sysStatus(sysNtpStatusReg_f1),
 
-assign GPIO_IN[GPIO_IDX_NTP_SERVER_SECONDS] = ntpSeconds;
-assign GPIO_IN[GPIO_IDX_NTP_SERVER_FRACTION] = ntpFraction;
-assign GPIO_IN[GPIO_IDX_NTP_SERVER_STATUS] = ntpStatusReg;
-assign ppsMarkerValid = ntpStatusReg[0];
+    .clk(evg1TxClk),
+    .pps_a(bestPPS_a),
+    .ppsToggle(evgPpsToggle_f1),
+    .ppsMarker(evgPpsMarker_f1),
+    .seconds(evgNtpSeconds_f1),
+    .fraction(evgNtpFraction_f1),
+    .posixSeconds(evgPosixSeconds_f1),
+    .posixSecondsNext(evgPosixSecondsNext_f1),
+    .status(evgNtpStatusReg_f1));
+
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_SECONDS] = sysNtpSeconds_f1;
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_FRACTION] = sysNtpFraction_f1;
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_STATUS] = sysNtpStatusReg_f1;
+wire ppsMarkerValid = sysNtpStatusReg_f1[0];
+wire ppsMarker = sysPpsMarker_f1;
 
 /////////////////////////////////////////////////////////////////////////////
 // First generator (injector)
@@ -419,17 +430,19 @@ evg #(
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_1_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
-    .sysPPStoggle(ppsToggle),
-    .sysSeconds(posixSeconds),
-    .sysSecondsNext(posixSecondsNext),
-    .sysNtpSeconds(ntpSeconds),
-    .sysNtpFraction(ntpFraction),
+    .sysSequencerStatusFIFOCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR]),
+    .sysSequencerStatusFifo(GPIO_IN[GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR]),
     .hwTriggers_a(FMC1_hwTrigger),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
     .evgHeartbeatRequest(evg1HeartbeatRequest),
-    .evgSequenceStart(injectorSequenceStart));
+    .evgSequenceStart(injectorSequenceStart),
+    .evgPPStoggle(evgPpsToggle_f1),
+    .evgSeconds(evgPosixSeconds_f1),
+    .evgSecondsNext(evgPosixSecondsNext_f1),
+    .evgNtpSeconds(evgNtpSeconds_f1),
+    .evgNtpFraction(evgNtpFraction_f1));
 
 evLogger #(.DEBUG("false"))
   evg1LoggerDisplay (
@@ -450,6 +463,40 @@ evFIFO evg1FIFOtlog (
   .evClk(evg1TxClk),
   .evChar(evg1TxData[7:0]),
   .evCharIsK(evg1TxCharIsK[0]));
+
+//////////////////////////////////////////////////////////////////////////////
+// NTP server support for F2 domain
+wire [31:0] sysNtpSeconds_f2, sysNtpFraction_f2, sysPosixSeconds_f2, sysPosixSecondsNext_f2, sysNtpStatusReg_f2;
+wire [31:0] evgNtpSeconds_f2, evgNtpFraction_f2, evgPosixSeconds_f2, evgPosixSecondsNext_f2, evgNtpStatusReg_f2;
+wire evgPpsToggle_f2, evgPpsMarker_f2;
+wire sysPpsToggle_f2, sysPpsMarker_f2;
+ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
+           .DEBUG("false"))
+  ntpClock_f2 (
+    .sysClk(sysClk),
+    .writeStrobe(GPIO_STROBES[GPIO_IDX_NTP_SERVER_F2_SECONDS]),
+    .writeData(GPIO_OUT),
+    .sysPpsToggle(sysPpsToggle_f2),
+    .sysPpsMarker(sysPpsMarker_f2),
+    .sysSeconds(sysNtpSeconds_f2),
+    .sysFraction(sysNtpFraction_f2),
+    .sysPosixSeconds(sysPosixSeconds_f2),
+    .sysPosixSecondsNext(sysPosixSecondsNext_f2),
+    .sysStatus(sysNtpStatusReg_f2),
+
+    .clk(evg2TxClk),
+    .pps_a(bestPPS_a),
+    .ppsToggle(evgPpsToggle_f2),
+    .ppsMarker(evgPpsMarker_f2),
+    .seconds(evgNtpSeconds_f2),
+    .fraction(evgNtpFraction_f2),
+    .posixSeconds(evgPosixSeconds_f2),
+    .posixSecondsNext(evgPosixSecondsNext_f2),
+    .status(evgNtpStatusReg_f2));
+
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_SECONDS] = sysNtpSeconds_f2;
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_FRACTION] = sysNtpFraction_f2;
+assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
@@ -529,17 +576,19 @@ evg #(
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_2_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
-    .sysPPStoggle(ppsToggle),
-    .sysSeconds(posixSeconds),
-    .sysSecondsNext(posixSecondsNext),
-    .sysNtpSeconds(ntpSeconds),
-    .sysNtpFraction(ntpFraction),
+    .sysSequencerStatusFIFOCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR]),
+    .sysSequencerStatusFifo(GPIO_IN[GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR]),
     .hwTriggers_a(FMC2_hwTrigger),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
     .evgHeartbeatRequest(evg2HeartbeatRequest),
-    .evgSequenceStart(swapoutSequenceStart));
+    .evgSequenceStart(swapoutSequenceStart),
+    .evgPPStoggle(evgPpsToggle_f2),
+    .evgSeconds(evgPosixSeconds_f2),
+    .evgSecondsNext(evgPosixSecondsNext_f2),
+    .evgNtpSeconds(evgNtpSeconds_f2),
+    .evgNtpFraction(evgNtpFraction_f2));
 
 evLogger #(.DEBUG("false"))
   evg2LoggerDisplay (

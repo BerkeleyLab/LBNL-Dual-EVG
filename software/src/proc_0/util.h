@@ -64,6 +64,7 @@
 #define DEBUGFLAG_IIC_FMC_REG       0x4000
 #define DEBUGFLAG_IIC_SCAN          0x8000
 #define DEBUGFLAG_DISPLAY_NEXT_PAGE 0x10000
+#define DEBUGFLAG_SEQ_STATUS_FIFO   0x200000
 #define DEBUGFLAG_DUMP_SCREEN       0x1000000
 #define DEBUGFLAG_DUMP_MGT_SWITCH   0x2000000
 #define DEBUGFLAG_DUMP_CROSSPOINT   0x4000000
@@ -71,6 +72,7 @@
 #define DEBUGFLAG_TX_RESET          0x40000000
 
 void warn(const char *fmt, ...);
+void fatal(const char *fmt, ...);
 void bswap32(uint32_t *b, int n);
 void microsecondSpin(unsigned int us);
 void showReg(unsigned int i);

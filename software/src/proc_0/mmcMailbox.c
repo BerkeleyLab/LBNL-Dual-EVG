@@ -48,9 +48,11 @@
  * QSFP1 is J17, QSFP2 is J8.
  */
 #define MADDR_MGT_CONFIG    0x20  /* Page 2, location 0 */
+#define MADDR_PG3_COUNT     0x30
 #define MADDR_U29_TEMP      0x34
 #define MADDR_U28_TEMP      0x36
 #define MADDR_MMC_BUILD     0x3C
+#define MADDR_PG4_COUNT     0x4A
 
 /*
  * Page 2, location 0 controls MGT4-7 routing and FMC power.
@@ -74,6 +76,14 @@
 /* MGTMUX config masks the result with 0x55 on the MMC side */
 # define MGT_CONFIG_RESULT_MASK    0x55
 
+/*
+ * MMC usually updates the register map every 1s.
+ * So, set the timeout to 5s
+ */
+#define MMC_UPDATE_TIMEOUT         5000000
+
+static int initDone;
+
 void
 mmcMailboxWrite(unsigned int address, int value)
 {
@@ -90,7 +100,7 @@ mmcMailboxWriteAndWait(unsigned int address, int value, int result)
     mmcMailboxWrite(address, value);
     then = MICROSECONDS_SINCE_BOOT();
     while ((GPIO_READ(GPIO_IDX_MMC_MAILBOX) & CSR_DATA_MASK) != result) {
-        if ((MICROSECONDS_SINCE_BOOT() - then) > 5000000) {
+        if ((MICROSECONDS_SINCE_BOOT() - then) > MMC_UPDATE_TIMEOUT) {
             warn("mmcMailboxWriteAndWait(0x%02x) timed out", address);
             return;
         }
@@ -125,6 +135,45 @@ showLM75temperature(int id, int address)
     printf("  U%d: %d.%d C\n", id, v / 2, (v & 0x1) * 5);
 }
 
+int
+getU28temperature(void) {
+    int t = mmcMailboxRead16(MADDR_U28_TEMP);
+    return t*5 + (t&0x1)*5;
+}
+
+int
+getU29temperature(void) {
+    int t = mmcMailboxRead16(MADDR_U29_TEMP);
+    return t*5 + (t&0x1)*5;
+}
+
+uint16_t
+getMMCPG3Count()
+{
+    return mmcMailboxRead16(MADDR_PG3_COUNT);
+}
+
+uint16_t
+getMMCPG4Count()
+{
+    return mmcMailboxRead16(MADDR_PG4_COUNT);
+}
+
+int
+mmcMailboxIsInit()
+{
+    return initDone;
+}
+
+int
+getMMCfirmware(void) {
+    uint32_t c=0;
+    for (uint8_t i = 0 ; i < 4 ; i++) {
+        c |= mmcMailboxRead(MADDR_MMC_BUILD + i)<<(24-8*i);
+    }
+    return c;
+}
+
 static void
 showMMCfirmware(void)
 {
@@ -137,10 +186,33 @@ showMMCfirmware(void)
     printf("\n");
 }
 
-void
+static int
+mmcMailboxIsValid()
+{
+    uint32_t then, check;
+    uint16_t counter;
+
+    counter = getMMCPG3Count();
+    check = then = MICROSECONDS_SINCE_BOOT();
+    while (getMMCPG3Count() == counter) {
+        if ((check = (MICROSECONDS_SINCE_BOOT() - then)) > MMC_UPDATE_TIMEOUT) {
+            warn("mmcMailboxIsValid() timed out reading PG3 count");
+            return 0;
+        }
+    }
+
+    printf("MMC mailbox valid after %u ms\n", check/1000);
+    return 1;
+}
+
+int
 mmcMailboxInit(void)
 {
     int mgtCfg = (CFG_MGT_FMC_OR_QSFP == 0)? MGT_CONFIG_FMC : MGT_CONFIG_QSFP;
+
+    if(!mmcMailboxIsValid()) {
+        return 0;
+    }
 
     mmcMailboxWriteAndWait(MADDR_MGT_CONFIG, mgtCfg,
             mgtCfg & MGT_CONFIG_RESULT_MASK);
@@ -149,6 +221,9 @@ mmcMailboxInit(void)
     showLM75temperature(28, MADDR_U28_TEMP);
     showLM75temperature(29, MADDR_U29_TEMP);
     showMMCfirmware();
+
+    initDone = 1;
+    return 1;
 }
 
 uint32_t *

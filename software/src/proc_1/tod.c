@@ -347,6 +347,9 @@ todCrank(void)
         if (now.secondsSincePosixEpoch) {
             GPIO_WRITE(GPIO_IDX_NTP_SERVER_SECONDS,
                                  now.secondsSincePosixEpoch + NTP_POSIX_OFFSET);
+            // Blindly apply the number of seconds to F2 NTP too.
+            GPIO_WRITE(GPIO_IDX_NTP_SERVER_F2_SECONDS,
+                                 now.secondsSincePosixEpoch + NTP_POSIX_OFFSET);
             printf("TOD %u:%u after %u us\n",
                                       now.secondsSincePosixEpoch, now.fraction,
                                       MICROSECONDS_SINCE_BOOT() - then);

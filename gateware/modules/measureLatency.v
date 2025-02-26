@@ -21,7 +21,7 @@ localparam LATENCY_WIDEN = $clog2(2000000000 / SAMPLING_CLOCK_RATE);
 ///////////////////////////////////////////////////////////////////////////////
 // Sampling clock domain
 localparam COUNTER_WIDTH = LATENCY_WIDTH + 1;
-reg [COUNTER_WIDTH-1:0] sampleCounter, latencyCount;
+reg [COUNTER_WIDTH-1:0] sampleCounter;
 (*mark_debug=DEBUG*) reg [LATENCY_WIDTH-1:0] rawLatency;
 wire sampleCounterOverflow = sampleCounter[COUNTER_WIDTH-1];
 reg measuring = 0, newValueToggle = 0;
@@ -39,8 +39,8 @@ always @(posedge samplingClk) begin
     echo_m  <= echo;
     echo_d0 <= echo_m;
     echo_d1 <= echo_d0;
-    pingStrobe <= ping_d0 ^ ping_d1;
-    echoStrobe <= echo_d0 ^ echo_d1;
+    pingStrobe <= ping_d0 && !ping_d1;
+    echoStrobe <= echo_d0 && !echo_d1;
     if (measuring) begin
         sampleCounter <= sampleCounter - 1;
         if (pingStrobe || !valid) begin
