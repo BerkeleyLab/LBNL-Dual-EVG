@@ -661,7 +661,7 @@ wire BRARAlignClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT),
           .DEBUG("false"))
-  evgBRARAlign(.sysClk(sysClk),
+  evgBRARAlignClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(),
           .csr(BRARAlignClockStatus),
@@ -680,7 +680,7 @@ wire BRARCoincClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE),
           .DEBUG("false"))
-  evgBRARCoinc(.sysClk(sysClk),
+  evgBRARCoincClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(),
           .csr(BRARCoincClockStatus),
@@ -701,7 +701,7 @@ wire AROrbitClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK),
           .DEBUG("false"))
-  evgAROC(.sysClk(sysClk),
+  evgAROrbitClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(),
           .csr(AROrbitClockStatus),
@@ -720,7 +720,7 @@ wire SROrbitClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK),
           .DEBUG("false"))
-  evgSROC(.sysClk(sysClk),
+  evgSROrbitClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(),
           .csr(SROrbitClockStatus),
@@ -733,23 +733,23 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .evrClkGen(SROrbitClock),
           .evrClkGenStrobe());
 
-wire [31:0] ARSRCoincStatus;
-wire ARSRCoincSynced;
-wire ARSRCoinc;
+wire [31:0] ARSRCoincClockStatus;
+wire ARSRCoincClockSynced;
+wire ARSRCoincClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_ARSR_COINCIDENCE),
           .DEBUG("false"))
-  evgARSRCoinc (.sysClk(sysClk),
+  evgARSRCoincClock (.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(),
-          .csr(ARSRCoincStatus),
+          .csr(ARSRCoincClockStatus),
 
           .evrClk(evg2TxClk),
           .evrHeartbeatMarker(evg2HeartbeatRequest),
           .evrPulsePerSecondMarker(evgPpsMarker_f2),
 
-          .evrClkGenSynced(ARSRCoincSynced),
-          .evrClkGen(ARSRCoinc),
+          .evrClkGenSynced(ARSRCoincClockSynced),
+          .evrClkGen(ARSRCoincClock),
           .evrClkGenStrobe());
 
 //////////////////////////////////////////////////////////////////////////////
@@ -797,7 +797,7 @@ assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h3) ? { evg1HeartbeatRequest, evg2TxClk } :
      (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
      (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
-     (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoinc } :
+     (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :
                                      diagnostic2ProgrammableOutputs;
 
 ///////////////////////////////////////////////////////////////////////////////
