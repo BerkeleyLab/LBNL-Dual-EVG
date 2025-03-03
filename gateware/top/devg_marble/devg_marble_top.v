@@ -663,7 +663,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEBUG("false"))
   evgBRARAlignClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
-          .GPIO_OUT(),
+          .GPIO_OUT(GPIO_OUT),
           .csr(BRARAlignClockStatus),
 
           .evrClk(evg1TxClk),
@@ -682,7 +682,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEBUG("false"))
   evgBRARCoincClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
-          .GPIO_OUT(),
+          .GPIO_OUT(GPIO_OUT),
           .csr(BRARCoincClockStatus),
 
           .evrClk(evg1TxClk),
@@ -703,7 +703,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEBUG("false"))
   evgAROrbitClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
-          .GPIO_OUT(),
+          .GPIO_OUT(GPIO_OUT),
           .csr(AROrbitClockStatus),
 
           .evrClk(evg2TxClk),
@@ -722,7 +722,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEBUG("false"))
   evgSROrbitClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
-          .GPIO_OUT(),
+          .GPIO_OUT(GPIO_OUT),
           .csr(SROrbitClockStatus),
 
           .evrClk(evg2TxClk),
@@ -741,7 +741,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .DEBUG("false"))
   evgARSRCoincClock (.sysClk(sysClk),
           .csrStrobe(1'b0),
-          .GPIO_OUT(),
+          .GPIO_OUT(GPIO_OUT),
           .csr(ARSRCoincClockStatus),
 
           .evrClk(evg2TxClk),
@@ -775,7 +775,8 @@ assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
      (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BRARAlignClock} :
-     (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARCoincClock} :
+     (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
+     (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
                                      diagnostic1ProgrammableOutputs;
 
 localparam DIAG2_SELECT_WIDTH = 3;
