@@ -754,12 +754,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
+localparam DIAG1_SELECT_WIDTH = 3;
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic1ProgrammableOutputs;
-wire                             [1:0] diagnostic1Select;
+wire [DIAG1_SELECT_WIDTH-1:0] diagnostic1Select;
 wire FMC1_auxSwitch_n, FMC2_auxSwitch_n;
 diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
                .OUTPUT_WIDTH(CFG_EVIO_DIAG_OUT_COUNT),
-               .OUTPUT_SELECT_WIDTH(3))
+               .OUTPUT_SELECT_WIDTH(DIAG1_SELECT_WIDTH))
   fmc1IO (
     .sysClk(sysClk),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FMC1_DIAGNOSTIC]),
@@ -777,11 +778,12 @@ assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARCoincClock} :
                                      diagnostic1ProgrammableOutputs;
 
+localparam DIAG2_SELECT_WIDTH = 3;
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic2ProgrammableOutputs;
-wire                             [1:0] diagnostic2Select;
+wire [DIAG2_SELECT_WIDTH-1:0] diagnostic2Select;
 diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
                .OUTPUT_WIDTH(CFG_EVIO_DIAG_OUT_COUNT),
-               .OUTPUT_SELECT_WIDTH(3))
+               .OUTPUT_SELECT_WIDTH(DIAG2_SELECT_WIDTH))
   fmc2IO (
     .sysClk(sysClk),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FMC2_DIAGNOSTIC]),
