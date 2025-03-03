@@ -652,6 +652,106 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .tachs_a({FMC2_FAN2_TACH, FMC2_FAN1_TACH,
                 FMC1_FAN2_TACH, FMC1_FAN1_TACH}));
 
+
+//////////////////////////////////////////////////////////////////////////////
+// EVG 1 Rates generation
+wire [31:0] BRARAlignClockStatus;
+wire BRARAlignClockSynced;
+wire BRARAlignClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT),
+          .DEBUG("false"))
+  evgBRARAlign(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(),
+          .csr(BRARAlignClockStatus),
+
+          .evrClk(evg1TxClk),
+          .evrHeartbeatMarker(evg1HeartbeatRequest),
+          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+
+          .evrClkGenSynced(BRARAlignClockSynced),
+          .evrClkGen(BRARAlignClock),
+          .evrClkGenStrobe());
+
+wire [31:0] BRARCoincClockStatus;
+wire BRARCoincClockSynced;
+wire BRARCoincClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE),
+          .DEBUG("false"))
+  evgBRARCoinc(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(),
+          .csr(BRARCoincClockStatus),
+
+          .evrClk(evg1TxClk),
+          .evrHeartbeatMarker(evg1HeartbeatRequest),
+          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+
+          .evrClkGenSynced(BRARCoincClockSynced),
+          .evrClkGen(BRARCoincClock),
+          .evrClkGenStrobe());
+
+//////////////////////////////////////////////////////////////////////////////
+// EVG 2 Rates generation
+wire [31:0] AROrbitClockStatus;
+wire AROrbitClockSynced;
+wire AROrbitClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK),
+          .DEBUG("false"))
+  evgAROC(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(),
+          .csr(AROrbitClockStatus),
+
+          .evrClk(evg2TxClk),
+          .evrHeartbeatMarker(evg2HeartbeatRequest),
+          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+
+          .evrClkGenSynced(AROrbitClockSynced),
+          .evrClkGen(AROrbitClock),
+          .evrClkGenStrobe());
+
+wire [31:0] SROrbitClockStatus;
+wire SROrbitClockSynced;
+wire SROrbitClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK),
+          .DEBUG("false"))
+  evgSROC(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(),
+          .csr(SROrbitClockStatus),
+
+          .evrClk(evg2TxClk),
+          .evrHeartbeatMarker(evg2HeartbeatRequest),
+          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+
+          .evrClkGenSynced(SROrbitClockSynced),
+          .evrClkGen(SROrbitClock),
+          .evrClkGenStrobe());
+
+wire [31:0] ARSRCoincStatus;
+wire ARSRCoincSynced;
+wire ARSRCoinc;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_ARSR_COINCIDENCE),
+          .DEBUG("false"))
+  evgARSRCoinc (.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(),
+          .csr(ARSRCoincStatus),
+
+          .evrClk(evg2TxClk),
+          .evrHeartbeatMarker(evg2HeartbeatRequest),
+          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+
+          .evrClkGenSynced(ARSRCoincSynced),
+          .evrClkGen(ARSRCoinc),
+          .evrClkGenStrobe());
+
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic1ProgrammableOutputs;
@@ -659,7 +759,7 @@ wire                             [1:0] diagnostic1Select;
 wire FMC1_auxSwitch_n, FMC2_auxSwitch_n;
 diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
                .OUTPUT_WIDTH(CFG_EVIO_DIAG_OUT_COUNT),
-               .OUTPUT_SELECT_WIDTH(2))
+               .OUTPUT_SELECT_WIDTH(3))
   fmc1IO (
     .sysClk(sysClk),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FMC1_DIAGNOSTIC]),
@@ -670,16 +770,18 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOut(diagnostic1ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic1Select));
 assign FMC1_diagnosticOut =
-     (diagnostic1Select == 2'h1) ? { evg1RefClk, evg1TxClk } :
-     (diagnostic1Select == 2'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
-     (diagnostic1Select == 2'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
+     (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
+     (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
+     (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
+     (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BRARAlignClock} :
+     (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARCoincClock} :
                                      diagnostic1ProgrammableOutputs;
 
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic2ProgrammableOutputs;
 wire                             [1:0] diagnostic2Select;
 diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
                .OUTPUT_WIDTH(CFG_EVIO_DIAG_OUT_COUNT),
-               .OUTPUT_SELECT_WIDTH(2))
+               .OUTPUT_SELECT_WIDTH(3))
   fmc2IO (
     .sysClk(sysClk),
     .csrStrobe(GPIO_STROBES[GPIO_IDX_FMC2_DIAGNOSTIC]),
@@ -690,9 +792,12 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOut(diagnostic2ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic2Select));
 assign FMC2_diagnosticOut =
-     (diagnostic2Select == 2'h1) ? { evg2RefClk, evg2TxClk } :
-     (diagnostic2Select == 2'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
-     (diagnostic2Select == 2'h3) ? { evg1HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
+     (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h3) ? { evg1HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
+     (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
+     (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoinc } :
                                      diagnostic2ProgrammableOutputs;
 
 ///////////////////////////////////////////////////////////////////////////////
