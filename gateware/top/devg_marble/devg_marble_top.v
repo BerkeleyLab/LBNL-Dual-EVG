@@ -777,6 +777,7 @@ assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BRARAlignClock} :
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
+     (diagnostic1Select == 3'h7) ? { BRARAlignClock, BRARCoincClock} :
                                      diagnostic1ProgrammableOutputs;
 
 localparam DIAG2_SELECT_WIDTH = 3;
@@ -801,6 +802,7 @@ assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
      (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
      (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :
+     (diagnostic2Select == 3'h7) ? { AROrbitClock, ARSRCoincClock } :
                                      diagnostic2ProgrammableOutputs;
 
 ///////////////////////////////////////////////////////////////////////////////
