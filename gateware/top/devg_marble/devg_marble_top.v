@@ -674,6 +674,25 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .evrClkGen(BRARAlignClock),
           .evrClkGenStrobe());
 
+wire [31:0] BROrbitClockDiv4ClockStatus;
+wire BROrbitClockDiv4ClockSynced;
+wire BROrbitClockDiv4Clock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4),
+          .DEBUG("false"))
+  evgBROrbitClockDiv4Clock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(BROrbitClockDiv4ClockStatus),
+
+          .evrClk(evg1TxClk),
+          .evrHeartbeatMarker(evg1HeartbeatRequest),
+          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+
+          .evrClkGenSynced(BROrbitClockDiv4ClockSynced),
+          .evrClkGen(BROrbitClockDiv4Clock),
+          .evrClkGenStrobe());
+
 wire [31:0] BRARCoincClockStatus;
 wire BRARCoincClockSynced;
 wire BRARCoincClock;
@@ -774,7 +793,7 @@ assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
      (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
-     (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BRARAlignClock} :
+     (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BROrbitClockDiv4Clock} :
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
      (diagnostic1Select == 3'h7) ? { BRARAlignClock, BRARCoincClock} :
