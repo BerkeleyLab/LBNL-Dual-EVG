@@ -217,6 +217,7 @@ BUFG f1BUFG (.I(FMC1_CLK0_M2C), .O(evg1RefClk));
 BUFG f2BUFG (.I(FMC2_CLK0_M2C), .O(evg2RefClk));
 
 wire evg1HeartbeatRequest, evg2HeartbeatRequest;
+wire sysRealignToggle;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -229,6 +230,8 @@ coincidenceRecorder #(
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_COINC_CSR]),
+    .sysRealignToggle(sysRealignToggle),
+    .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
     .value_a({evg1RefClk, evg1TxClk}),
     .txClk(evg1TxClk),
@@ -244,6 +247,7 @@ coincidenceRecorder #(
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysRealignToggleIn(sysRealignToggle),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
     .value_a({evg2RefClk, evg2TxClk}),

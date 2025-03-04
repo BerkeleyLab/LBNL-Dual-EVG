@@ -11,6 +11,8 @@ module coincidenceRecorder #(
     input         sysCsrStrobe,
     input  [31:0] sysGPIO_OUT,
     output [31:0] sysCsr,
+    output reg    sysRealignToggle = 0,
+    input         sysRealignToggleIn,
 
     input                     samplingClk,
     input [CHANNEL_COUNT-1:0] value_a,
@@ -173,7 +175,6 @@ end
 localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 reg [MUXSEL_WIDTH-1:0] sysMuxSel = 0;
 reg [SUM_WIDTH-1:0] sysReadMux;
-reg sysRealignToggle = 0;
 always @(posedge sysClk) begin
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
@@ -222,7 +223,7 @@ always @(posedge txClk) begin
      txCoincidenceMarker   <= txCoincidenceMarker_m;
      txCoincidenceMarker_d <= txCoincidenceMarker;
 
-    txRealignToggle_m <= sysRealignToggle;
+    txRealignToggle_m <= sysRealignToggleIn;
     txRealignToggle   <= txRealignToggle_m;
 
     if (txRealignToggle != txRealignMatch) begin
