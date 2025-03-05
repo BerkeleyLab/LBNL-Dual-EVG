@@ -799,7 +799,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
-     (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1CoincidenceMarker } :
+     (diagnostic1Select == 3'h3) ? { BRARAlignClock, evg1CoincidenceMarker } :
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BROrbitClockDiv4Clock} :
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
@@ -824,7 +824,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
      (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
-     (diagnostic2Select == 3'h3) ? { evg1HeartbeatRequest, evg2CoincidenceMarker } :
+     (diagnostic2Select == 3'h3) ? { AROrbitClock, evg2CoincidenceMarker } :
      (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
      (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
      (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :
