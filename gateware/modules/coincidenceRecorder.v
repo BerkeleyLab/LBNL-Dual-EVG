@@ -16,6 +16,7 @@ module coincidenceRecorder #(
 
     input                     samplingClk,
     input [CHANNEL_COUNT-1:0] value_a,
+    output                    coincidenceMarker,
 
     input  txClk,
     output txHeartbeatStrobe);
@@ -108,6 +109,8 @@ reg [SAMPLE_COUNTER_WIDTH-1:0] sysSampleCountCoincidence = ~0;
 reg [SAMPLE_COUNTER_WIDTH-1:0] sampleCountCoincidence = ~0;
 reg [3:0] coincidenceStretchCounter = 0;
 wire coincidenceStretchActive = coincidenceStretchCounter[3];
+
+assign coincidenceMarker = coincidenceStretchActive;
 
 /*
  * Acquisition

@@ -218,6 +218,7 @@ BUFG f2BUFG (.I(FMC2_CLK0_M2C), .O(evg2RefClk));
 
 wire evg1HeartbeatRequest, evg2HeartbeatRequest;
 wire sysRealignToggle;
+wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -234,6 +235,7 @@ coincidenceRecorder #(
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
     .value_a({evg1RefClk, evg1TxClk}),
+    .coincidenceMarker(evg1CoincidenceMarker),
     .txClk(evg1TxClk),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
@@ -251,6 +253,7 @@ coincidenceRecorder #(
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
     .value_a({evg2RefClk, evg2TxClk}),
+    .coincidenceMarker(evg2CoincidenceMarker),
     .txClk(evg2TxClk),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
@@ -796,7 +799,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
-     (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
+     (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1CoincidenceMarker } :
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BROrbitClockDiv4Clock} :
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
@@ -821,7 +824,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
      (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
-     (diagnostic2Select == 3'h3) ? { evg1HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h3) ? { evg1HeartbeatRequest, evg2CoincidenceMarker } :
      (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
      (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
      (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :
