@@ -485,6 +485,59 @@ cmdPLL(int argc, char **argv)
     return 0;
 }
 
+/*
+ * Set coincide couint manually (mainly for testing)
+ */
+static int
+cmdCoinc(int argc, char **argv, int evgNumber)
+{
+    char *endp;
+    int a = 0;
+    uint32_t csrIdx = 0;
+
+    switch (evgNumber) {
+    case 0:
+        csrIdx = GPIO_IDX_EVG_1_COINC_CSR;
+        break;
+    case 1:
+        csrIdx = GPIO_IDX_EVG_2_COINC_CSR;
+        break;
+    default:
+        warn("[!] Invalid EVG number - Coinc command aborted.");
+        return 0;
+    }
+
+    if (argc == 1) {
+        printf("Coincidence commands expects an argument\n", evgNumber);
+    }
+    else {
+        a = strtol(argv[1], &endp, 0);
+        if (*endp != '\0') {
+            printf("Bad value\n");
+            return 1;
+        }
+
+#define CSR_W_SET_COINCIDENCE 0x40000000
+        GPIO_WRITE(csrIdx, CSR_W_SET_COINCIDENCE | a);
+        printf("EVG:%d Coincidence count: %d\n", evgNumber + 1, a);
+#undef CSR_W_SET_COINCIDENCE
+    }
+
+    return 0;
+}
+
+static int
+cmdCoincevg1(int argc, char **argv)
+{
+    return cmdCoinc(argc, argv, 0);
+}
+
+static int
+cmdCoincevg2(int argc, char **argv)
+{
+    return cmdCoinc(argc, argv, 1);
+}
+
 static int
 cmdREG(int argc, char **argv)
 {
@@ -667,6 +720,8 @@ commandHandler(int argc, char **argv)
       { "tlog1",      cmdTLOGevg1,    "Timing system event logger (EVG1)"  },
       { "tlog2",      cmdTLOGevg2,    "Timing system event logger (EVG2)"  },
       { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
+      { "cmdC1",      cmdCoincevg1,   "Set coincidence value (EVG1)"       },
+      { "cmdC2",      cmdCoincevg2,   "Set coincidence value (EVG2)"       },
     };
 
     if (argc <= 0)

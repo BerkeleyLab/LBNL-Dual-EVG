@@ -134,6 +134,7 @@ evgCoincidenceCrank(void)
                 /* Account for clock domain crossing delay */
                 a = (a - 2 + evgp->samplesPerCycle) % evgp->samplesPerCycle;
                 GPIO_WRITE(evgp->csrIndex, CSR_W_SET_COINCIDENCE | a);
+                printf("EVG:%d Coincidence count: %d\n", evgp->evgIndex + 1, a);
             }
             else {
                 good = 0;
@@ -143,7 +144,7 @@ evgCoincidenceCrank(void)
             microsecondSpin(10);
             for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
                 for (int i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
-                    evgp->oldAddressOfRisingEdge[i] = 
+                    evgp->oldAddressOfRisingEdge[i] =
                                                    evgp->addressOfRisingEdge[i];
                 }
                 GPIO_WRITE(evgp->csrIndex, CSR_W_REALIGN);
@@ -208,7 +209,7 @@ evgCoincidenceShow(int showData)
             printf("EVG:%d Input:%d Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
                               i, evgp->addressOfRisingEdge[i], evgp->jitter[i]);
         }
-        printf("EVG:%d Tx:Ref %d\n", evgp->evgIndex + 1, 
+        printf("EVG:%d Tx:Ref %d\n", evgp->evgIndex + 1,
                                   sharedMemory->pllPhaseOffset[evgp->evgIndex]);
     }
 }
