@@ -134,7 +134,6 @@ evgCoincidenceCrank(void)
                 /* Account for clock domain crossing delay */
                 a = (a - 2 + evgp->samplesPerCycle) % evgp->samplesPerCycle;
                 GPIO_WRITE(evgp->csrIndex, CSR_W_SET_COINCIDENCE | a);
-                printf("EVG:%d Coincidence count: %d\n", evgp->evgIndex + 1, a);
             }
             else {
                 good = 0;
