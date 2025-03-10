@@ -264,9 +264,21 @@ fillDefaultSequence(struct evgInfo *evgp)
 static void
 findPhase(void)
 {
+    uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
     sharedMemory->requestCoincidenceMeasurement = 1;
+
     while (sharedMemory->requestCoincidenceMeasurement) {
         microsecondSpin(10);
+
+        // If there is no Tx clock (possibly because there was
+        // no ref clock), we could be stuck here forever. Even
+        // if the ref clock returns, we wouldn't be able to
+        // re-enable Tx clock, as mgtTxReset() is performed
+        // by the same processor
+        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50000) {
+            warn("Coincidence measurement request timeout");
+            break;
+        }
     }
 }
 

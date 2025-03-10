@@ -119,9 +119,10 @@ mgtLossOfLock(int mgtBitmap)
     return mgtLOLBitmap;
 }
 
-void
+int
 mgtTxReset(int mgtBitmap)
 {
+    int good = 1;
     uint32_t then, seconds;
     int evg, lane, locked, txResetDone;
     uint32_t csrIdx;
@@ -157,6 +158,8 @@ mgtTxReset(int mgtBitmap)
                              evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }
+
+                    good = 0;
                     break;
                 }
                 locked = GPIO_READ(csrIdx) & CSR_R_CPLL_LOCKED;
@@ -190,6 +193,8 @@ mgtTxReset(int mgtBitmap)
                              evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }
+
+                    good = 0;
                     break;
                 }
                 txResetDone = GPIO_READ(csrIdx) & CSR_R_TX_RESET_DONE;
@@ -198,6 +203,8 @@ mgtTxReset(int mgtBitmap)
             }
         }
     }
+
+    return good;
 }
 
 /*
@@ -228,20 +235,24 @@ mgtCrank(void)
 
     if (debugFlags & DEBUGFLAG_TX_RESET) {
         debugFlags &= ~DEBUGFLAG_TX_RESET;
-        mgtTxReset(0x3);
-        evgAlign();
+
+        if(mgtTxReset(0x3)) {
+            evgAlign();
+        }
     }
 
     if (!(debugFlags & DEBUGFLAG_NO_RESYNC_ON_LOL)) {
         /* Check all EVGs LOL every few seconds */
         seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
-        if ((seconds - whenChecked) > 4) {
+        if ((seconds - whenChecked) > 5) {
             whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
             if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
                 warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
                         mgtLOLBitmap, whenChecked);
-                mgtTxReset(mgtLOLBitmap);
-                evgAlign();
+
+                if(mgtTxReset(mgtLOLBitmap)) {
+                    evgAlign();
+                }
             }
         }
     }
