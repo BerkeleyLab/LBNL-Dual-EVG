@@ -275,7 +275,7 @@ findPhase(void)
         // if the ref clock returns, we wouldn't be able to
         // re-enable Tx clock, as mgtTxReset() is performed
         // by the same processor
-        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50000) {
+        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 100000) {
             warn("Coincidence measurement request timeout");
             break;
         }
