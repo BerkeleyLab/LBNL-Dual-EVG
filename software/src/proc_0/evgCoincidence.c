@@ -228,4 +228,6 @@ evgCoincidenceInit(void)
             evgp->addressOfRisingEdge[i] = -1;
         }
     }
+
+    sharedMemory->wasAligned = sharedMemory->isAligned = 0;
 }
