@@ -37,6 +37,7 @@ struct sharedRAM {
 
     int      requestCoincidenceMeasurement;
     int      requestAlignment;
+    int      wasAligned;
     int      isAligned;
     uint32_t coincidence[SHARED_RAM_COINCIDENCE_COUNT];
     int16_t  pllPhaseOffset[EVG_COUNT];
@@ -53,7 +54,7 @@ struct sharedRAM {
     int     stdoutBufHead;
     int     stdoutBufTail;
 };
-    
+
 #define sharedMemory ((volatile struct sharedRAM *)(XPAR_SHARED_RAM_S_AXI_BASEADDR))
 #define debugFlags (sharedMemory->debug)
 

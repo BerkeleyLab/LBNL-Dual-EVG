@@ -148,7 +148,7 @@ evgCoincidenceCrank(void)
                 }
                 GPIO_WRITE(evgp->csrIndex, CSR_W_REALIGN);
             }
-            sharedMemory->isAligned = 1;
+            sharedMemory->wasAligned = sharedMemory->isAligned = 1;
         }
         sharedMemory->requestAlignment = 0;
     }
@@ -170,6 +170,11 @@ evgCoincidenceCrank(void)
         sharedMemory->requestCoincidenceMeasurement = 0;
     }
     else if (sharedMemory->requestCoincidenceMeasurement) {
+        if (sharedMemory->wasAligned && !sharedMemory->isAligned) {
+            warn("Alignment lost");
+            return;
+        }
+
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
             GPIO_WRITE(evgp->csrIndex, CSR_W_START);
             evgp->acquiring = 1;
