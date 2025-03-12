@@ -278,6 +278,7 @@ align(struct evgInfo *evgp)
 {
     int pass = 0;
     int phaseOffset, phaseError;
+
     for (;;) {
         pass++;
         findPhase();

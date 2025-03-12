@@ -121,7 +121,8 @@ static int
 mmcMailboxRead16(unsigned int address)
 {
     int16_t v0 = (mmcMailboxRead(address) << 8) | mmcMailboxRead(address+1);
-    for (;;) {
+
+    for (int i = 0; i < 500; i++) {
         int16_t v = (mmcMailboxRead(address) << 8) | mmcMailboxRead(address+1);
         if (v == v0) return v;
         v0 = v;
