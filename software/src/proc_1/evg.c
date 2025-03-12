@@ -66,7 +66,7 @@
 
 #define MONITOR_CHANNELS_PER_EVG    2
 #define SEQ_WARN_WAITING_TIME       1 // s
-#define COINCIDENCE_TIMEOUT         5 // s
+#define COINCIDENCE_TIMEOUT         500000 // us
 
 static struct evgInfo {
     uint16_t    csrIdx;
@@ -265,11 +265,11 @@ fillDefaultSequence(struct evgInfo *evgp)
 static void
 findPhase(void)
 {
-    uint32_t whenStarted = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+    uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
 
     sharedMemory->requestCoincidenceMeasurement = 1;
     while (sharedMemory->requestCoincidenceMeasurement) {
-        uint32_t now = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+        uint32_t now = MICROSECONDS_SINCE_BOOT();
         // If there is no Tx clock (possibly because there was
         // no ref clock), we could be stuck here forever. Even
         // if the ref clock returns, we wouldn't be able to
@@ -290,6 +290,7 @@ align(struct evgInfo *evgp)
 {
     int pass = 0;
     int phaseOffset, phaseError;
+
     for (;;) {
         pass++;
         findPhase();
