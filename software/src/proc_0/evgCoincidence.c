@@ -124,8 +124,12 @@ void
 evgCoincidenceCrank(void)
 {
     struct evgInfo *evgp;
+    uint32_t seconds;
     static int active;
+    static uint32_t whenWarned;
     static uint32_t whenStarted;
+
+    seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
 
     if (sharedMemory->requestAlignment) {
         int good = 1, a;
@@ -171,7 +175,10 @@ evgCoincidenceCrank(void)
     }
     else if (sharedMemory->requestCoincidenceMeasurement) {
         if (sharedMemory->wasAligned && !sharedMemory->isAligned) {
-            warn("Alignment lost");
+            if ((seconds - whenWarned) > 5) {
+                warn("Alignment lost");
+                whenWarned = seconds;
+            }
             return;
         }
 
