@@ -66,6 +66,7 @@
 
 #define MONITOR_CHANNELS_PER_EVG    2
 #define SEQ_WARN_WAITING_TIME       1 // s
+#define COINCIDENCE_TIMEOUT         5 // s
 
 static struct evgInfo {
     uint16_t    csrIdx;
@@ -264,9 +265,20 @@ fillDefaultSequence(struct evgInfo *evgp)
 static void
 findPhase(void)
 {
+    uint32_t whenWarned = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+
     sharedMemory->requestCoincidenceMeasurement = 1;
     while (sharedMemory->requestCoincidenceMeasurement) {
-        microsecondSpin(10);
+        uint32_t now = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+        // If there is no Tx clock (possibly because there was
+        // no ref clock), we could be stuck here forever. Even
+        // if the ref clock returns, we wouldn't be able to
+        // re-enable Tx clock, as mgtTxReset() is performed
+        // by the same processor
+        if ((now - whenWarned) > COINCIDENCE_TIMEOUT) {
+            warn("Coincidence measurement request timeout");
+            whenWarned = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+        }
     }
 }
 
