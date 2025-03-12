@@ -265,6 +265,11 @@ fillDefaultSequence(struct evgInfo *evgp)
 static void
 findPhase(void)
 {
+    if (debugFlags & DEBUGFLAG_BYPASS_FIND_PHASE) {
+        printf("Bypassing findPhase()\n");
+        return;
+    }
+
     uint32_t whenWarned = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
 
     sharedMemory->requestCoincidenceMeasurement = 1;
