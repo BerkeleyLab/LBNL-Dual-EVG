@@ -217,8 +217,9 @@ evgCoincidenceShow(int showData)
         }
         for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
             findCoincidence(evgp, i);
-            printf("EVG:%d Input:%d Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
-                              i, evgp->addressOfRisingEdge[i], evgp->jitter[i]);
+            printf("EVG:%d Input:%d Coinc %d Old Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
+                              i, evgp->addressOfRisingEdge[i], evgp->oldAddressOfRisingEdge[i],
+                              evgp->jitter[i]);
         }
         printf("EVG:%d Tx:Ref %d\n", evgp->evgIndex + 1,
                                   sharedMemory->pllPhaseOffset[evgp->evgIndex]);
