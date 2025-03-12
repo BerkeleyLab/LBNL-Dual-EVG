@@ -265,7 +265,7 @@ fillDefaultSequence(struct evgInfo *evgp)
 static void
 findPhase(void)
 {
-    uint32_t whenWarned = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+    uint32_t whenStarted = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
 
     sharedMemory->requestCoincidenceMeasurement = 1;
     while (sharedMemory->requestCoincidenceMeasurement) {
@@ -275,9 +275,9 @@ findPhase(void)
         // if the ref clock returns, we wouldn't be able to
         // re-enable Tx clock, as mgtTxReset() is performed
         // by the same processor
-        if ((now - whenWarned) > COINCIDENCE_TIMEOUT) {
+        if ((now - whenStarted) > COINCIDENCE_TIMEOUT) {
             warn("Coincidence measurement request timeout");
-            whenWarned = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+            break;
         }
     }
 }
