@@ -198,11 +198,12 @@ evgCoincidenceShow(int showData)
     int a, i;
 
     for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
+        // Make sure the coincidence recorder is not acquiring and not busy.
+        // Otherwise we would mess up the coincidence measurement
         while (evgp->acquiring) {
             evgCoincidenceCrank();
         }
-        GPIO_WRITE(evgp->csrIndex, CSR_W_START);
-        while (GPIO_READ(evgp->csrIndex) & CSR_R_BUSY) continue;
+
         if (showData) {
             for (a = 0 ; a < evgp->samplesPerCycle ; a++) {
                 printf("%d", a);
