@@ -64,9 +64,10 @@
 #define SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR       0x2
 #define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
 
-#define MONITOR_CHANNELS_PER_EVG    2
-#define SEQ_WARN_WAITING_TIME       1 // s
-#define COINCIDENCE_TIMEOUT         500000 // us
+#define MONITOR_CHANNELS_PER_EVG        2
+#define SEQ_WARN_WAITING_TIME           1 // s
+#define COINCIDENCE_TIMEOUT             500000 // us
+#define REQUEST_COINCIDENCE_INTERVAL    2000000 // us
 
 static struct evgInfo {
     uint16_t    csrIdx;
@@ -351,6 +352,17 @@ evgAlign(void)
         sharedMemory->requestAlignment = 1;
     }
     return ret;
+}
+
+void
+evgCrank(void)
+{
+    static uint32_t then;
+
+    if ((MICROSECONDS_SINCE_BOOT() - then) > REQUEST_COINCIDENCE_INTERVAL) {
+        then = MICROSECONDS_SINCE_BOOT();
+        sharedMemory->requestCoincidenceMeasurement = 1;
+    }
 }
 
 void

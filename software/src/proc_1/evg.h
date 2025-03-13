@@ -51,6 +51,7 @@
 #define EVG_STATUS_MISSED_COUNT_MASK   (0xFF<<EVG_STATUS_MISSED_COUNT_SHIFT)
 
 void evgInit(void);
+void evgCrank(void);
 int evgAlign(void);
 void evgShowAlignment(void);
 
