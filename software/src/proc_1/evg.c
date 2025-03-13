@@ -277,7 +277,9 @@ findPhase(void)
         // re-enable Tx clock, as mgtTxReset() is performed
         // by the same processor
         if ((now - whenStarted) > COINCIDENCE_TIMEOUT) {
-            warn("Coincidence measurement request timeout");
+            int lostAlignment = sharedMemory->wasAligned && !sharedMemory->isAligned;
+            warn("Coincidence measurement request timeout. Reason: %s",
+                    lostAlignment? "Alignment lost": "Unknown");
             break;
         }
     }
