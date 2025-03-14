@@ -71,8 +71,9 @@ end
  */
 localparam SUM_WIDTH = $clog2(CYCLES_PER_ACQUISITION+1);
 localparam DPRAM_WIDTH = CHANNEL_COUNT * SUM_WIDTH;
+wire [SAMPLE_COUNTER_WIDTH-1:0] sampReadAddress;
 reg [SAMPLE_COUNTER_WIDTH-1:0] sysReadAddress, writeAddress;
-wire [SAMPLE_COUNTER_WIDTH-1:0] readAddress = cycleCountDone ? sysReadAddress
+wire [SAMPLE_COUNTER_WIDTH-1:0] readAddress = cycleCountDone ? sampReadAddress
                                                              : sampleCounter;
 reg writeEnable = 0;
 reg [DPRAM_WIDTH-1:0] dpram [0:(1<<SAMPLE_COUNTER_WIDTH)-1], dpramQ;
@@ -91,6 +92,13 @@ for (i = 0 ; i < CHANNEL_COUNT ; i = i + 1) begin
                                               : dpramQ[i*SUM_WIDTH+:SUM_WIDTH]);
 end
 endgenerate
+
+// Data read by sysClk
+wire [MUXSEL_WIDTH-1:0] sampMuxSel;
+reg [SUM_WIDTH-1:0] sampReadMux = 0;
+always @(posedge samplingClk) begin
+    sampReadMux <= dpramQ[sampMuxSel*SUM_WIDTH+:SUM_WIDTH];
+end
 
 /*
  * Acquisition trigger
@@ -177,7 +185,7 @@ end
 // System clock domain
 localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 reg [MUXSEL_WIDTH-1:0] sysMuxSel = 0;
-reg [SUM_WIDTH-1:0] sysReadMux;
+wire [SUM_WIDTH-1:0] sysReadMux;
 always @(posedge sysClk) begin
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
@@ -195,8 +203,26 @@ always @(posedge sysClk) begin
             sysMuxSel <= sysGPIO_OUT[24+:MUXSEL_WIDTH];
         end
     end
-    sysReadMux <= dpramQ[sysMuxSel*SUM_WIDTH+:SUM_WIDTH];
 end
+
+// This is slow (1 inClk clocks + 3 outClk clocks)
+forwardData #(
+    .DATA_WIDTH(MUXSEL_WIDTH+SAMPLE_COUNTER_WIDTH))
+  forwardDataToSamp (
+    .inClk(sysClk),
+    .inData({sysMuxSel, sysReadAddress}),
+    .outClk(samplingClk),
+    .outData({sampMuxSel, sampReadAddress}));
+
+// This is slow (1 inClk clocks + 3 outClk clocks)
+forwardData #(
+    .DATA_WIDTH(SUM_WIDTH))
+  forwardDataToSys (
+    .inClk(samplingClk),
+    .inData(sampReadMux),
+    .outClk(sysClk),
+    .outData(sysReadMux));
+
 assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysMuxSel,
                   {24-SUM_WIDTH{1'b0}}, sysReadMux };
 
