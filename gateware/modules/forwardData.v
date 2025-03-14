@@ -2,14 +2,14 @@
 // Forward data from one clock domain to another
 //
 
-module forwardData(inClk, inData, outClk, outData);
-
-parameter DATA_WIDTH = 32;
-
-input                   inClk;
-input  [DATA_WIDTH-1:0] inData;
-input                   outClk;
-output [DATA_WIDTH-1:0] outData;
+module forwardData #(
+    parameter DATA_WIDTH = 32
+) (
+    input                   inClk,
+    input [DATA_WIDTH-1:0]  inData,
+    input                   outClk,
+    output [DATA_WIDTH-1:0] outData
+);
 
 //
 // Input clock domain
