@@ -230,6 +230,7 @@ void
 mgtCrank(void)
 {
     static uint32_t whenChecked;
+    static int reportedLOL;
     uint32_t seconds;
     int mgtLOLBitmap = 0;
 
@@ -247,10 +248,16 @@ mgtCrank(void)
         if ((seconds - whenChecked) > 5) {
             whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
             if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
-                warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
-                        mgtLOLBitmap, whenChecked);
+                if (!reportedLOL) {
+                    reportedLOL = 1;
+                    warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
+                            mgtLOLBitmap, whenChecked);
+                }
 
                 if(mgtTxReset(mgtLOLBitmap)) {
+                    // If reset succeeds that means we have lock
+                    // and the MGT good to go
+                    reportedLOL = 0;
                     evgAlign();
                 }
             }
