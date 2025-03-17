@@ -250,13 +250,15 @@ mgtCrank(void)
             if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
                 if (!reportedLOL) {
                     reportedLOL = 1;
-                    warn("MGT CPLL LOL detected on 0x%08X at %u seconds. Resetting EVG(s)",
+                    warn("MGT CPLL LOL detected on 0x%08X at %u seconds",
                             mgtLOLBitmap, whenChecked);
                 }
 
                 if(mgtTxReset(mgtLOLBitmap)) {
                     // If reset succeeds that means we have lock
                     // and the MGT good to go
+                    printf("MGT reset succeeded on 0x%08X at %u seconds\n",
+                            mgtLOLBitmap, whenChecked);
                     reportedLOL = 0;
                     evgAlign();
                 }
