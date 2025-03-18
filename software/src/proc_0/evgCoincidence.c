@@ -56,23 +56,31 @@ readCoincidenceHist(struct evgInfo *evgp, int concidenceHistIdx, int address)
 {
     uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
     uint32_t reg;
+    int pass = 0;
+    int timeout = 0;
 
     GPIO_WRITE(evgp->csrIndex, (concidenceHistIdx << 24) | address);
     reg = GPIO_READ(evgp->csrIndex);
 
     while (ADDRESS_RB_R(reg) != address) {
-        if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
-            printf("Coincidence requested address: %d, readback: %d",
-                    address, ADDRESS_RB_R(reg));
-        }
+        pass++;
 
-        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 10) {
+        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50) {
             warn("Coincidence histogram read timeout");
-            return 0;
+            timeout = 1;
+            break;
         }
 
         reg = GPIO_READ(evgp->csrIndex);
     }
+
+   if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
+       printf("Coincidence readout required # passes: %d\n", pass);
+   }
+
+   if (timeout) {
+       return 0;
+   }
 
     return DATA_R(reg);
 }
