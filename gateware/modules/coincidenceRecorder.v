@@ -69,6 +69,7 @@ end
 /*
  * Histogram dual-port RAM
  */
+localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 localparam SUM_WIDTH = $clog2(CYCLES_PER_ACQUISITION+1);
 localparam DPRAM_WIDTH = CHANNEL_COUNT * SUM_WIDTH;
 wire [SAMPLE_COUNTER_WIDTH-1:0] sampReadAddress;
@@ -77,9 +78,12 @@ reg [SAMPLE_COUNTER_WIDTH-1:0] sysReadAddress = 0, writeAddress = 0;
 wire [SAMPLE_COUNTER_WIDTH-1:0] readAddress = cycleCountDone ? sampReadAddress
                                                              : sampleCounter;
 reg writeEnable = 0;
+wire [MUXSEL_WIDTH-1:0] sampMuxSel;
+reg [MUXSEL_WIDTH-1:0] muxSel = 0;
 reg [DPRAM_WIDTH-1:0] dpram [0:(1<<SAMPLE_COUNTER_WIDTH)-1], dpramQ;
 wire [DPRAM_WIDTH-1:0] writeData;
 always @(posedge samplingClk) begin
+    muxSel <= sampMuxSel;
     dpramRBAddress <= readAddress;
     dpramQ <= dpram[readAddress];
     if (writeEnable) begin
@@ -96,12 +100,13 @@ end
 endgenerate
 
 // Data read by sysClk
-wire [MUXSEL_WIDTH-1:0] sampMuxSel;
+reg [MUXSEL_WIDTH-1:0] sampRBMuxSel = 0;
 reg [SUM_WIDTH-1:0] sampReadMux = 0;
 reg [SAMPLE_COUNTER_WIDTH-1:0] sampRBAddress = 0;
 always @(posedge samplingClk) begin
+    sampRBMuxSel <= muxSel;
     sampRBAddress <= dpramRBAddress;
-    sampReadMux <= dpramQ[sampMuxSel*SUM_WIDTH+:SUM_WIDTH];
+    sampReadMux <= dpramQ[muxSel*SUM_WIDTH+:SUM_WIDTH];
 end
 
 /*
@@ -187,8 +192,8 @@ end
 
 //////////////////////////////////////////////////////////////////////////////
 // System clock domain
-localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 reg [MUXSEL_WIDTH-1:0] sysMuxSel = 0;
+wire [MUXSEL_WIDTH-1:0] sysRBMuxSel;
 wire [SUM_WIDTH-1:0] sysReadMux;
 wire [SAMPLE_COUNTER_WIDTH-1:0] sysRBAddress;
 always @(posedge sysClk) begin
@@ -221,14 +226,14 @@ forwardData #(
 
 // This is slow (1 inClk clocks + 3 outClk clocks)
 forwardData #(
-    .DATA_WIDTH(SUM_WIDTH+SAMPLE_COUNTER_WIDTH))
+    .DATA_WIDTH(MUXSEL_WIDTH+SUM_WIDTH+SAMPLE_COUNTER_WIDTH))
   forwardDataToSys (
     .inClk(samplingClk),
-    .inData({sampReadMux, sampRBAddress}),
+    .inData({sampRBMuxSel, sampReadMux, sampRBAddress}),
     .outClk(sysClk),
-    .outData({sysReadMux, sysRBAddress}));
+    .outData({sysRBMuxSel, sysReadMux, sysRBAddress}));
 
-assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysMuxSel,
+assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysRBMuxSel,
                   {24-SUM_WIDTH-SAMPLE_COUNTER_WIDTH{1'b0}}, sysRBAddress, sysReadMux };
 
 //////////////////////////////////////////////////////////////////////////////
