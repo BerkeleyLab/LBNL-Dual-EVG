@@ -13,8 +13,15 @@
 #include "sharedMemory.h"
 #include "util.h"
 
-#define DATA_WIDTH 10
-#define DATA_MASK ((1 << DATA_WIDTH) - 1)
+#define DATA_SIZE             10
+#define DATA_SHIFT            0
+#define DATA_MASK             REG_GEN_MASK(DATA_SHIFT, DATA_SIZE)
+#define DATA_R(reg)           REG_GEN_READ(reg, DATA_SHIFT, DATA_SIZE)
+
+#define ADDRESS_RB_SIZE       11
+#define ADDRESS_RB_SHIFT      DATA_SIZE
+#define ADDRESS_RB_MASK       REG_GEN_MASK(ADDRESS_RB_SHIFT, ADDRESS_RB_SIZE)
+#define ADDRESS_RB_R(reg)     REG_GEN_READ(reg, ADDRESS_RB_SHIFT, ADDRESS_RB_SIZE)
 
 #define CSR_W_START           0x80000000
 #define CSR_W_SET_COINCIDENCE 0x40000000
@@ -43,6 +50,33 @@ static struct evgInfo {
     }
 };
 
+// Only call this when not capturing a new histogram
+static int
+readCoincidenceHist(struct evgInfo *evgp, int concidenceHistIdx, int address)
+{
+    uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
+    uint32_t reg;
+
+    GPIO_WRITE(evgp->csrIndex, (concidenceHistIdx << 24) | address);
+    reg = GPIO_READ(evgp->csrIndex);
+
+    while (ADDRESS_RB_R(reg) != address) {
+        if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
+            printf("Coincidence requested address: %d, readback: %d",
+                    address, ADDRESS_RB_R(reg));
+        }
+
+        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 10) {
+            warn("Coincidence histogram read timeout");
+            return 0;
+        }
+
+        reg = GPIO_READ(evgp->csrIndex);
+    }
+
+    return DATA_R(reg);
+}
+
 /*
  * Find midpoint of rising edge
  */
@@ -58,10 +92,8 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
     evgp->addressOfRisingEdge[inputIndex] = -1;
     evgp->jitter[inputIndex] = -1;
     for (i = 0 ; i < loopLimit ; i++) {
-        int n;
         int address = i % evgp->samplesPerCycle;
-        GPIO_WRITE(evgp->csrIndex, (inputIndex << 24) | address);
-        n = GPIO_READ(evgp->csrIndex) & DATA_MASK;
+        int n = readCoincidenceHist(evgp, inputIndex, address);
         if (n == 0) {
             consecutiveZeroCount++;
         }
@@ -211,9 +243,7 @@ evgCoincidenceShow(int showData)
             for (a = 0 ; a < evgp->samplesPerCycle ; a++) {
                 printf("%d", a);
                 for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
-                    int n;
-                    GPIO_WRITE(evgp->csrIndex, (i << 24) | a);
-                    n = GPIO_READ(evgp->csrIndex) & DATA_MASK;
+                    int n = readCoincidenceHist(evgp, i, a);
                     printf(" %d", n);
                 }
                 printf("\n");
