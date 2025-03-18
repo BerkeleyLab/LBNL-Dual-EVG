@@ -72,13 +72,15 @@ end
 localparam SUM_WIDTH = $clog2(CYCLES_PER_ACQUISITION+1);
 localparam DPRAM_WIDTH = CHANNEL_COUNT * SUM_WIDTH;
 wire [SAMPLE_COUNTER_WIDTH-1:0] sampReadAddress;
-reg [SAMPLE_COUNTER_WIDTH-1:0] sysReadAddress, writeAddress;
+reg [SAMPLE_COUNTER_WIDTH-1:0] dpramRBAddress = 0;
+reg [SAMPLE_COUNTER_WIDTH-1:0] sysReadAddress = 0, writeAddress = 0;
 wire [SAMPLE_COUNTER_WIDTH-1:0] readAddress = cycleCountDone ? sampReadAddress
                                                              : sampleCounter;
 reg writeEnable = 0;
 reg [DPRAM_WIDTH-1:0] dpram [0:(1<<SAMPLE_COUNTER_WIDTH)-1], dpramQ;
 wire [DPRAM_WIDTH-1:0] writeData;
 always @(posedge samplingClk) begin
+    dpramRBAddress <= readAddress;
     dpramQ <= dpram[readAddress];
     if (writeEnable) begin
         dpram[writeAddress] <= writeData;
@@ -96,7 +98,9 @@ endgenerate
 // Data read by sysClk
 wire [MUXSEL_WIDTH-1:0] sampMuxSel;
 reg [SUM_WIDTH-1:0] sampReadMux = 0;
+reg [SAMPLE_COUNTER_WIDTH-1:0] sampRBAddress = 0;
 always @(posedge samplingClk) begin
+    sampRBAddress <= dpramRBAddress;
     sampReadMux <= dpramQ[sampMuxSel*SUM_WIDTH+:SUM_WIDTH];
 end
 
@@ -186,6 +190,7 @@ end
 localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 reg [MUXSEL_WIDTH-1:0] sysMuxSel = 0;
 wire [SUM_WIDTH-1:0] sysReadMux;
+wire [SAMPLE_COUNTER_WIDTH-1:0] sysRBAddress;
 always @(posedge sysClk) begin
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
@@ -216,15 +221,15 @@ forwardData #(
 
 // This is slow (1 inClk clocks + 3 outClk clocks)
 forwardData #(
-    .DATA_WIDTH(SUM_WIDTH))
+    .DATA_WIDTH(SUM_WIDTH+SAMPLE_COUNTER_WIDTH))
   forwardDataToSys (
     .inClk(samplingClk),
-    .inData(sampReadMux),
+    .inData({sampReadMux, sampRBAddress}),
     .outClk(sysClk),
-    .outData(sysReadMux));
+    .outData({sysReadMux, sysRBAddress}));
 
 assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysMuxSel,
-                  {24-SUM_WIDTH{1'b0}}, sysReadMux };
+                  {24-SUM_WIDTH-SAMPLE_COUNTER_WIDTH{1'b0}}, sysRBAddress, sysReadMux };
 
 //////////////////////////////////////////////////////////////////////////////
 // Transmiter (EVG) clock domain
