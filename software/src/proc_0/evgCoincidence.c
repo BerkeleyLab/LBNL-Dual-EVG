@@ -213,7 +213,7 @@ evgCoincidenceCrank(void)
             if ((a = evgp->addressOfRisingEdge[0]) >= 0) {
                 /* Account for clock domain crossing delay */
                 a = (a - 2 + evgp->samplesPerCycle) % evgp->samplesPerCycle;
-                GPIO_WRITE(evgp->csrIndex, CSR_W_SET_COINCIDENCE | a);
+                GPIO_WRITE(evgp->csrIndex, CSR_W_SET_COINCIDENCE | ADDRESS_WR_W(a));
             }
             else {
                 good = 0;
