@@ -234,7 +234,7 @@ forwardData #(
     .outData({sysRBMuxSel, sysReadMux, sysRBAddress}));
 
 assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysRBMuxSel,
-                  {24-SUM_WIDTH-SAMPLE_COUNTER_WIDTH{1'b0}}, sysRBAddress, sysReadMux };
+                  {24-SAMPLE_COUNTER_WIDTH-SUM_WIDTH{1'b0}}, sysRBAddress, sysReadMux };
 
 //////////////////////////////////////////////////////////////////////////////
 // Transmiter (EVG) clock domain
