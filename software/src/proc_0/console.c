@@ -192,7 +192,7 @@ static int
 cmdDEBUG(int argc, char **argv)
 {
     char *endp;
-    int d;
+    uint32_t d;
     int sFlag = 0;
 
     if ((argc > 1) && (strcmp(argv[1], "-s") == 0)) {
@@ -201,7 +201,7 @@ cmdDEBUG(int argc, char **argv)
         argv++;
     }
     if (argc > 1) {
-        d = strtol(argv[1], &endp, 16);
+        d = strtoul(argv[1], &endp, 16);
         if (*endp == '\0') {
             debugFlags = d;
         }

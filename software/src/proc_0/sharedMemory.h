@@ -27,11 +27,11 @@ struct sharedRAM_UDP {
 };
 
 struct sharedRAM {
-    int     enableEPICSprocessor;
-    int     resetFPGA;
-    int     debug;
-    int     loopbackRequest;
-    int     loopbackActual;
+    int         enableEPICSprocessor;
+    int         resetFPGA;
+    uint32_t    debug;
+    int         loopbackRequest;
+    int         loopbackActual;
 
     struct systemParameters systemParameters;
 
