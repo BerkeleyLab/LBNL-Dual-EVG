@@ -13,20 +13,54 @@
 #include "sharedMemory.h"
 #include "util.h"
 
-#define DATA_SIZE             10
-#define DATA_SHIFT            0
-#define DATA_MASK             REG_GEN_MASK(DATA_SHIFT, DATA_SIZE)
-#define DATA_R(reg)           REG_GEN_READ(reg, DATA_SHIFT, DATA_SIZE)
+/* CSR read */
 
-#define ADDRESS_RB_SIZE       11
-#define ADDRESS_RB_SHIFT      DATA_SIZE
-#define ADDRESS_RB_MASK       REG_GEN_MASK(ADDRESS_RB_SHIFT, ADDRESS_RB_SIZE)
-#define ADDRESS_RB_R(reg)     REG_GEN_READ(reg, ADDRESS_RB_SHIFT, ADDRESS_RB_SIZE)
+#define DATA_HIST_SIZE              10
+#define DATA_HIST_SHIFT             0
+#define DATA_HIST_MASK              REG_GEN_MASK(DATA_HIST_SHIFT, DATA_HIST_SIZE)
+#define DATA_HIST_R(reg)            REG_GEN_READ(reg, DATA_HIST_SHIFT, DATA_HIST_SIZE)
 
-#define CSR_W_START           0x80000000
-#define CSR_W_SET_COINCIDENCE 0x40000000
-#define CSR_W_REALIGN         0x20000000
-#define CSR_R_BUSY            0x80000000
+#define ADDRESS_RB_SIZE             10
+#define ADDRESS_RB_SHIFT            DATA_HIST_SIZE
+#define ADDRESS_RB_MASK             REG_GEN_MASK(ADDRESS_RB_SHIFT, ADDRESS_RB_SIZE)
+#define ADDRESS_RB_R(reg)           REG_GEN_READ(reg, ADDRESS_RB_SHIFT, ADDRESS_RB_SIZE)
+
+#define MUX_SEL_RB_SIZE             1
+#define MUX_SEL_RB_SHIFT            24
+#define MUX_SEL_RB_MASK             REG_GEN_MASK(MUX_SEL_RB_SHIFT, MUX_SEL_RB_SIZE)
+#define MUX_SEL_RB_R(reg)           REG_GEN_READ(reg, MUX_SEL_RB_SHIFT, MUX_SEL_RB_SIZE)
+
+#define BUSY_STATUS_SIZE            1
+#define BUSY_STATUS_SHIFT           31
+#define BUSY_STATUS_MASK            REG_GEN_MASK(BUSY_STATUS_SHIFT, BUSY_STATUS_SIZE)
+#define CSR_R_BUSY                  BUSY_STATUS_MASK
+
+/* CSR write */
+
+#define ADDRESS_WR_SIZE             10
+#define ADDRESS_WR_SHIFT            0
+#define ADDRESS_WR_MASK             REG_GEN_MASK(ADDRESS_WR_SHIFT, ADDRESS_WR_SIZE)
+#define ADDRESS_WR_W(value)         REG_GEN_WRITE(value, ADDRESS_WR_SHIFT, ADDRESS_WR_SIZE)
+
+#define MUX_SEL_WR_SIZE             1
+#define MUX_SEL_WR_SHIFT            24
+#define MUX_SEL_WR_MASK             REG_GEN_MASK(MUX_SEL_WR_SHIFT, MUX_SEL_WR_SIZE)
+#define MUX_SEL_WR_W(value)         REG_GEN_WRITE(value, MUX_SEL_WR_SHIFT, MUX_SEL_WR_SIZE)
+
+#define REALIGN_WR_SIZE             1
+#define REALIGN_WR_SHIFT            29
+#define REALIGN_WR_MASK             REG_GEN_MASK(REALIGN_WR_SHIFT, REALIGN_WR_SIZE)
+#define CSR_W_REALIGN               REALIGN_WR_MASK
+
+#define SET_COINCIDENCE_WR_SIZE     1
+#define SET_COINCIDENCE_WR_SHIFT    30
+#define SET_COINCIDENCE_WR_MASK     REG_GEN_MASK(SET_COINCIDENCE_WR_SHIFT, SET_COINCIDENCE_WR_SIZE)
+#define CSR_W_SET_COINCIDENCE       SET_COINCIDENCE_WR_MASK
+
+#define START_WR_SIZE               1
+#define START_WR_SHIFT              31
+#define START_WR_MASK               REG_GEN_MASK(START_WR_SHIFT, START_WR_SIZE)
+#define CSR_W_START                 START_WR_MASK
 
 static struct evgInfo {
     uint16_t evgIndex;
@@ -52,37 +86,41 @@ static struct evgInfo {
 
 // Only call this when not capturing a new histogram
 static int
-readCoincidenceHist(struct evgInfo *evgp, int concidenceHistIdx, int address)
+readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
 {
     uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
     uint32_t reg;
     int pass = 0;
     int timeout = 0;
 
-    GPIO_WRITE(evgp->csrIndex, (concidenceHistIdx << 24) | address);
+    GPIO_WRITE(evgp->csrIndex, MUX_SEL_WR_W(muxSel) | ADDRESS_WR_W(address));
     reg = GPIO_READ(evgp->csrIndex);
 
-    while (ADDRESS_RB_R(reg) != address) {
+    while ((ADDRESS_RB_R(reg) != address) ||
+            (MUX_SEL_RB_R(reg) != muxSel)) {
         pass++;
 
         if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50) {
             warn("Coincidence histogram read timeout");
             timeout = 1;
+
+            if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
+                printf("Coincidence readout address %d:%d muxSel %d:%d\n",
+                        address, ADDRESS_RB_R(reg),
+                        muxSel, MUX_SEL_RB_R(reg));
+            }
+
             break;
         }
 
         reg = GPIO_READ(evgp->csrIndex);
     }
 
-   if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
-       printf("Coincidence readout required # passes: %d\n", pass);
-   }
-
    if (timeout) {
        return 0;
    }
 
-    return DATA_R(reg);
+    return DATA_HIST_R(reg);
 }
 
 /*
@@ -111,11 +149,11 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
                 indexOfFirstNonZero = i;
             }
             if (indexOfFirstNonZero >= 0) {
-                if ((n >= (DATA_MASK / 2))
+                if ((n >= (DATA_HIST_MASK / 2))
                  && (evgp->addressOfRisingEdge[inputIndex] < 0)) {
                     evgp->addressOfRisingEdge[inputIndex] = address;
                 }
-                if (n == DATA_MASK) {
+                if (n == DATA_HIST_MASK) {
                     evgp->jitter[inputIndex] = i - indexOfFirstNonZero;
                     break;
                 }
