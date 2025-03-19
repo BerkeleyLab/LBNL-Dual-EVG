@@ -517,10 +517,8 @@ cmdCoinc(int argc, char **argv, int evgNumber)
             return 1;
         }
 
-#define CSR_W_SET_COINCIDENCE 0x40000000
-        GPIO_WRITE(csrIdx, CSR_W_SET_COINCIDENCE | a);
+        GPIO_WRITE(csrIdx, CSR_W_SET_COINCIDENCE | ADDRESS_WR_W(a));
         printf("EVG:%d Coincidence count: %d\n", evgNumber + 1, a);
-#undef CSR_W_SET_COINCIDENCE
     }
 
     return 0;
