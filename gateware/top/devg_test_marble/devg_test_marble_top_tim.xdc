@@ -23,9 +23,22 @@ create_clock -period 7.999 -name gtx_ref3 [get_ports MGT_CLK_3_P]
 
 # EXT0_CLK
 create_clock -period 8.001 -name refCoinc1 [get_ports EXT0_CLK_P]
+set clk_refCoinc1_period                   [get_property PERIOD [get_clocks refCoinc1]]
 
 # EXT1_CLK
 create_clock -period 7.999 -name refCoinc2 [get_ports EXT1_CLK_P]
+set clk_refCoinc2_period                   [get_property PERIOD [get_clocks refCoinc2]]
+
+# MGT generated clocks
+set clk_evg1mgt_0_TXOUTCLK_period            [get_property PERIOD [get_clocks evg1_mgt_fanout[0].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK]]
+set clk_evg1mgt_1_TXOUTCLK_period            [get_property PERIOD [get_clocks evg1_mgt_fanout[1].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK]]
+set clk_evg1mgt_2_TXOUTCLK_period            [get_property PERIOD [get_clocks evg1_mgt_fanout[2].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK]]
+set clk_evg1mgt_3_TXOUTCLK_period            [get_property PERIOD [get_clocks evg1_mgt_fanout[3].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK]]
+
+set clk_evg2mgt_0_TXOUTCLK_period            [get_property PERIOD [get_clocks evg2_mgt_fanout[0].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]]
+set clk_evg2mgt_1_TXOUTCLK_period            [get_property PERIOD [get_clocks evg2_mgt_fanout[1].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]]
+set clk_evg2mgt_2_TXOUTCLK_period            [get_property PERIOD [get_clocks evg2_mgt_fanout[2].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]]
+set clk_evg2mgt_3_TXOUTCLK_period            [get_property PERIOD [get_clocks evg2_mgt_fanout[3].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]]
 
 #########################################
 # Don't check timing across clock domains.
@@ -39,9 +52,9 @@ set_false_path -from [get_clocks rx_clk] -to [get_clocks -of_objects [get_pins b
 set_false_path -from [get_clocks refCoinc1] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks refCoinc1]
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks refCoinc2]
-set_false_path -from [get_clocks refCoinc1] -to [get_clocks refCoinc2]
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks refCoinc2] $clk_refCoinc2_period
 set_false_path -from [get_clocks refCoinc2] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
-set_false_path -from [get_clocks refCoinc2] -to [get_clocks refCoinc1]
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks refCoinc1] $clk_refCoinc1_period
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT3]] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
 set_false_path -from [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
 set_false_path -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/RXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
@@ -51,9 +64,15 @@ set_false_path -from [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i
 set_false_path -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/RXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT3]]
 set_false_path -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT3]]
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK]
-set_false_path -from [get_clocks refCoinc2] -to [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK]
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks evg1_mgt_fanout[0].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] $clk_evg1mgt_0_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks evg1_mgt_fanout[1].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] $clk_evg1mgt_1_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks evg1_mgt_fanout[2].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] $clk_evg1mgt_2_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks evg1_mgt_fanout[3].evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] $clk_evg1mgt_3_TXOUTCLK_period
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]
-set_false_path -from [get_clocks refCoinc1] -to [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]
-set_false_path -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks refCoinc1]
-set_false_path -from [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks refCoinc2]
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks evg2_mgt_fanout[0].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] $clk_evg2mgt_0_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks evg2_mgt_fanout[1].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] $clk_evg2mgt_1_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks evg2_mgt_fanout[2].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] $clk_evg2mgt_2_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks evg2_mgt_fanout[3].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] $clk_evg2mgt_3_TXOUTCLK_period
+set_max_delay -datapath_only -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks refCoinc1] $clk_refCoinc1_period
+set_max_delay -datapath_only -from [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks refCoinc2] $clk_refCoinc2_period
 set_false_path -from [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/RXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
