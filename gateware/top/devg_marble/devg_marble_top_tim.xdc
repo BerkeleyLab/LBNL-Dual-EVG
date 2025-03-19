@@ -28,6 +28,13 @@ set clk_evg1mgt_TXOUTCLK_period            [get_property PERIOD [get_clocks evg1
 set clk_evg2mgt_TXOUTCLK_period            [get_property PERIOD [get_clocks evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]]
 
 #########################################
+# Sampling a clock with another
+#########################################
+
+set_max_delay -datapath_only -from [get_ports FMC1_CLK0_M2C_P] -to [get_clocks refCoinc2] $clk_refCoinc2_period
+set_max_delay -datapath_only -from [get_ports FMC2_CLK0_M2C_P] -to [get_clocks refCoinc1] $clk_refCoinc1_period
+
+#########################################
 # Don't check timing across clock domains.
 #########################################
 
@@ -39,9 +46,7 @@ set_false_path -from [get_clocks rx_clk] -to [get_clocks -of_objects [get_pins b
 set_false_path -from [get_clocks refCoinc1] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks refCoinc1]
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks refCoinc2]
-set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks refCoinc2] $clk_refCoinc2_period
 set_false_path -from [get_clocks refCoinc2] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
-set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks refCoinc1] $clk_refCoinc1_period
 set_false_path -from [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT3]] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
 set_false_path -from [get_clocks evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
 set_false_path -from [get_clocks evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/RXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
