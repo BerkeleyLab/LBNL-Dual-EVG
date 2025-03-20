@@ -205,7 +205,7 @@ coincidenceRecorder #(
     .sysGPIO_OUT(GPIO_OUT),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_COINC_CSR]),
     .samplingClk(evg2RefClk),
-    .value_a({evg1RefClk, evg1TxClk}),
+    .refClk({evg1RefClk, evg1TxClk}),
     .txClk(evg1TxClk),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
@@ -221,7 +221,7 @@ coincidenceRecorder #(
     .sysGPIO_OUT(GPIO_OUT),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
-    .value_a({evg2RefClk, evg2TxClk}),
+    .refClk({evg2RefClk, evg2TxClk}),
     .txClk(evg2TxClk),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
