@@ -15,7 +15,7 @@ module coincidenceRecorder #(
     input         sysRealignToggleIn,
 
     input                     samplingClk,
-    input [CHANNEL_COUNT-1:0] value_a,
+    input [CHANNEL_COUNT-1:0] refClk,
     output                    coincidenceMarker,
 
     input  txClk,
@@ -47,38 +47,32 @@ reg firstCycle = 0, firstCycle_d = 0;
 
 /*
  * Sample input signal
- * If (SAMPLE_CLKS_PER_COINCIDENCE > INPUT_CYCLES_PER_COINCIDENCE) the input
- * is aliased to a negative frequency so the rising edge we're looking for
- * appears as a falling edge.  Account for this by inverting the input so
- * that the aliased falling edge appears to be rising.
- * If (SAMPLE_CLKS_PER_COINCIDENCE < INPUT_CYCLES_PER_COINCIDENCE) the input
- * is aliased to a positive frequency so unmodified input can be used.
+ * Because using clock as data is not well defined with the 2 clocks
+ * having an "uncontrolable" routing delay, generate a /2 signal using
+ * the measured clock
  */
+reg [CHANNEL_COUNT-1:0] value_a = 0;
 (*ASYNC_REG="true"*) reg [CHANNEL_COUNT-1:0] value_m = 0;
-(*KEEP="true"*) reg [CHANNEL_COUNT-1:0] value_d0 = 0, value_d1 = 0, value_d2 = 0;
+(*KEEP="true"*) reg [CHANNEL_COUNT-1:0] value_d0 = 0, value_d1 = 0, value_d2 = 0, value_d3 = 0;
 wire [CHANNEL_COUNT-1:0] value;
 
 genvar i;
 generate
 for(i = 0; i < CHANNEL_COUNT; i = i + 1) begin
 
+always @(posedge refClk[i]) begin
+    value_a[i] <= ~value_a[i];
+end
+
 always @(posedge samplingClk) begin
     value_m[i]   <= value_a[i];
     value_d0[i]  <= value_m[i];
     value_d1[i]  <= value_d0[i];
     value_d2[i]  <= value_d1[i];
+    value_d3[i]  <= value_d2[i];
 end
 
-if (SAMPLE_CLKS_PER_COINCIDENCE > INPUT_CYCLES_PER_COINCIDENCE) begin
-
-assign value[i] = ~value_d2[i];
-
-end
-else begin
-
-assign value[i] = value_d2[i];
-
-end
+assign value[i] = value_d3[i]^value_d2[i];
 
 end
 endgenerate
