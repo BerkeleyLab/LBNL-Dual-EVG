@@ -38,8 +38,8 @@ set clk_evg2mgt_0_TXOUTCLK_period            [get_property PERIOD [get_clocks ev
 # Sampling a clock with another
 #########################################
 
-set_max_delay -datapath_only -from [get_ports EXT0_CLK_P] -to [get_clocks refCoinc2] $clk_refCoinc2_period
-set_max_delay -datapath_only -from [get_ports EXT1_CLK_P] -to [get_clocks refCoinc1] $clk_refCoinc1_period
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks refCoinc2] $clk_refCoinc2_period
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks refCoinc1] $clk_refCoinc1_period
 
 #########################################
 # Don't check timing across clock domains.
