@@ -61,7 +61,7 @@ generate
 for(i = 0; i < CHANNEL_COUNT; i = i + 1) begin
 
 always @(posedge refClk[i]) begin
-    value_a[i] <= ~value_a[i];
+    value_a[i] <= !value_a[i];
 end
 
 always @(posedge samplingClk) begin
