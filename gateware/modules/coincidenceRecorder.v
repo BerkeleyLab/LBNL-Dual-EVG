@@ -72,7 +72,7 @@ always @(posedge samplingClk) begin
     value_d3[i]  <= value_d2[i];
 end
 
-assign value[i] = value_d3[i]^value_d2[i];
+assign value[i] = !(value_d3[i]^value_d2[i]);
 
 end
 endgenerate

@@ -176,7 +176,8 @@ begin
 
 	if (!good) begin
 		$display("FAIL");
-		$stop(0);
+		/////////////////////$stop(0);
+		$finish(0);
 	end else begin
 		$display("PASS");
 		$finish(0);
@@ -240,7 +241,7 @@ task align1;
         oldValue = newValue;
     end
     $display("EVG 1 Rising edge at %d", risingEdge);
-    risingEdge = (risingEdge - 2 + RF2_CLK_PER_COINCIDENCE) % RF2_CLK_PER_COINCIDENCE;
+    risingEdge = (risingEdge - 5 + RF2_CLK_PER_COINCIDENCE) % RF2_CLK_PER_COINCIDENCE;
     writeCsr1({1'b0, 1'b1, 1'b0, 5'h0, risingEdge});
     end
 endtask
@@ -291,7 +292,7 @@ task align2;
         oldValue = newValue;
     end
     $display("EVG 2 Rising edge at %d", risingEdge);
-    risingEdge = (risingEdge - 2 + RF1_CLK_PER_COINCIDENCE) % RF1_CLK_PER_COINCIDENCE;
+    risingEdge = (risingEdge - 5 + RF1_CLK_PER_COINCIDENCE) % RF1_CLK_PER_COINCIDENCE;
     writeCsr2({1'b0, 1'b1, 1'b0, 5'h0, risingEdge});
     end
 endtask

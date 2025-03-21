@@ -1,21 +1,20 @@
 [*]
-[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Wed Mar 19 18:24:35 2025
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Fri Mar 21 03:43:14 2025
 [*]
 [dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/coincidenceRecorder.vcd"
-[dumpfile_mtime] "Wed Mar 19 18:23:48 2025"
-[dumpfile_size] 19511080
+[dumpfile_mtime] "Fri Mar 21 03:41:37 2025"
+[dumpfile_size] 25078986
 [savefile] "/home/lrusso/repos/dual-evg/gateware/modules/coincidenceRecorder.gtkw"
-[timestart] 0
-[size] 1916 1134
-[pos] 301 77
-*-17.000000 80069200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 2739000
+[size] 1910 1110
+[pos] 0 0
+*-19.700001 4618732 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] coincidenceRecorder_tb.
-[treeopen] coincidenceRecorder_tb.coincidenceRecorder2.
-[sst_width] 214
+[sst_width] 305
 [signals_width] 377
 [sst_expanded] 1
-[sst_vpaned_height] 415
+[sst_vpaned_height] 419
 @200
 -TB
 @420
@@ -28,9 +27,7 @@ coincidenceRecorder_tb.hbCount
 @28
 coincidenceRecorder_tb.isAligned[2:1]
 coincidenceRecorder_tb.rf1clk
-@29
 coincidenceRecorder_tb.rf1clk_d
-@28
 coincidenceRecorder_tb.rf1clk_p
 coincidenceRecorder_tb.rf1heartbeat
 coincidenceRecorder_tb.rf2clk
@@ -100,6 +97,22 @@ coincidenceRecorder_tb.coincidenceRecorder1.cycleCount[3:0]
 coincidenceRecorder_tb.coincidenceRecorder1.busy
 @24
 coincidenceRecorder_tb.coincidenceRecorder1.readAddress[8:0]
+@29
+coincidenceRecorder_tb.coincidenceRecorder1.refClk[1:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.value_a[1:0]
+coincidenceRecorder_tb.coincidenceRecorder1.value_m[1:0]
+coincidenceRecorder_tb.coincidenceRecorder1.value_d0[1:0]
+coincidenceRecorder_tb.coincidenceRecorder1.value_d1[1:0]
+coincidenceRecorder_tb.coincidenceRecorder1.value_d2[1:0]
+coincidenceRecorder_tb.coincidenceRecorder1.value_d3[1:0]
+@c00028
+coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
+@28
+(0)coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
+(1)coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
+@1401200
+-group_end
 @c00022
 coincidenceRecorder_tb.coincidenceRecorder1.writeData[5:0]
 @28
@@ -117,16 +130,6 @@ coincidenceRecorder_tb.coincidenceRecorder1.writeAddress[8:0]
 coincidenceRecorder_tb.coincidenceRecorder1.writeEnable
 @24
 coincidenceRecorder_tb.coincidenceRecorder1.dpramQ[5:0]
-@28
-coincidenceRecorder_tb.coincidenceRecorder1.value_a[1:0]
-coincidenceRecorder_tb.coincidenceRecorder1.value_m[1:0]
-@c00028
-coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
-@28
-(0)coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
-(1)coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
-@1401200
--group_end
 @28
 coincidenceRecorder_tb.coincidenceRecorder1.coincidenceMarker
 coincidenceRecorder_tb.coincidenceRecorder1.coincidenceStretchActive
@@ -209,6 +212,22 @@ coincidenceRecorder_tb.coincidenceRecorder2.cycleCount[3:0]
 coincidenceRecorder_tb.coincidenceRecorder2.busy
 @24
 coincidenceRecorder_tb.coincidenceRecorder2.readAddress[8:0]
+@29
+coincidenceRecorder_tb.coincidenceRecorder2.refClk[1:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder2.value_a[1:0]
+coincidenceRecorder_tb.coincidenceRecorder2.value_m[1:0]
+coincidenceRecorder_tb.coincidenceRecorder2.value_d0[1:0]
+coincidenceRecorder_tb.coincidenceRecorder2.value_d1[1:0]
+coincidenceRecorder_tb.coincidenceRecorder2.value_d2[1:0]
+coincidenceRecorder_tb.coincidenceRecorder2.value_d3[1:0]
+@c00028
+coincidenceRecorder_tb.coincidenceRecorder2.value[1:0]
+@28
+(0)coincidenceRecorder_tb.coincidenceRecorder2.value[1:0]
+(1)coincidenceRecorder_tb.coincidenceRecorder2.value[1:0]
+@1401200
+-group_end
 @c00022
 coincidenceRecorder_tb.coincidenceRecorder2.writeData[5:0]
 @28
@@ -226,16 +245,6 @@ coincidenceRecorder_tb.coincidenceRecorder2.writeAddress[8:0]
 coincidenceRecorder_tb.coincidenceRecorder2.writeEnable
 @24
 coincidenceRecorder_tb.coincidenceRecorder2.dpramQ[5:0]
-@28
-coincidenceRecorder_tb.coincidenceRecorder2.value_a[1:0]
-coincidenceRecorder_tb.coincidenceRecorder2.value_m[1:0]
-@c00028
-coincidenceRecorder_tb.coincidenceRecorder2.value[1:0]
-@28
-(0)coincidenceRecorder_tb.coincidenceRecorder2.value[1:0]
-(1)coincidenceRecorder_tb.coincidenceRecorder2.value[1:0]
-@1401200
--group_end
 @28
 coincidenceRecorder_tb.coincidenceRecorder2.coincidenceMarker
 coincidenceRecorder_tb.coincidenceRecorder2.coincidenceStretchActive
@@ -291,5 +300,6 @@ coincidenceRecorder_tb.coincidenceRecorder2.txHeartbeatStrobe
 coincidenceRecorder_tb.coincidenceRecorder2.txRealignMatch
 coincidenceRecorder_tb.coincidenceRecorder2.txRealignToggle
 coincidenceRecorder_tb.coincidenceRecorder2.txRealignToggle_m
+@200
 [pattern_trace] 1
 [pattern_trace] 0
