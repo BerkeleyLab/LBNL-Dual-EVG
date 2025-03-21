@@ -35,7 +35,7 @@ coincidenceRecorder #(
     .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(rf2clk),
-    .value_a({rf1clk_d, rf1clk}),
+    .refClk({rf1clk_d, rf1clk}),
     .txClk(rf1clk),
     .txHeartbeatStrobe(rf1heartbeat));
 
@@ -53,7 +53,7 @@ coincidenceRecorder #(
     .sysCsr(sysCsr2),
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(rf1clk),
-    .value_a({rf2clk_d, rf2clk}),
+    .refClk({rf2clk_d, rf2clk}),
     .txClk(rf2clk),
     .txHeartbeatStrobe(rf2heartbeat));
 
