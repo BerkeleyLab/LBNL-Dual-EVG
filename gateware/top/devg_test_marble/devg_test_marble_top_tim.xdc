@@ -35,11 +35,22 @@ set clk_evg1mgt_0_TXOUTCLK_period            [get_property PERIOD [get_clocks ev
 set clk_evg2mgt_0_TXOUTCLK_period            [get_property PERIOD [get_clocks evg2_mgt_fanout[0].evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK]]
 
 #########################################
-# Sampling a clock with another
+# Phase measurement FF. We need them to be always have the same
+# delay from the clock that is driving them, as the following CDC
+# FF will sample this signal and compare essentially the edges of
+# this
 #########################################
 
-set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks refCoinc2] $clk_refCoinc2_period
-set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks refCoinc1] $clk_refCoinc1_period
+set_property LOC SLICE_X86Y182 [get_cells coincidenceRecorder1/genblk2[0].value_a_reg[0]]
+set_property LOC SLICE_X86Y181 [get_cells coincidenceRecorder2/genblk2[0].value_a_reg[0]]
+
+#########################################
+# Sampling a clock with another. CDC FF with ASYNC_REG
+# property. Likely unneeded
+#########################################
+
+set_max_delay -datapath_only -from [get_clocks refCoinc1] -to [get_clocks refCoinc2] 1.0
+set_max_delay -datapath_only -from [get_clocks refCoinc2] -to [get_clocks refCoinc1] 1.0
 
 #########################################
 # Don't check timing across clock domains.
