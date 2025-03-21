@@ -104,7 +104,7 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
                  && (evgp->addressOfRisingEdge[inputIndex] < 0)) {
                     evgp->addressOfRisingEdge[inputIndex] = address;
                 }
-                if (n == DATA_HIST_MASK) {
+                if (n >= ((DATA_HIST_MASK * 5) / 7)) {
                     evgp->jitter[inputIndex] = i - indexOfFirstNonZero;
                     break;
                 }
