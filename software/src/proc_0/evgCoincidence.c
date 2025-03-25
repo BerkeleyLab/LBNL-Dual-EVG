@@ -84,6 +84,7 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
     const int debounceLimit = evgp->samplesPerCycle / 5;
     int consecutiveZeroCount = 0;
     int indexOfFirstNonZero = -1;
+    int indexOfLastNonZero = -1;
     int i;
 
     evgp->addressOfRisingEdge[inputIndex] = -1;
@@ -99,17 +100,19 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
              && (indexOfFirstNonZero < 0)) {
                 indexOfFirstNonZero = i;
             }
-            if (indexOfFirstNonZero >= 0) {
-                if ((n >= (DATA_HIST_MASK / 2))
-                 && (evgp->addressOfRisingEdge[inputIndex] < 0)) {
-                    evgp->addressOfRisingEdge[inputIndex] = address;
-                }
-                if (n >= ((DATA_HIST_MASK * 5) / 7)) {
-                    evgp->jitter[inputIndex] = i - indexOfFirstNonZero;
-                    break;
-                }
-            }
+
             consecutiveZeroCount = 0;
+        }
+
+        if (indexOfFirstNonZero >= 0) {
+            if (n == 0 && (indexOfLastNonZero < 0)) {
+                indexOfLastNonZero = i;
+                evgp->jitter[inputIndex] = (indexOfLastNonZero - indexOfFirstNonZero) / 2;
+                evgp->addressOfRisingEdge[inputIndex] =
+                    (indexOfFirstNonZero + evgp->jitter[inputIndex]) %
+                    evgp->samplesPerCycle;
+                break;
+            }
         }
     }
 }
