@@ -295,3 +295,52 @@ mgtFetchLatency(unsigned int evgIdx)
     }
     return 0;
 }
+
+mgtFetchStatus(uint32_t *ap)
+{
+    int evg, lane;
+    int idx = 0;
+    uint32_t csrIdx;
+    uint32_t csrBaseIdx;
+    uint32_t csr = 0;
+    uint32_t evgStatus = 0;
+    uint32_t laneStatus = 0;
+
+    for (evg = 0 ; evg < EVG_COUNT; evg++) {
+        evgStatus = 0;
+        csrBaseIdx = ((0x1 << evg) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
+                        (((0x1 << evg) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
+
+        if (!csrBaseIdx) {
+            continue;
+        }
+
+        for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
+            laneStatus = 0;
+            csrIdx = REG(csrBaseIdx, lane);
+            csr = GPIO_READ(csrIdx);
+
+            if (csr & CSR_R_RX_ALIGNED) {
+                laneStatus |= 0x1;
+            }
+            if (csr & CSR_R_TX_FSM_RESET_DONE) {
+                laneStatus |= 0x2;
+            }
+            if (csr & CSR_R_RX_FSM_RESET_DONE) {
+                laneStatus |= 0x4;
+            }
+            if (csr & CSR_R_CPLL_LOCKED) {
+                laneStatus |= 0x8;
+            }
+            if (csr & CSR_R_CPLL_LOSS_OF_LOCK) {
+                laneStatus |= 0x10;
+            }
+
+            evgStatus |= (laneStatus << (8*lane));
+        }
+
+        ap[idx++] = evgStatus;
+    }
+
+    return idx;
+}

@@ -41,5 +41,6 @@ int mgtTxReset(int mgtBitmap);
 void mgtTxStutter(int evgNumber);
 int mgtFetchLatency(unsigned int evgIdx);
 void mgtCrank();
+int mgtFetchStatus(uint32_t *ap);
 
 #endif /* _MGT_H_ */
