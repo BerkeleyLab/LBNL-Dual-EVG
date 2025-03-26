@@ -125,6 +125,12 @@ evgStatusFifoAcceptWr(struct evgInfo *evgp, int accept)
     GPIO_WRITE(evgp->csrStatusFifoIdx, statusFifoWr);
 }
 
+static void
+evgStatusFifoForceWr(struct evgInfo *evgp)
+{
+    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
+}
+
 static uint32_t
 evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
 {
@@ -334,9 +340,9 @@ int
 evgAlign(void)
 {
     int ret = 1;
+    struct evgInfo *evgp = NULL;
 
     if (CFG_MGT_TX_REF_ALIGN == 1) {
-        struct evgInfo *evgp;
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
             if (!align(evgp)) {
                 ret = 0;
@@ -348,6 +354,16 @@ evgAlign(void)
         // We still need to measure the phase difference
         // for the coincidence procedure
         findPhase();
+    }
+
+    // In case we are re-align due to a loss of lock, we need to force
+    // the sequencer module to send it's current status after the re-lock.
+    // Otherwise the sequencer status bits will get stuck on the previous
+    // value, which are likely not true anymore.
+    for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
+        evgStatusFifoForceWr(evgp);
+        // Wait for register to be updated
+        microsecondSpin(1000);
     }
 
     if (!sharedMemory->requestAlignment) {
@@ -380,7 +396,7 @@ evgInit(void)
 
         // On startup force a valid intial value to the status
         // register
-        GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
+        evgStatusFifoForceWr(evgp);
         // Wait for register to be updated
         microsecondSpin(1000);
 
