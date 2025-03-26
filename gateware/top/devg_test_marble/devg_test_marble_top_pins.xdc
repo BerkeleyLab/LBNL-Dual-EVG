@@ -128,14 +128,6 @@ set_property -dict {PACKAGE_PIN H1} [get_ports QSFP2_TX_4_N]
 set_property -dict {PACKAGE_PIN J4} [get_ports QSFP2_RX_4_P]
 set_property -dict {PACKAGE_PIN J3} [get_ports QSFP2_RX_4_N]
 
-# Direct monitoring of MGT reference clocks
-# EXT0_CLK. MGTREFCLK1_116 (schematic MGT_CLK_1), U2 output 1. EVG1
-set_property -dict {PACKAGE_PIN F6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT0_CLK_P]
-set_property -dict {PACKAGE_PIN F5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT0_CLK_N]
-# EXT1_CLK. MGTREFCLK0_115 (schematic MGT_CLK_2), U2 output 4. EVG2
-set_property -dict {PACKAGE_PIN H6 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_P]
-set_property -dict {PACKAGE_PIN H5 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports EXT1_CLK_N]
-
 # Bank 0 setup
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]
