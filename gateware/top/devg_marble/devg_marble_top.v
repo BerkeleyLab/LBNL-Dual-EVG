@@ -28,9 +28,6 @@ module devg_marble_top #(
     output MGT_TX_2_P, MGT_TX_2_N,
     input  MGT_RX_2_P, MGT_RX_2_N,
 
-    input  FMC1_CLK0_M2C_P, FMC1_CLK0_M2C_N,
-    input  FMC2_CLK0_M2C_P, FMC2_CLK0_M2C_N,
-
     input        [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC1_hwTrigger,
     input                                         FMC1_auxInput,
     input        [CFG_EVIO_DIAG_IN_COUNT-1:0] FMC1_diagnosticIn,
@@ -207,15 +204,6 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire FMC1_CLK0_M2C, FMC2_CLK0_M2C;
-IBUFDS f1IBUF (.I(FMC1_CLK0_M2C_P), .IB(FMC1_CLK0_M2C_N),
-               .O(FMC1_CLK0_M2C));
-IBUFDS f2IBUF (.I(FMC2_CLK0_M2C_P), .IB(FMC2_CLK0_M2C_N),
-               .O(FMC2_CLK0_M2C));
-
-BUFG f1BUFG (.I(FMC1_CLK0_M2C), .O(evg1RefClk));
-BUFG f2BUFG (.I(FMC2_CLK0_M2C), .O(evg2RefClk));
-
 wire evg1HeartbeatRequest, evg2HeartbeatRequest;
 wire sysRealignToggle;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
@@ -381,6 +369,7 @@ wire evg1RxClkIn;
 wire evg1TxClkIn;
 wire evg1RefClkUnbuf;
 IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
+BUFG f1BUFG (.I(evg1RefClkUnbuf), .O(evg1RefClk));
 
 wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
 mgtWrapper #(.EVG(1),
@@ -528,6 +517,7 @@ wire evg2RxClkIn;
 wire evg2TxClkIn;
 wire evg2RefClkUnbuf;
 IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_1_P), .IB(MGT_CLK_1_N), .O(evg2RefClkUnbuf));
+BUFG f2BUFG (.I(evg2RefClkUnbuf), .O(evg2RefClk));
 
 mgtWrapper #(.EVG(2),
              .SAMPLING_CLOCK_RATE(500000000),

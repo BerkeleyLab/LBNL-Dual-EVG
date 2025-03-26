@@ -24,7 +24,6 @@ module devg_test_marble_top #(
     output wire[3:0] RGMII_TXD,
 
     input  MGT_CLK_0_P, MGT_CLK_0_N,
-    input  MGT_CLK_1_P, MGT_CLK_1_N,
     output QSFP1_TX_1_P, QSFP1_TX_1_N,
     input  QSFP1_RX_1_P, QSFP1_RX_1_N,
     output QSFP1_TX_2_P, QSFP1_TX_2_N,
@@ -34,7 +33,6 @@ module devg_test_marble_top #(
     output QSFP1_TX_4_P, QSFP1_TX_4_N,
     input  QSFP1_RX_4_P, QSFP1_RX_4_N,
 
-    input  MGT_CLK_2_P, MGT_CLK_2_N,
     input  MGT_CLK_3_P, MGT_CLK_3_N,
     output QSFP2_TX_1_P, QSFP2_TX_1_N,
     input  QSFP2_RX_1_P, QSFP2_RX_1_N,
@@ -44,9 +42,6 @@ module devg_test_marble_top #(
     input  QSFP2_RX_3_P, QSFP2_RX_3_N,
     output QSFP2_TX_4_P, QSFP2_TX_4_N,
     input  QSFP2_RX_4_P, QSFP2_RX_4_N,
-
-    input  EXT0_CLK_P, EXT0_CLK_N,
-    input  EXT1_CLK_P, EXT1_CLK_N,
 
     input  FPGA_SCLK,
     input  FPGA_CSB,
@@ -176,21 +171,6 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire EXT0_CLK, EXT1_CLK;
-IBUFDS_GTE2 f1IBUF (
-    .I(EXT0_CLK_P),
-    .IB(EXT0_CLK_N),
-    .CEB(1'b0),
-    .O(EXT0_CLK));
-IBUFDS_GTE2 f2IBUF (
-    .I(EXT1_CLK_P),
-    .IB(EXT1_CLK_N),
-    .CEB(1'b0),
-    .O(EXT1_CLK));
-
-BUFG f1BUFG (.I(EXT0_CLK), .O(evg1RefClk));
-BUFG f2BUFG (.I(EXT1_CLK), .O(evg2RefClk));
-
 wire evg1HeartbeatRequest, evg2HeartbeatRequest;
 
 coincidenceRecorder #(
@@ -380,6 +360,7 @@ wire [3:0] evg2RxClks;
 
 wire evg1RefClkUnbuf;
 IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
+BUFG f1BUFG (.I(evg1RefClkUnbuf), .O(evg1RefClk));
 
 generate
 for (i = 0 ; i < 4 ; i = i + 1) begin : evg1_mgt_fanout
@@ -561,6 +542,7 @@ wire [3:0] evg2TxClksIn;
 
 wire evg2RefClkUnbuf;
 IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_3_P), .IB(MGT_CLK_3_N), .O(evg2RefClkUnbuf));
+BUFG f2BUFG (.I(evg2RefClkUnbuf), .O(evg2RefClk));
 
 generate
 for (i = 0 ; i < 4 ; i = i + 1) begin : evg2_mgt_fanout
