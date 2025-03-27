@@ -28,6 +28,11 @@ module devg_marble_top #(
     output MGT_TX_2_P, MGT_TX_2_N,
     input  MGT_RX_2_P, MGT_RX_2_N,
 
+    // Currently unsused, but kept here for compatibility
+    // and possible future use
+    input  FMC1_CLK0_M2C_P, FMC1_CLK0_M2C_N,
+    input  FMC2_CLK0_M2C_P, FMC2_CLK0_M2C_N,
+
     input        [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC1_hwTrigger,
     input                                         FMC1_auxInput,
     input        [CFG_EVIO_DIAG_IN_COUNT-1:0] FMC1_diagnosticIn,
