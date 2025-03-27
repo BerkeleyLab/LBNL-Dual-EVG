@@ -51,8 +51,9 @@ reg firstCycle = 0, firstCycle_d = 0;
  * having an "uncontrolable" routing delay, generate a /2 signal using
  * the measured clock
  */
-(*RLOC="X0Y0"*) (*ASYNC_REG="true"*) reg [CHANNEL_COUNT-1:0] value_a = 0, value_m = 0;
-(*KEEP="true"*) reg [CHANNEL_COUNT-1:0] value_d0 = 0, value_d1 = 0, value_d2 = 0, value_d3 = 0;
+reg [CHANNEL_COUNT-1:0] value_a = 0;
+(*RLOC="X0Y0"*) (*ASYNC_REG="true"*) reg [CHANNEL_COUNT-1:0] value_m = 0, value_d0 = 0;
+(*KEEP="true"*) reg [CHANNEL_COUNT-1:0] value_d1 = 0, value_d2 = 0, value_d3 = 0;
 wire [CHANNEL_COUNT-1:0] value;
 
 genvar i;
