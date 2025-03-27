@@ -37,7 +37,7 @@
 
 void mgtInit(void);
 int mgtLossOfLock(int mgtBitmap);
-int mgtTxReset(int mgtBitmap);
+int mgtReset(int mgtBitmap);
 void mgtTxStutter(int evgNumber);
 int mgtFetchLatency(unsigned int evgIdx);
 void mgtCrank();

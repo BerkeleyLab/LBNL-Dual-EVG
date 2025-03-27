@@ -280,7 +280,7 @@ findPhase(void)
         // If there is no Tx clock (possibly because there was
         // no ref clock), we could be stuck here forever. Even
         // if the ref clock returns, we wouldn't be able to
-        // re-enable Tx clock, as mgtTxReset() is performed
+        // re-enable Tx clock, as mgtReset() is performed
         // by the same processor
         if ((now - whenStarted) > COINCIDENCE_TIMEOUT) {
             int lostAlignment = sharedMemory->wasAligned && !sharedMemory->isAligned;

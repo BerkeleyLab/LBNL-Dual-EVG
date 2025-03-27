@@ -38,7 +38,6 @@
 #define CSR_W_ENABLE_RESETS     0x80000000
 #define CSR_RW_GT_TX_RESET      0x40000000
 #define CSR_RW_GT_RX_RESET      0x20000000
-#define CSR_RW_CPLL_RESET       0x10000000
 
 #define CSR_W_DRP_WE            0x40000000
 #define CSR_W_DRP_ADDR_SHIFT    16
@@ -120,20 +119,22 @@ mgtLossOfLock(int mgtBitmap)
 }
 
 int
-mgtTxReset(int mgtBitmap)
+mgtReset(int mgtBitmap)
 {
     int good = 1;
     uint32_t then, seconds;
-    int evg, lane, locked, txResetDone;
-    uint32_t csrIdx;
+    int evg, lane, txResetDone, rxResetDone;
     uint32_t csrBaseIdx;
+    uint32_t csr;
     uint32_t reg1Value, reg2Value;
     static uint32_t whenWarned;
 
-    writeResets(mgtBitmap, CSR_RW_GT_TX_RESET | CSR_RW_GT_RX_RESET | CSR_RW_CPLL_RESET);
-    microsecondSpin(200);
+    // We don't need to pull CPLL_RESET because it is not doing anything in
+    // the FPGA anyway. TX_RESET is enough and will internally reset the CPLL
     writeResets(mgtBitmap, CSR_RW_GT_TX_RESET | CSR_RW_GT_RX_RESET);
     microsecondSpin(200);
+    writeResets(mgtBitmap, 0);
+
     seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
     then = MICROSECONDS_SINCE_BOOT();
 
@@ -146,15 +147,16 @@ mgtTxReset(int mgtBitmap)
         }
 
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
-            csrIdx = REG(csrBaseIdx, lane);
-            locked = GPIO_READ(csrIdx) & CSR_R_CPLL_LOCKED;
+            csr = GPIO_READ(REG(csrBaseIdx, lane));
+            txResetDone = csr & CSR_R_TX_RESET_DONE;
+            rxResetDone = csr & CSR_R_RX_RESET_DONE;
             reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
             reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
 
-            while (!locked) {
+            while (!txResetDone || !rxResetDone) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
-                        warn("MGT CPLL lock fail - EVG%d Lane:%d ResetCmd:0x%x [reg 0x%08X - 0x%08X]",
+                        warn("MGT Tx/Rx reset fail - EVG%d Lane:%d ResetCmd:0x%x [reg 0x%08X - 0x%08X]",
                              evg+1, lane, mgtBitmap, reg1Value, reg2Value);
                         whenWarned = seconds;
                     }
@@ -162,42 +164,9 @@ mgtTxReset(int mgtBitmap)
                     good = 0;
                     break;
                 }
-                locked = GPIO_READ(csrIdx) & CSR_R_CPLL_LOCKED;
-                reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
-                reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
-            }
-        }
-    }
-
-    writeResets(mgtBitmap, 0);
-    then = MICROSECONDS_SINCE_BOOT();
-
-    for (evg = 0 ; evg < EVG_COUNT; evg++) {
-        csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
-                        (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
-
-        if (!csrBaseIdx) {
-            continue;
-        }
-
-        for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
-            csrIdx = REG(csrBaseIdx, lane);
-            txResetDone = GPIO_READ(csrIdx) & CSR_R_TX_RESET_DONE;
-            reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
-            reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
-
-            while (!txResetDone) {
-                if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
-                    if ((seconds - whenWarned) > 5) {
-                        warn("MGT Tx reset fail - EVG%d Lane:%d ResetCmd:0x%x [reg 0x%08X - 0x%08X]",
-                             evg+1, lane, mgtBitmap, reg1Value, reg2Value);
-                        whenWarned = seconds;
-                    }
-
-                    good = 0;
-                    break;
-                }
-                txResetDone = GPIO_READ(csrIdx) & CSR_R_TX_RESET_DONE;
+                csr = GPIO_READ(REG(csrBaseIdx, lane));
+                txResetDone = csr & CSR_R_TX_RESET_DONE;
+                rxResetDone = csr & CSR_R_RX_RESET_DONE;
                 reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
                 reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
             }
@@ -215,15 +184,15 @@ mgtTxStutter(int evgNumber)
 {
     switch(evgNumber) {
     default: return;
-    case 1:  mgtTxReset(0x1);  break;
-    case 2:  mgtTxReset(0x2);  break;
+    case 1:  mgtReset(0x1);  break;
+    case 2:  mgtReset(0x2);  break;
     }
 }
 
 void
 mgtInit(void)
 {
-    mgtTxReset(0x3);
+    mgtReset(0x3);
 }
 
 void
@@ -237,7 +206,10 @@ mgtCrank(void)
     if (debugFlags & DEBUGFLAG_TX_RESET) {
         debugFlags &= ~DEBUGFLAG_TX_RESET;
 
-        if(mgtTxReset(0x3)) {
+        if(mgtReset(0x3)) {
+            printf("MGT forced reset (DEBUGFLAG_TX_RESET) succeeded on 0x%08X\n",
+                    0x3);
+            reportedLOL = 0;
             evgAlign();
         }
     }
@@ -254,7 +226,7 @@ mgtCrank(void)
                             mgtLOLBitmap, whenChecked);
                 }
 
-                if(mgtTxReset(mgtLOLBitmap)) {
+                if(mgtReset(mgtLOLBitmap)) {
                     // If reset succeeds that means we have lock
                     // and the MGT good to go
                     printf("MGT reset succeeded on 0x%08X at %u seconds\n",
