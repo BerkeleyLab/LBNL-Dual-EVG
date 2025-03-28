@@ -268,6 +268,7 @@ mgtFetchLatency(unsigned int evgIdx)
     return 0;
 }
 
+int
 mgtFetchStatus(uint32_t *ap)
 {
     int evg, lane;
