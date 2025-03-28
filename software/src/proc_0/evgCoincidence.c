@@ -211,10 +211,6 @@ evgCoincidenceCrank(void)
                 warn("Alignment lost");
                 evgCoincidenceShow(0);
             }
-
-            if (!(debugFlags & DEBUGFLAG_FORCE_MEAS_ON_LOA)) {
-                return;
-            }
         }
 
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {

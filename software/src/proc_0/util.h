@@ -76,7 +76,6 @@
 #define DEBUGFLAG_IIC_SCAN          0x8000
 #define DEBUGFLAG_DISPLAY_NEXT_PAGE 0x10000
 #define DEBUGFLAG_SEQ_STATUS_FIFO   0x200000
-#define DEBUGFLAG_FORCE_MEAS_ON_LOA 0x400000 // Force coincidence measurement on lost alignment state
 #define DEBUGFLAG_SHOW_COINC_ADDR_RB \
                                     0x800000
 #define DEBUGFLAG_DUMP_SCREEN       0x1000000

@@ -379,7 +379,13 @@ evgCrank(void)
 
     if ((MICROSECONDS_SINCE_BOOT() - then) > REQUEST_COINCIDENCE_INTERVAL) {
         then = MICROSECONDS_SINCE_BOOT();
-        sharedMemory->requestCoincidenceMeasurement = 1;
+
+        // Preserve last measurement for debugging purposes, until we
+        // actually want to take a new measurement due to a reset
+        int lostAlignment = sharedMemory->wasAligned && !sharedMemory->isAligned;
+        if (!lostAlignment) {
+            sharedMemory->requestCoincidenceMeasurement = 1;
+        }
     }
 }
 
