@@ -561,7 +561,6 @@ evgFetchCoincidenceStatus(uint32_t *ap)
         ap[idx++] = sharedMemory->referenceFrequency[i];
     }
     ap[idx++] = sharedMemory->isAligned;
-    sharedMemory->requestCoincidenceMeasurement = 1;
     return idx;
 }
 
