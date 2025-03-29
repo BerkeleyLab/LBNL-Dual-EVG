@@ -52,6 +52,12 @@
 #define CSR_R_CPLL_LOCKED       0x00400000
 #define CSR_R_CPLL_LOSS_OF_LOCK 0x00200000
 
+#define CSR_R_RESET_DONE        (CSR_R_TX_FSM_RESET_DONE | \
+                                    CSR_R_RX_FSM_RESET_DONE | \
+                                    CSR_R_TX_RESET_DONE | \
+                                    CSR_R_RX_RESET_DONE | \
+                                    CSR_R_CPLL_LOCKED)
+
 #define REG(base,chan)  ((base) + (GPIO_IDX_PER_MGTWRAPPER * (chan)))
 #define MGT_RESET_WAITING_TIME  100000 // us
 
@@ -123,7 +129,7 @@ mgtReset(int mgtBitmap)
 {
     int good = 1;
     uint32_t then, seconds;
-    int evg, lane, txResetDone, rxResetDone;
+    int evg, lane, resetDone;
     uint32_t csrBaseIdx;
     uint32_t csr;
     uint32_t reg1Value, reg2Value;
@@ -148,12 +154,11 @@ mgtReset(int mgtBitmap)
 
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
             csr = GPIO_READ(REG(csrBaseIdx, lane));
-            txResetDone = csr & CSR_R_TX_RESET_DONE;
-            rxResetDone = csr & CSR_R_RX_RESET_DONE;
+            resetDone = csr & CSR_R_RESET_DONE;
             reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
             reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
 
-            while (!txResetDone || !rxResetDone) {
+            while (resetDone != CSR_R_RESET_DONE) {
                 if ((MICROSECONDS_SINCE_BOOT() - then) > MGT_RESET_WAITING_TIME) {
                     if ((seconds - whenWarned) > 5) {
                         warn("MGT Tx/Rx reset fail - EVG%d Lane:%d ResetCmd:0x%x [reg 0x%08X - 0x%08X]",
@@ -165,8 +170,7 @@ mgtReset(int mgtBitmap)
                     break;
                 }
                 csr = GPIO_READ(REG(csrBaseIdx, lane));
-                txResetDone = csr & CSR_R_TX_RESET_DONE;
-                rxResetDone = csr & CSR_R_RX_RESET_DONE;
+                resetDone = csr & CSR_R_RESET_DONE;
                 reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
                 reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
             }
