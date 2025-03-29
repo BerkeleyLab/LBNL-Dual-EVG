@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2020, Lawrence Berkeley National Laboratory
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #define CSR_W_ENABLE_RESETS     0x80000000
 #define CSR_RW_GT_TX_RESET      0x40000000
 #define CSR_RW_GT_RX_RESET      0x20000000
+#define CSR_RW_GT_LOL_ACK       0x10000000
 
 #define CSR_W_DRP_WE            0x40000000
 #define CSR_W_DRP_ADDR_SHIFT    16
@@ -51,6 +52,7 @@
 #define CSR_R_RX_RESET_DONE     0x00800000
 #define CSR_R_CPLL_LOCKED       0x00400000
 #define CSR_R_CPLL_LOSS_OF_LOCK 0x00200000
+#define CSR_R_GT_LOL_ACK        0x00100000
 
 #define CSR_R_RESET_DONE        (CSR_R_TX_FSM_RESET_DONE | \
                                     CSR_R_RX_FSM_RESET_DONE | \
@@ -235,6 +237,10 @@ mgtCrank(void)
                     // and the MGT good to go
                     printf("MGT reset succeeded on 0x%08X at %u seconds\n",
                             mgtLOLBitmap, whenChecked);
+
+                    writeResets(mgtLOLBitmap, CSR_RW_GT_LOL_ACK);
+                    microsecondSpin(10);
+                    writeResets(mgtLOLBitmap, 0);
                     reportedLOL = 0;
                     evgAlign();
                 }
