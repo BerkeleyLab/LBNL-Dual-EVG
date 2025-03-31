@@ -43,8 +43,8 @@ localparam LOOPBACK = LOOPBACK_OFF;
 // DRP and resets
 localparam DRP_DATA_WIDTH = 16;
 localparam DRP_ADDR_WIDTH = 9;
-localparam RESET_CONTROL_WIDTH = 4;
-localparam RESET_STATUS_WIDTH = 11;
+localparam RESET_CONTROL_WIDTH = 3;
+localparam RESET_STATUS_WIDTH = 13;
 
 (*mark_debug=DEBUG*) wire lolAck, gtTxReset, gtRxReset, cpllReset;
 wire rx_fsm_reset_done, rxResetDone, tx_fsm_reset_done, txResetDone, cpllLock;
@@ -53,8 +53,7 @@ wire rxIsAligned;
 wire [RESET_CONTROL_WIDTH-1:0] resetControl;
 assign { gtTxReset,
          gtRxReset,
-         cpllReset,
-         lolAck } = resetControl;
+         cpllReset } = resetControl;
 wire [RESET_STATUS_WIDTH-1:0] resetStatus = { gtTxReset,
                                               gtRxReset,
                                               cpllReset,
@@ -65,7 +64,7 @@ wire [RESET_STATUS_WIDTH-1:0] resetStatus = { gtTxReset,
                                               rxResetDone,
                                               cpllLock,
                                               lossOfLockLatch,
-                                              lolAck };
+                                              lolState };
 
 wire drp_en, drp_we, drp_rdy;
 wire [DRP_ADDR_WIDTH-1:0] drp_addr;
@@ -92,30 +91,105 @@ drpControl #(.DRP_DATA_WIDTH(DRP_DATA_WIDTH),
 
 //////////////////////////////////////////////////////////////////////////////
 // PLL loss of lock detection
-localparam LOLS_NEEDED = 16; // arbitrary number
-localparam LOL_COUNTER_RELOAD = LOLS_NEEDED - 1;
-localparam LOL_COUNTER_WIDTH = $clog2(LOL_COUNTER_RELOAD+1) + 1;
-(*mark_debug=DEBUG*) reg [LOL_COUNTER_WIDTH-1:0] lolCounter =
-                                                           LOL_COUNTER_RELOAD;
+localparam ST_CHECK_LOL            = 3'd0,
+           ST_WAIT_USER_RESET      = 3'd1,
+           ST_WAIT_USER_RESET_CLR  = 3'd2,
+           ST_WAIT_CPLL_LOCK       = 3'd3,
+           ST_WAIT_RESET_DONE      = 3'd4;
+reg [2:0] lolState = ST_CHECK_LOL;
+
+// Loss of lock detection
 reg lossOfLockLatch = 0;
-wire lossOfLock = lolCounter[LOL_COUNTER_WIDTH-1];
 (*ASYNC_REG="true"*) reg cpllLock_m = 0, cpllLockReg = 0;
+
+// Lock detect detection
+localparam LDS_NEEDED = 1024; // arbitrary number
+localparam LD_COUNTER_RELOAD = LDS_NEEDED - 2;
+localparam LD_COUNTER_WIDTH = $clog2(LD_COUNTER_RELOAD+1) + 1;
+(*mark_debug=DEBUG*) reg [LD_COUNTER_WIDTH-1:0] ldCounter =
+                                                           LD_COUNTER_RELOAD;
+wire lockDetect = ldCounter[LD_COUNTER_WIDTH-1];
+
+// Number of resets per loss of reset
+localparam RSTS_NEEDED = 2; // arbitrary number
+localparam RST_COUNTER_RELOAD = RSTS_NEEDED - 2;
+localparam RST_COUNTER_WIDTH = $clog2(RST_COUNTER_RELOAD+1) + 1;
+(*mark_debug=DEBUG*) reg [RST_COUNTER_WIDTH-1:0] rstCounter =
+                                                           RST_COUNTER_RELOAD;
+wire resetDone = rstCounter[RST_COUNTER_WIDTH-1];
 always @(posedge sysClk) begin
     cpllLock_m <= cpllLock;
     cpllLockReg <= cpllLock_m;
-    if (cpllLockReg) begin
-        lolCounter <= LOL_COUNTER_RELOAD;
-    end
-    else if (!lossOfLock) begin
-        lolCounter <= lolCounter - 1;
+
+    case (lolState)
+
+    ST_CHECK_LOL: begin
+        // reset came at the wrong time
+        if (gtTxReset) begin
+            rstCounter <= RST_COUNTER_RELOAD;
+            lolState <= ST_WAIT_USER_RESET_CLR;
+        end
+        else if (!cpllLockReg) begin
+            lossOfLockLatch <= 1;
+            rstCounter <= RST_COUNTER_RELOAD;
+            lolState <= ST_WAIT_USER_RESET;
+        end
     end
 
-    if (lossOfLock) begin
-        lossOfLockLatch <= 1;
+    ST_WAIT_USER_RESET: begin
+        if (gtTxReset) begin
+            lolState <= ST_WAIT_USER_RESET_CLR;
+        end
     end
-    else if (lolAck) begin
-        lossOfLockLatch <= 0;
+
+    ST_WAIT_USER_RESET_CLR: begin
+        if (!gtTxReset) begin
+            lolState <= ST_WAIT_CPLL_LOCK;
+            ldCounter <= LD_COUNTER_RELOAD;
+        end
     end
+
+    ST_WAIT_CPLL_LOCK: begin
+        if (!cpllLockReg) begin
+            ldCounter <= LD_COUNTER_RELOAD;
+        end
+        else if (!lockDetect) begin
+            ldCounter <= ldCounter - 1;
+        end
+
+        // reset came at the wrong time
+        if (gtTxReset) begin
+            rstCounter <= RST_COUNTER_RELOAD;
+            lolState <= ST_WAIT_USER_RESET_CLR;
+        end
+        else if (lockDetect) begin
+            lolState <= ST_WAIT_RESET_DONE;
+        end
+    end
+
+    ST_WAIT_RESET_DONE: begin
+        // reset came at the wrong time
+        if(gtTxReset) begin
+            rstCounter <= RST_COUNTER_RELOAD;
+            lolState <= ST_WAIT_USER_RESET_CLR;
+        end
+        else if (txResetDone && tx_fsm_reset_done) begin
+            if (!resetDone) begin
+                rstCounter <= rstCounter - 1;
+                lolState <= ST_WAIT_USER_RESET;
+            end
+            else begin
+                lossOfLockLatch <= 0;
+                lolState <= ST_CHECK_LOL;
+            end
+        end
+    end
+
+    default: begin
+        lolState <= ST_CHECK_LOL;
+    end
+
+    endcase
 end
 
 //////////////////////////////////////////////////////////////////////////////
