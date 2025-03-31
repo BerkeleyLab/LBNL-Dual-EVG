@@ -508,7 +508,7 @@ cmdCoinc(int argc, char **argv, int evgNumber)
     }
 
     if (argc == 1) {
-        printf("Coincidence commands expects an argument\n", evgNumber);
+        printf("Coincidence commands expects an argument\n");
     }
     else {
         a = strtol(argv[1], &endp, 0);
@@ -518,22 +518,79 @@ cmdCoinc(int argc, char **argv, int evgNumber)
         }
 
         GPIO_WRITE(csrIdx, CSR_W_SET_COINCIDENCE | ADDRESS_WR_W(a));
-        printf("EVG:%d Coincidence count: %d\n", evgNumber + 1, a);
+        printf("EVG %d coincidence count: %d\n", evgNumber + 1, a);
     }
 
     return 0;
 }
 
 static int
-cmdCoincevg1(int argc, char **argv)
+cmdCoincEvg1(int argc, char **argv)
 {
     return cmdCoinc(argc, argv, 0);
 }
 
 static int
-cmdCoincevg2(int argc, char **argv)
+cmdCoincEvg2(int argc, char **argv)
 {
     return cmdCoinc(argc, argv, 1);
+}
+
+/*
+ * Get LOL state (mainly for testing)
+ */
+static int
+cmdLOLState(int argc, char **argv, int evgNumber)
+{
+    char *endp;
+    int state = 0;
+    uint16_t lane = 0;
+    uint16_t evgBitmap = 0;
+
+    switch (evgNumber) {
+    case 0:
+        evgBitmap = 0x1;
+        break;
+    case 1:
+        evgBitmap = 0x2;
+        break;
+    default:
+        warn("Invalid EVG number");
+        return 0;
+    }
+
+    if (argc > 1) {
+        lane = strtoul(argv[1], &endp, 0);
+        if (*endp != '\0') {
+            return 1;
+        }
+    }
+
+    /* Set EVG and lane */
+    sharedMemory->lolStateMGTBitmap = evgBitmap;
+    sharedMemory->lolStateMGTLane = lane;
+    microsecondSpin(1000);
+
+    state = sharedMemory->lolState;
+    if (state < 0) {
+        return 1;
+    }
+
+    printf("EVG %d LOL state: %d\n", evgNumber + 1, state);
+
+    return 0;
+}
+
+static int
+cmdLOLStateEvg1(int argc, char **argv)
+{
+    return cmdLOLState(argc, argv, 0);
+}
+
+static int
+cmdLOLStateEvg2(int argc, char **argv)
+{
+    return cmdLOLState(argc, argv, 1);
 }
 
 static int
@@ -718,8 +775,10 @@ commandHandler(int argc, char **argv)
       { "tlog1",      cmdTLOGevg1,    "Timing system event logger (EVG1)"  },
       { "tlog2",      cmdTLOGevg2,    "Timing system event logger (EVG2)"  },
       { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
-      { "cmdC1",      cmdCoincevg1,   "Set coincidence value (EVG1)"       },
-      { "cmdC2",      cmdCoincevg2,   "Set coincidence value (EVG2)"       },
+      { "cmdC1",      cmdCoincEvg1,   "Set coincidence value (EVG1)"       },
+      { "cmdC2",      cmdCoincEvg2,   "Set coincidence value (EVG2)"       },
+      { "lolState1",  cmdLOLStateEvg1, "Get Loss of lock state (EVG1)"     },
+      { "lolState2",  cmdLOLStateEvg2, "Get Loss of lock state (EVG2)"     },
     };
 
     if (argc <= 0)
