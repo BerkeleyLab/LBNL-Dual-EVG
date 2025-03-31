@@ -227,7 +227,7 @@ mgtCrank(void)
     if (!(debugFlags & DEBUGFLAG_NO_RESYNC_ON_LOL)) {
         /* Check all EVGs LOL every few seconds */
         seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
-        if ((seconds - whenChecked) > 5) {
+        if ((seconds - whenChecked) > 2) {
             whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
 
             if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
