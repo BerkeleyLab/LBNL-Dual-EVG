@@ -29,7 +29,21 @@ set clk_evg2mgt_TXOUTCLK_period           [get_property PERIOD [get_clocks evg2m
 #########################################
 
 set_property LOC SLICE_X86Y182 [get_cells coincidenceRecorder1/genblk2[0].value_a_reg[0]]
+set_property LOC SLICE_X87Y182 [get_cells coincidenceRecorder1/genblk2[0].value_m_reg[0]]
+
 set_property LOC SLICE_X86Y181 [get_cells coincidenceRecorder2/genblk2[0].value_a_reg[0]]
+set_property LOC SLICE_X87Y181 [get_cells coincidenceRecorder2/genblk2[0].value_m_reg[0]]
+
+#########################################
+# Phase measurement FF of the TX clock. We don't really care,
+# but good to have them placed for diagnostics
+#########################################
+
+set_property LOC SLICE_X81Y188 [get_cells coincidenceRecorder1/genblk2[1].value_a_reg[1]]
+set_property LOC SLICE_X82Y188 [get_cells coincidenceRecorder1/genblk2[1].value_m_reg[1]]
+
+set_property LOC SLICE_X81Y187 [get_cells coincidenceRecorder2/genblk2[1].value_a_reg[1]]
+set_property LOC SLICE_X82Y187 [get_cells coincidenceRecorder2/genblk2[1].value_m_reg[1]]
 
 #########################################
 # Sampling a clock with another. We want to account
