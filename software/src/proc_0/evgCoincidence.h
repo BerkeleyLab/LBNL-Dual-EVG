@@ -35,6 +35,8 @@
 #ifndef _EVG_COINCIDENCE_H_
 #define _EVG_COINCIDENCE_H_
 
+#include "util.h"
+
 /* CSR read */
 
 #define DATA_HIST_SIZE              10
