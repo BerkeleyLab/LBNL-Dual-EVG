@@ -35,6 +35,37 @@
 #ifndef _MGT_H_
 #define _MGT_H_
 
+#include "util.h"
+
+#define CSR_W_ENABLE_RESETS     0x80000000
+#define CSR_RW_GT_TX_RESET      0x40000000
+#define CSR_RW_GT_RX_RESET      0x20000000
+#define CSR_RW_GT_LOL_ACK       0x10000000
+
+#define CSR_W_DRP_WE            0x40000000
+#define CSR_W_DRP_ADDR_SHIFT    16
+#define CSR_R_DRP_BUSY          0x80000000
+#define CSR_DRP_DATA_MASK       0xFFFF
+
+#define CSR_R_RX_ALIGNED        0x08000000
+#define CSR_R_TX_FSM_RESET_DONE 0x04000000
+#define CSR_R_RX_FSM_RESET_DONE 0x02000000
+#define CSR_R_TX_RESET_DONE     0x01000000
+#define CSR_R_RX_RESET_DONE     0x00800000
+#define CSR_R_CPLL_LOCKED       0x00400000
+#define CSR_R_CPLL_LOSS_OF_LOCK 0x00200000
+
+#define CSR_R_LOL_STATE_SIZE    3
+#define CSR_R_LOL_STATE_SHIFT   18
+#define CSR_R_LOL_STATE_MASK    REG_GEN_MASK(CSR_R_LOL_STATE_SHIFT, CSR_R_LOL_STATE_SIZE)
+#define CSR_R_LOL_STATE_R(reg)  REG_GEN_READ(reg, CSR_R_LOL_STATE_SHIFT, CSR_R_LOL_STATE_SIZE)
+
+#define CSR_R_RESET_DONE        (CSR_R_TX_FSM_RESET_DONE | \
+                                    CSR_R_RX_FSM_RESET_DONE | \
+                                    CSR_R_TX_RESET_DONE | \
+                                    CSR_R_RX_RESET_DONE | \
+                                    CSR_R_CPLL_LOCKED)
+
 void mgtInit(void);
 int mgtLossOfLock(int mgtBitmap);
 int mgtReset(int mgtBitmap);
@@ -42,5 +73,6 @@ void mgtTxStutter(int evgNumber);
 int mgtFetchLatency(unsigned int evgIdx);
 void mgtCrank();
 int mgtFetchStatus(uint32_t *ap);
+int mgtLOLState(int mgtBitmap, int lane);
 
 #endif /* _MGT_H_ */

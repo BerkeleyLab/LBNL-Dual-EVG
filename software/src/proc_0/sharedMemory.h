@@ -39,6 +39,9 @@ struct sharedRAM {
     int      requestAlignment;
     int      wasAligned;
     int      isAligned;
+    int      lolState;
+    uint16_t lolStateMGTBitmap;
+    uint16_t lolStateMGTLane;
     uint32_t coincidence[SHARED_RAM_COINCIDENCE_COUNT];
     int16_t  pllPhaseOffset[EVG_COUNT];
     int16_t  pllPhaseError[EVG_COUNT];

@@ -35,31 +35,6 @@
 #include "util.h"
 #include "eyescanTarget.h"
 
-#define CSR_W_ENABLE_RESETS     0x80000000
-#define CSR_RW_GT_TX_RESET      0x40000000
-#define CSR_RW_GT_RX_RESET      0x20000000
-#define CSR_RW_GT_LOL_ACK       0x10000000
-
-#define CSR_W_DRP_WE            0x40000000
-#define CSR_W_DRP_ADDR_SHIFT    16
-#define CSR_R_DRP_BUSY          0x80000000
-#define CSR_DRP_DATA_MASK       0xFFFF
-
-#define CSR_R_RX_ALIGNED        0x08000000
-#define CSR_R_TX_FSM_RESET_DONE 0x04000000
-#define CSR_R_RX_FSM_RESET_DONE 0x02000000
-#define CSR_R_TX_RESET_DONE     0x01000000
-#define CSR_R_RX_RESET_DONE     0x00800000
-#define CSR_R_CPLL_LOCKED       0x00400000
-#define CSR_R_CPLL_LOSS_OF_LOCK 0x00200000
-#define CSR_R_GT_LOL_ACK        0x00100000
-
-#define CSR_R_RESET_DONE        (CSR_R_TX_FSM_RESET_DONE | \
-                                    CSR_R_RX_FSM_RESET_DONE | \
-                                    CSR_R_TX_RESET_DONE | \
-                                    CSR_R_RX_RESET_DONE | \
-                                    CSR_R_CPLL_LOCKED)
-
 #define REG(base,chan)  ((base) + (GPIO_IDX_PER_MGTWRAPPER * (chan)))
 #define MGT_RESET_WAITING_TIME  100000 // us
 
@@ -182,6 +157,31 @@ mgtReset(int mgtBitmap)
     return good;
 }
 
+int mgtLOLState(int mgtBitmap, int lane)
+{
+    int evg;
+    uint32_t csrBaseIdx;
+    uint32_t csr;
+
+    if (lane > EYESCAN_LANECOUNT/2-1) {
+        return -1;
+    }
+
+    for (evg = 0 ; evg < EVG_COUNT; evg++) {
+        csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
+                        (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
+
+        if (!csrBaseIdx) {
+            continue;
+        }
+
+        csr = GPIO_READ(REG(csrBaseIdx, lane));
+        return CSR_R_LOL_STATE_R(csr);
+    }
+
+    return -1;
+}
+
 /*
  * Unsync temporarily
  */
@@ -220,11 +220,16 @@ mgtCrank(void)
         }
     }
 
+    /* always Read LOL state so other processor is aware */
+    sharedMemory->lolState = mgtLOLState(sharedMemory->lolStateMGTBitmap,
+            sharedMemory->lolStateMGTLane);
+
     if (!(debugFlags & DEBUGFLAG_NO_RESYNC_ON_LOL)) {
         /* Check all EVGs LOL every few seconds */
         seconds = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
         if ((seconds - whenChecked) > 5) {
             whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
+
             if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
                 if (!reportedLOL) {
                     reportedLOL = 1;
@@ -237,10 +242,6 @@ mgtCrank(void)
                     // and the MGT good to go
                     printf("MGT reset succeeded on 0x%08X at %u seconds\n",
                             mgtLOLBitmap, whenChecked);
-
-                    writeResets(mgtLOLBitmap, CSR_RW_GT_LOL_ACK);
-                    microsecondSpin(10);
-                    writeResets(mgtLOLBitmap, 0);
                     reportedLOL = 0;
                     evgAlign();
                 }
