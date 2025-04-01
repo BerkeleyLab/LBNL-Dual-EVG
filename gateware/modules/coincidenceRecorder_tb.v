@@ -7,6 +7,12 @@ parameter RF1_CLK_PER_COINCIDENCE = 399;
 parameter RF2_CLK_PER_COINCIDENCE = 400;
 parameter CYCLES_PER_ACQUISITION  = 7;
 
+parameter real RF1_CLK_TO_C1_DELAY = 0.000;
+parameter real RF2_CLK_TO_C1_DELAY = 0.000;
+
+parameter real RF1_CLK_TO_C2_DELAY = 0.000;
+parameter real RF2_CLK_TO_C2_DELAY = 0.000;
+
 localparam DATA_WIDTH = $clog2(CYCLES_PER_ACQUISITION+1);
 
 reg         sysClk = 1;
@@ -17,6 +23,8 @@ wire        rf1heartbeat, rf2heartbeat;
 wire        sysRealignToggle;
 
 reg rf1clk_p=1, rf1clk=0, rf1clk_d=0, rf2clk_p=0, rf2clk=0, rf2clk_d=0;
+reg rf1clk_c1=0, rf2clk_c1=0;
+reg rf1clk_c2=0, rf2clk_c2=0;
 
 //
 // Instantiate devices under test
@@ -34,9 +42,9 @@ coincidenceRecorder #(
     .sysCsr(sysCsr1),
     .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
-    .samplingClk(rf2clk),
-    .refClk({rf1clk_d, rf1clk}),
-    .txClk(rf1clk),
+    .samplingClk(rf2clk_c1),
+    .refClk({rf1clk_d, rf1clk_c1}),
+    .txClk(rf1clk_c1),
     .txHeartbeatStrobe(rf1heartbeat));
 
 
@@ -52,9 +60,9 @@ coincidenceRecorder #(
     .sysGPIO_OUT(sysGPIO_OUT),
     .sysCsr(sysCsr2),
     .sysRealignToggleIn(sysRealignToggle),
-    .samplingClk(rf1clk),
-    .refClk({rf2clk_d, rf2clk}),
-    .txClk(rf2clk),
+    .samplingClk(rf1clk_c2),
+    .refClk({rf2clk_d, rf2clk_c2}),
+    .txClk(rf2clk_c2),
     .txHeartbeatStrobe(rf2heartbeat));
 
 //
@@ -82,6 +90,19 @@ always @(rf2clk_p) begin
 end
 always @(rf2clk) begin
     #1.6 rf2clk_d = rf2clk;
+end
+
+always @(rf1clk) begin
+    #RF1_CLK_TO_C1_DELAY rf1clk_c1 = rf1clk;
+end
+always @(rf2clk) begin
+    #RF2_CLK_TO_C1_DELAY rf2clk_c1 = rf2clk;
+end
+always @(rf1clk) begin
+    #RF2_CLK_TO_C2_DELAY rf1clk_c2 = rf1clk;
+end
+always @(rf2clk) begin
+    #RF2_CLK_TO_C2_DELAY rf2clk_c2 = rf2clk;
 end
 
 //
@@ -157,8 +178,8 @@ begin
     end
     align1();
     align2();
-    plotData1();
-    plotData2();
+    //plotData1();
+    //plotData2();
     #10000;
     writeCsr1({1'b0, 1'b0, 1'b1, 29'h0});
     writeCsr2({1'b0, 1'b0, 1'b1, 29'h0});
@@ -176,8 +197,7 @@ begin
 
 	if (!good) begin
 		$display("FAIL");
-		/////////////////////$stop(0);
-		$finish(0);
+		$stop(0);
 	end else begin
 		$display("PASS");
 		$finish(0);
