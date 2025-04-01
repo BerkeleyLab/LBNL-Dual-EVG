@@ -51,28 +51,29 @@ reg firstCycle = 0, firstCycle_d = 0;
  * having an "uncontrolable" routing delay, generate a /2 signal using
  * the measured clock
  */
-reg [CHANNEL_COUNT-1:0] value_a = 0;
-(*RLOC="X0Y0"*) (*ASYNC_REG="true"*) reg [CHANNEL_COUNT-1:0] value_m = 0, value_d0 = 0;
-(*KEEP="true"*) reg [CHANNEL_COUNT-1:0] value_d1 = 0, value_d2 = 0, value_d3 = 0;
 wire [CHANNEL_COUNT-1:0] value;
 
 genvar i;
 generate
 for(i = 0; i < CHANNEL_COUNT; i = i + 1) begin
 
+reg value_a = 0;
+(*RLOC="X0Y0"*) (*ASYNC_REG="true"*) reg value_m = 0, value_d0 = 0;
+(*KEEP="true"*) reg value_d1 = 0, value_d2 = 0, value_d3 = 0;
+
 always @(posedge refClk[i]) begin
-    value_a[i] <= !value_a[i];
+    value_a <= !value_a;
 end
 
 always @(posedge samplingClk) begin
-    value_m[i]   <= value_a[i];
-    value_d0[i]  <= value_m[i];
-    value_d1[i]  <= value_d0[i];
-    value_d2[i]  <= value_d1[i];
-    value_d3[i]  <= value_d2[i];
+    value_m   <= value_a;
+    value_d0  <= value_m;
+    value_d1  <= value_d0;
+    value_d2  <= value_d1;
+    value_d3  <= value_d2;
 end
 
-assign value[i] = !(value_d3[i]^value_d2[i]);
+assign value[i] = !(value_d3^value_d2);
 
 end
 endgenerate
