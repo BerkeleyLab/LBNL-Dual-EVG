@@ -58,7 +58,7 @@ generate
 for(i = 0; i < CHANNEL_COUNT; i = i + 1) begin
 
 reg value_a = 0;
-(*RLOC="X0Y0"*) (*ASYNC_REG="true"*) reg value_m = 0, value_d0 = 0;
+(*ASYNC_REG="true"*) reg value_m = 0, value_d0 = 0;
 (*KEEP="true"*) reg value_d1 = 0, value_d2 = 0, value_d3 = 0;
 
 always @(posedge refClk[i]) begin
