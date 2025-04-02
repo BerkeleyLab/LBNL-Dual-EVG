@@ -53,8 +53,11 @@ set_property LOC SLICE_X82Y187 [get_cells coincidenceRecorder2/genblk2[1].value_
 # phase difference offset
 #########################################
 
-set_max_delay -from [get_clocks gtx_ref0] -to [get_clocks gtx_ref1] 4.0
-set_max_delay -from [get_clocks gtx_ref1] -to [get_clocks gtx_ref0] 4.0
+set_max_delay -from [get_clocks gtx_ref0] -to [get_clocks gtx_ref1] 2.0
+set_false_path -hold -from [get_clocks gtx_ref0] -to [get_clocks gtx_ref1]
+
+set_max_delay -from [get_clocks gtx_ref1] -to [get_clocks gtx_ref0] 2.0
+set_false_path -hold -from [get_clocks gtx_ref1] -to [get_clocks gtx_ref0]
 
 #########################################
 # Don't check timing across clock domains.
