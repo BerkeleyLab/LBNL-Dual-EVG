@@ -5,7 +5,8 @@ module coincidenceRecorder #(
     parameter CYCLES_PER_ACQUISITION       = -1,
     parameter SAMPLE_CLKS_PER_COINCIDENCE  = -1,
     parameter INPUT_CYCLES_PER_COINCIDENCE = -1,
-    parameter TX_CLK_PER_HEARTBEAT         = -1
+    parameter TX_CLK_PER_HEARTBEAT         = -1,
+    parameter SAMPLE_COUNTER_WIDTH         = $clog2(SAMPLE_CLKS_PER_COINCIDENCE)
     ) (
     input         sysClk,
     input         sysCsrStrobe,
@@ -14,9 +15,10 @@ module coincidenceRecorder #(
     output reg    sysRealignToggle = 0,
     input         sysRealignToggleIn,
 
-    input                     samplingClk,
-    input [CHANNEL_COUNT-1:0] refClk,
-    output                    coincidenceMarker,
+    input                             samplingClk,
+    input [CHANNEL_COUNT-1:0]         refClk,
+    output                            coincidenceMarker,
+    output [SAMPLE_COUNTER_WIDTH-1:0] sampleCounterDbg,
 
     input  txClk,
     output txHeartbeatStrobe);
@@ -41,9 +43,10 @@ wire cycleCountDone = cycleCount[CYCLE_COUNT_WIDTH-1];
  * Count samples in a cycle
  * Free running so phase of input signal remains constant between acquisitions.
  */
-localparam SAMPLE_COUNTER_WIDTH = $clog2(SAMPLE_CLKS_PER_COINCIDENCE);
 reg [SAMPLE_COUNTER_WIDTH-1:0] sampleCounter = 0;
 reg firstCycle = 0, firstCycle_d = 0;
+
+assign sampleCounterDbg = sampleCounter;
 
 /*
  * Sample input signal
