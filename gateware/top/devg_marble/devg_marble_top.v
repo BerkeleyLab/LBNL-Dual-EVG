@@ -213,6 +213,10 @@ wire evg1HeartbeatRequest, evg2HeartbeatRequest;
 wire sysRealignToggle;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 
+
+localparam EVG1_SAMPLE_COUNTER_WIDTH = $clog2(CFG_EVG2_CLK_PER_RF_COINCIDENCE);
+wire [EVG1_SAMPLE_COUNTER_WIDTH-1:0] evg1SampleCounterDbg;
+
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
     .CYCLES_PER_ACQUISITION(1023),
@@ -227,10 +231,14 @@ coincidenceRecorder #(
     .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
+    .sampleCounterDbg(evg1SampleCounterDbg),
     .refClk({evg1TxClk, evg1RefClk}),
     .coincidenceMarker(evg1CoincidenceMarker),
     .txClk(evg1TxClk),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
+
+localparam EVG2_SAMPLE_COUNTER_WIDTH = $clog2(CFG_EVG1_CLK_PER_RF_COINCIDENCE);
+wire [EVG2_SAMPLE_COUNTER_WIDTH-1:0] evg2SampleCounterDbg;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -245,10 +253,22 @@ coincidenceRecorder #(
     .sysRealignToggleIn(sysRealignToggle),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
+    .sampleCounterDbg(evg2SampleCounterDbg),
     .refClk({evg2TxClk, evg2RefClk}),
     .coincidenceMarker(evg2CoincidenceMarker),
     .txClk(evg2TxClk),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
+
+wire [255:0] probe;
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(evg2RefClk),
+    .probe0(probe)
+);
+`endif
+
+assign probe[0+:EVG1_SAMPLE_COUNTER_WIDTH] = evg1SampleCounterDbg;
+assign probe[32+:EVG2_SAMPLE_COUNTER_WIDTH] = evg2SampleCounterDbg;
 
 //////////////////////////////////////////////////////////////////////////////
 // Debounce timing markers
