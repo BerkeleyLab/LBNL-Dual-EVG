@@ -223,13 +223,6 @@ mgtTxStutter(int evgNumber)
 void
 mgtInit(void)
 {
-    // There is an unknown issue with the lock
-    // detect in which the easiest way to recover from
-    // a CPLL loss of lock is to reset the MGTs twice.
-    // Because of that, do it here too, so we don't get
-    // a fake warning about CPLL LOL detected
-    mgtReset(0x3);
-    microsecondSpin(1000);
     mgtReset(0x3);
 }
 

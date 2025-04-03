@@ -114,7 +114,7 @@ wire lockDetect = ldCounter[LD_COUNTER_WIDTH-1];
 // Number of resets per loss of reset
 localparam RSTS_NEEDED = 2; // arbitrary number
 localparam RST_COUNTER_RELOAD = RSTS_NEEDED - 2;
-localparam RST_COUNTER_WIDTH = $clog2(RST_COUNTER_RELOAD+1) + 1;
+localparam RST_COUNTER_WIDTH = $clog2(((RST_COUNTER_RELOAD <= 0)?1:RST_COUNTER_RELOAD)+1) + 1;
 (*mark_debug=DEBUG*) reg [RST_COUNTER_WIDTH-1:0] rstCounter =
                                                            RST_COUNTER_RELOAD;
 wire resetDone = rstCounter[RST_COUNTER_WIDTH-1];

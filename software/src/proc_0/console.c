@@ -540,10 +540,11 @@ cmdCoincEvg2(int argc, char **argv)
  * Get LOL state (mainly for testing)
  */
 static int
-cmdLOLState(int argc, char **argv, int evgNumber)
+cmdLOL(int argc, char **argv, int evgNumber)
 {
     char *endp;
     int state = 0;
+    int rstCounter = 0;
     uint16_t lane = 0;
     uint16_t evgBitmap = 0;
 
@@ -572,25 +573,27 @@ cmdLOLState(int argc, char **argv, int evgNumber)
     microsecondSpin(1000);
 
     state = sharedMemory->lolState;
-    if (state < 0) {
+    rstCounter = sharedMemory->lolRstCounter;
+    if (state < 0 || rstCounter < 0) {
         return 1;
     }
 
-    printf("EVG %d LOL state: %d\n", evgNumber + 1, state);
+    printf("EVG %d LOL state: %d rstCounter: %d\n", evgNumber + 1, state,
+            rstCounter);
 
     return 0;
 }
 
 static int
-cmdLOLStateEvg1(int argc, char **argv)
+cmdLOLEvg1(int argc, char **argv)
 {
-    return cmdLOLState(argc, argv, 0);
+    return cmdLOL(argc, argv, 0);
 }
 
 static int
-cmdLOLStateEvg2(int argc, char **argv)
+cmdLOLEvg2(int argc, char **argv)
 {
-    return cmdLOLState(argc, argv, 1);
+    return cmdLOL(argc, argv, 1);
 }
 
 static int
@@ -777,8 +780,8 @@ commandHandler(int argc, char **argv)
       { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
       { "cmdC1",      cmdCoincEvg1,   "Set coincidence value (EVG1)"       },
       { "cmdC2",      cmdCoincEvg2,   "Set coincidence value (EVG2)"       },
-      { "lolState1",  cmdLOLStateEvg1, "Get Loss of lock state (EVG1)"     },
-      { "lolState2",  cmdLOLStateEvg2, "Get Loss of lock state (EVG2)"     },
+      { "lol1",       cmdLOLEvg1,     "Get Loss of lock stats (EVG1)"      },
+      { "lol2",       cmdLOLEvg2,     "Get Loss of lock stats (EVG2)"      },
     };
 
     if (argc <= 0)
