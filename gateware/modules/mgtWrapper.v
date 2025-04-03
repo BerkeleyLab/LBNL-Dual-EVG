@@ -44,7 +44,7 @@ localparam LOOPBACK = LOOPBACK_OFF;
 localparam DRP_DATA_WIDTH = 16;
 localparam DRP_ADDR_WIDTH = 9;
 localparam RESET_CONTROL_WIDTH = 3;
-localparam RESET_STATUS_WIDTH = 13;
+localparam RESET_STATUS_WIDTH = 15;
 
 (*mark_debug=DEBUG*) wire lolAck, gtTxReset, gtRxReset, cpllReset;
 wire rx_fsm_reset_done, rxResetDone, tx_fsm_reset_done, txResetDone, cpllLock;
@@ -64,7 +64,8 @@ wire [RESET_STATUS_WIDTH-1:0] resetStatus = { gtTxReset,
                                               rxResetDone,
                                               cpllLock,
                                               lossOfLockLatch,
-                                              lolState };
+                                              lolState,
+                                              rstCounter };
 
 wire drp_en, drp_we, drp_rdy;
 wire [DRP_ADDR_WIDTH-1:0] drp_addr;
