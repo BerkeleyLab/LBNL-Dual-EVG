@@ -60,6 +60,11 @@
 #define CSR_R_LOL_STATE_MASK    REG_GEN_MASK(CSR_R_LOL_STATE_SHIFT, CSR_R_LOL_STATE_SIZE)
 #define CSR_R_LOL_STATE_R(reg)  REG_GEN_READ(reg, CSR_R_LOL_STATE_SHIFT, CSR_R_LOL_STATE_SIZE)
 
+#define CSR_R_LOL_RST_COUNTER_SIZE    2
+#define CSR_R_LOL_RST_COUNTER_SHIFT   16
+#define CSR_R_LOL_RST_COUNTER_MASK    REG_GEN_MASK(CSR_R_LOL_RST_COUNTER_SHIFT, CSR_R_LOL_RST_COUNTER_SIZE)
+#define CSR_R_LOL_RST_COUNTER_R(reg)  REG_GEN_READ(reg, CSR_R_LOL_RST_COUNTER_SHIFT, CSR_R_LOL_RST_COUNTER_SIZE)
+
 #define CSR_R_RESET_DONE        (CSR_R_TX_FSM_RESET_DONE | \
                                     CSR_R_RX_FSM_RESET_DONE | \
                                     CSR_R_TX_RESET_DONE | \
@@ -74,5 +79,6 @@ int mgtFetchLatency(unsigned int evgIdx);
 void mgtCrank();
 int mgtFetchStatus(uint32_t *ap);
 int mgtLOLState(int mgtBitmap, int lane);
+int mgtLOLRstCounter(int mgtBitmap, int lane);
 
 #endif /* _MGT_H_ */

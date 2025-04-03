@@ -182,6 +182,31 @@ int mgtLOLState(int mgtBitmap, int lane)
     return -1;
 }
 
+int mgtLOLRstCounter(int mgtBitmap, int lane)
+{
+    int evg;
+    uint32_t csrBaseIdx;
+    uint32_t csr;
+
+    if (lane > EYESCAN_LANECOUNT/2-1) {
+        return -1;
+    }
+
+    for (evg = 0 ; evg < EVG_COUNT; evg++) {
+        csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
+                        (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
+
+        if (!csrBaseIdx) {
+            continue;
+        }
+
+        csr = GPIO_READ(REG(csrBaseIdx, lane));
+        return CSR_R_LOL_RST_COUNTER_R(csr);
+    }
+
+    return -1;
+}
+
 /*
  * Unsync temporarily
  */
@@ -227,8 +252,10 @@ mgtCrank(void)
         }
     }
 
-    /* always Read LOL state so other processor is aware */
+    /* always Read LOL state/rstCounter so other processor is aware */
     sharedMemory->lolState = mgtLOLState(sharedMemory->lolStateMGTBitmap,
+            sharedMemory->lolStateMGTLane);
+    sharedMemory->lolRstCounter = mgtLOLRstCounter(sharedMemory->lolStateMGTBitmap,
             sharedMemory->lolStateMGTLane);
 
     if (!(debugFlags & DEBUGFLAG_NO_RESYNC_ON_LOL)) {
