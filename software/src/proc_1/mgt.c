@@ -101,8 +101,8 @@ mgtLossOfLock(int mgtBitmap)
     return mgtLOLBitmap;
 }
 
-int
-mgtReset(int mgtBitmap)
+static int
+mgtResetRaw(int mgtBitmap)
 {
     int good = 1;
     uint32_t then, seconds;
@@ -152,6 +152,22 @@ mgtReset(int mgtBitmap)
                 reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
             }
         }
+    }
+
+    return good;
+}
+
+int
+mgtReset(int mgtBitmap)
+{
+    // We have to perform 2 resets everytime,
+    // because I couldn't figure out a reliable
+    // way of fixing CPLL lock signal
+    int i = 0;
+    int good = 1;
+
+    for (i = 0; i < 2; i++) {
+        good &= mgtResetRaw(mgtBitmap);
     }
 
     return good;
