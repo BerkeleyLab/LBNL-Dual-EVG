@@ -158,19 +158,25 @@ mgtResetRaw(int mgtBitmap)
 }
 
 int
+mgtResetMultiple(int mgtBitmap, int passes)
+{
+    int i = 0;
+    int good = 1;
+
+    for (i = 0; i < passes; i++) {
+        good &= mgtResetRaw(mgtBitmap);
+    }
+
+    return good;
+}
+
+int
 mgtReset(int mgtBitmap)
 {
     // We have to perform 2 resets everytime,
     // because I couldn't figure out a reliable
     // way of fixing CPLL lock signal
-    int i = 0;
-    int good = 1;
-
-    for (i = 0; i < 2; i++) {
-        good &= mgtResetRaw(mgtBitmap);
-    }
-
-    return good;
+    return mgtResetMultiple(mgtBitmap, 2);
 }
 
 int mgtLOLState(int mgtBitmap, int lane)
@@ -253,7 +259,7 @@ mgtCrank(void)
     if (debugFlags & DEBUGFLAG_TX_RESET) {
         debugFlags &= ~DEBUGFLAG_TX_RESET;
 
-        if(mgtReset(0x3)) {
+        if(mgtResetMultiple(0x3, 1)) {
             printf("MGT forced reset (DEBUGFLAG_TX_RESET) succeeded on 0x%08X\n",
                     0x3);
             reportedLOL = 0;
