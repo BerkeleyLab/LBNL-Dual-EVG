@@ -44,7 +44,7 @@ localparam LOOPBACK = LOOPBACK_OFF;
 localparam DRP_DATA_WIDTH = 16;
 localparam DRP_ADDR_WIDTH = 9;
 localparam RESET_CONTROL_WIDTH = 3;
-localparam RESET_STATUS_WIDTH = 15;
+localparam RESET_STATUS_WIDTH = 13;
 
 (*mark_debug=DEBUG*) wire lolAck, gtTxReset, gtRxReset, cpllReset;
 wire rx_fsm_reset_done, rxResetDone, tx_fsm_reset_done, txResetDone, cpllLock;
@@ -64,8 +64,7 @@ wire [RESET_STATUS_WIDTH-1:0] resetStatus = { gtTxReset,
                                               rxResetDone,
                                               cpllLock,
                                               lossOfLockLatch,
-                                              lolState,
-                                              rstCounter };
+                                              lolState };
 
 wire drp_en, drp_we, drp_rdy;
 wire [DRP_ADDR_WIDTH-1:0] drp_addr;
@@ -111,13 +110,6 @@ localparam LD_COUNTER_WIDTH = $clog2(LD_COUNTER_RELOAD+1) + 1;
                                                            LD_COUNTER_RELOAD;
 wire lockDetect = ldCounter[LD_COUNTER_WIDTH-1];
 
-// Number of resets per loss of reset
-localparam RSTS_NEEDED = 2; // arbitrary number
-localparam RST_COUNTER_RELOAD = RSTS_NEEDED - 1;
-localparam RST_COUNTER_WIDTH = $clog2(((RST_COUNTER_RELOAD <= 0)?1:RST_COUNTER_RELOAD)+1) + 1;
-(*mark_debug=DEBUG*) reg [RST_COUNTER_WIDTH-1:0] rstCounter =
-                                                           RST_COUNTER_RELOAD;
-wire resetDone = rstCounter[RST_COUNTER_WIDTH-1];
 always @(posedge sysClk) begin
     cpllLock_m <= cpllLock;
     cpllLockReg <= cpllLock_m;
@@ -126,12 +118,10 @@ always @(posedge sysClk) begin
 
     ST_CHECK_LOL: begin
         if (gtTxReset) begin
-            rstCounter <= RST_COUNTER_RELOAD-1;
             lolState <= ST_WAIT_USER_RESET_CLR;
         end
         else if (!cpllLockReg) begin
             lossOfLockLatch <= 1;
-            rstCounter <= RST_COUNTER_RELOAD;
             lolState <= ST_WAIT_USER_RESET;
         end
     end
@@ -139,13 +129,6 @@ always @(posedge sysClk) begin
     ST_WAIT_USER_RESET: begin
         if (gtTxReset) begin
             lolState <= ST_WAIT_USER_RESET_CLR;
-
-            if (!resetDone) begin
-                rstCounter <= rstCounter - 1;
-            end
-            else begin
-                lolState <= ST_CHECK_LOL;
-            end
         end
     end
 
@@ -164,9 +147,8 @@ always @(posedge sysClk) begin
             ldCounter <= ldCounter - 1;
         end
 
-        // reset came at the wrong time
         if (gtTxReset) begin
-            lolState <= ST_CHECK_LOL;
+            lolState <= ST_WAIT_USER_RESET_CLR;
         end
         else if (lockDetect) begin
             lolState <= ST_WAIT_RESET_DONE;
@@ -177,22 +159,10 @@ always @(posedge sysClk) begin
         // reset came at the wrong time
         if(gtTxReset) begin
             lolState <= ST_WAIT_USER_RESET_CLR;
-
-            if (!resetDone) begin
-                rstCounter <= rstCounter - 1;
-            end
-            else begin
-                lolState <= ST_CHECK_LOL;
-            end
         end
         else if (txResetDone && tx_fsm_reset_done) begin
-            if (!resetDone) begin
-                lolState <= ST_WAIT_USER_RESET;
-            end
-            else begin
-                lossOfLockLatch <= 0;
-                lolState <= ST_CHECK_LOL;
-            end
+            lossOfLockLatch <= 0;
+            lolState <= ST_CHECK_LOL;
         end
     end
 

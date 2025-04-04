@@ -40,7 +40,6 @@ struct sharedRAM {
     int      wasAligned;
     int      isAligned;
     int      lolState;
-    int      lolRstCounter;
     uint16_t lolStateMGTBitmap;
     uint16_t lolStateMGTLane;
     uint32_t coincidence[SHARED_RAM_COINCIDENCE_COUNT];

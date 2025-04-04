@@ -544,7 +544,6 @@ cmdLOL(int argc, char **argv, int evgNumber)
 {
     char *endp;
     int state = 0;
-    int rstCounter = 0;
     uint16_t lane = 0;
     uint16_t evgBitmap = 0;
 
@@ -573,13 +572,11 @@ cmdLOL(int argc, char **argv, int evgNumber)
     microsecondSpin(1000);
 
     state = sharedMemory->lolState;
-    rstCounter = sharedMemory->lolRstCounter;
-    if (state < 0 || rstCounter < 0) {
+    if (state < 0) {
         return 1;
     }
 
-    printf("EVG %d LOL state: %d rstCounter: %d\n", evgNumber + 1, state,
-            rstCounter);
+    printf("EVG %d LOL state: %d\n", evgNumber + 1, state);
 
     return 0;
 }

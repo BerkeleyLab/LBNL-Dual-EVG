@@ -101,8 +101,8 @@ mgtLossOfLock(int mgtBitmap)
     return mgtLOLBitmap;
 }
 
-static int
-mgtResetRaw(int mgtBitmap)
+int
+mgtReset(int mgtBitmap)
 {
     int good = 1;
     uint32_t then, seconds;
@@ -157,28 +157,6 @@ mgtResetRaw(int mgtBitmap)
     return good;
 }
 
-int
-mgtResetMultiple(int mgtBitmap, int passes)
-{
-    int i = 0;
-    int good = 1;
-
-    for (i = 0; i < passes; i++) {
-        good &= mgtResetRaw(mgtBitmap);
-    }
-
-    return good;
-}
-
-int
-mgtReset(int mgtBitmap)
-{
-    // We have to perform 2 resets everytime,
-    // because I couldn't figure out a reliable
-    // way of fixing CPLL lock signal
-    return mgtResetMultiple(mgtBitmap, 2);
-}
-
 int mgtLOLState(int mgtBitmap, int lane)
 {
     int evg;
@@ -199,31 +177,6 @@ int mgtLOLState(int mgtBitmap, int lane)
 
         csr = GPIO_READ(REG(csrBaseIdx, lane));
         return CSR_R_LOL_STATE_R(csr);
-    }
-
-    return -1;
-}
-
-int mgtLOLRstCounter(int mgtBitmap, int lane)
-{
-    int evg;
-    uint32_t csrBaseIdx;
-    uint32_t csr;
-
-    if (lane > EYESCAN_LANECOUNT/2-1) {
-        return -1;
-    }
-
-    for (evg = 0 ; evg < EVG_COUNT; evg++) {
-        csrBaseIdx = ((mgtBitmap & (0x1 << evg)) == 1)? GPIO_IDX_EVG_1_0_DRP_CSR :
-                        (((mgtBitmap & (0x1 << evg)) == 2)? GPIO_IDX_EVG_2_0_DRP_CSR : 0);
-
-        if (!csrBaseIdx) {
-            continue;
-        }
-
-        csr = GPIO_READ(REG(csrBaseIdx, lane));
-        return CSR_R_LOL_RST_COUNTER_R(csr);
     }
 
     return -1;
@@ -253,13 +206,14 @@ mgtCrank(void)
 {
     static uint32_t whenChecked;
     static int reportedLOL;
+    static unsigned int successfulRstNeeded;
+    static int mgtLOLBitmap;
     uint32_t seconds;
-    int mgtLOLBitmap = 0;
 
     if (debugFlags & DEBUGFLAG_TX_RESET) {
         debugFlags &= ~DEBUGFLAG_TX_RESET;
 
-        if(mgtResetMultiple(0x3, 1)) {
+        if(mgtReset(0x3)) {
             printf("MGT forced reset (DEBUGFLAG_TX_RESET) succeeded on 0x%08X\n",
                     0x3);
             reportedLOL = 0;
@@ -267,10 +221,8 @@ mgtCrank(void)
         }
     }
 
-    /* always Read LOL state/rstCounter so other processor is aware */
+    /* always Read LOL state so other processor is aware */
     sharedMemory->lolState = mgtLOLState(sharedMemory->lolStateMGTBitmap,
-            sharedMemory->lolStateMGTLane);
-    sharedMemory->lolRstCounter = mgtLOLRstCounter(sharedMemory->lolStateMGTBitmap,
             sharedMemory->lolStateMGTLane);
 
     if (!(debugFlags & DEBUGFLAG_NO_RESYNC_ON_LOL)) {
@@ -279,16 +231,30 @@ mgtCrank(void)
         if ((seconds - whenChecked) > 2) {
             whenChecked = GPIO_READ(GPIO_IDX_SECONDS_SINCE_BOOT);
 
-            if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
-                if (!reportedLOL) {
-                    reportedLOL = 1;
-                    warn("MGT CPLL LOL detected on 0x%08X at %u seconds",
-                            mgtLOLBitmap, whenChecked);
+            if (!successfulRstNeeded) {
+                if ((mgtLOLBitmap = mgtLossOfLock(0x3))) {
+                    // On loss of lock, we need 1 reset to re-establish the
+                    // CPLL lock reliability and another for relible clock
+                    // itself
+                    successfulRstNeeded = 2;
+
+                    if (!reportedLOL) {
+                        reportedLOL = 1;
+                        warn("MGT CPLL LOL detected on 0x%08X at %u seconds",
+                                mgtLOLBitmap, whenChecked);
+                    }
+                }
+            }
+
+            if (successfulRstNeeded) {
+                if(mgtReset(mgtLOLBitmap)) {
+                    successfulRstNeeded--;
+                }
+                else {
+                    successfulRstNeeded = 2;
                 }
 
-                if(mgtReset(mgtLOLBitmap)) {
-                    // If reset succeeds that means we have lock
-                    // and the MGT good to go
+                if (!successfulRstNeeded) {
                     printf("MGT reset succeeded on 0x%08X at %u seconds\n",
                             mgtLOLBitmap, whenChecked);
                     reportedLOL = 0;
