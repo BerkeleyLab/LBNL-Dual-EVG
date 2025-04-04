@@ -113,7 +113,7 @@ wire lockDetect = ldCounter[LD_COUNTER_WIDTH-1];
 
 // Number of resets per loss of reset
 localparam RSTS_NEEDED = 2; // arbitrary number
-localparam RST_COUNTER_RELOAD = RSTS_NEEDED - 2;
+localparam RST_COUNTER_RELOAD = RSTS_NEEDED - 1;
 localparam RST_COUNTER_WIDTH = $clog2(((RST_COUNTER_RELOAD <= 0)?1:RST_COUNTER_RELOAD)+1) + 1;
 (*mark_debug=DEBUG*) reg [RST_COUNTER_WIDTH-1:0] rstCounter =
                                                            RST_COUNTER_RELOAD;
@@ -125,9 +125,8 @@ always @(posedge sysClk) begin
     case (lolState)
 
     ST_CHECK_LOL: begin
-        // reset came at the wrong time
         if (gtTxReset) begin
-            rstCounter <= RST_COUNTER_RELOAD;
+            rstCounter <= RST_COUNTER_RELOAD-1;
             lolState <= ST_WAIT_USER_RESET_CLR;
         end
         else if (!cpllLockReg) begin
@@ -140,6 +139,13 @@ always @(posedge sysClk) begin
     ST_WAIT_USER_RESET: begin
         if (gtTxReset) begin
             lolState <= ST_WAIT_USER_RESET_CLR;
+
+            if (!resetDone) begin
+                rstCounter <= rstCounter - 1;
+            end
+            else begin
+                lolState <= ST_CHECK_LOL;
+            end
         end
     end
 
@@ -160,8 +166,7 @@ always @(posedge sysClk) begin
 
         // reset came at the wrong time
         if (gtTxReset) begin
-            rstCounter <= RST_COUNTER_RELOAD;
-            lolState <= ST_WAIT_USER_RESET_CLR;
+            lolState <= ST_CHECK_LOL;
         end
         else if (lockDetect) begin
             lolState <= ST_WAIT_RESET_DONE;
@@ -171,12 +176,17 @@ always @(posedge sysClk) begin
     ST_WAIT_RESET_DONE: begin
         // reset came at the wrong time
         if(gtTxReset) begin
-            rstCounter <= RST_COUNTER_RELOAD;
             lolState <= ST_WAIT_USER_RESET_CLR;
+
+            if (!resetDone) begin
+                rstCounter <= rstCounter - 1;
+            end
+            else begin
+                lolState <= ST_CHECK_LOL;
+            end
         end
         else if (txResetDone && tx_fsm_reset_done) begin
             if (!resetDone) begin
-                rstCounter <= rstCounter - 1;
                 lolState <= ST_WAIT_USER_RESET;
             end
             else begin
