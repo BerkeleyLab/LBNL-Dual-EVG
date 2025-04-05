@@ -267,8 +267,11 @@ ila_td256_s4096_cap ila_td256_s4096_cap_inst (
 );
 `endif
 
-assign probe[0+:EVG1_SAMPLE_COUNTER_WIDTH] = evg1SampleCounterDbg;
-assign probe[32+:EVG2_SAMPLE_COUNTER_WIDTH] = evg2SampleCounterDbg;
+assign probe[0] = evg1CoincidenceMarker;
+assign probe[1] = evg2CoincidenceMarker;
+
+assign probe[32+:EVG1_SAMPLE_COUNTER_WIDTH] = evg1SampleCounterDbg;
+assign probe[64+:EVG2_SAMPLE_COUNTER_WIDTH] = evg2SampleCounterDbg;
 
 //////////////////////////////////////////////////////////////////////////////
 // Debounce timing markers

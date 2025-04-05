@@ -6,7 +6,7 @@ module coincidenceRecorder #(
     parameter SAMPLE_CLKS_PER_COINCIDENCE  = -1,
     parameter INPUT_CYCLES_PER_COINCIDENCE = -1,
     parameter TX_CLK_PER_HEARTBEAT         = -1,
-    parameter SAMPLE_COUNTER_WIDTH         = $clog2(SAMPLE_CLKS_PER_COINCIDENCE)
+    parameter SAMPLE_COUNTER_WIDTH         = $clog2(2*SAMPLE_CLKS_PER_COINCIDENCE)
     ) (
     input         sysClk,
     input         sysCsrStrobe,
@@ -68,15 +68,30 @@ always @(posedge refClk[i]) begin
     value_a <= !value_a;
 end
 
+/*
+ * Sample input signal
+ * If (SAMPLE_CLKS_PER_COINCIDENCE > INPUT_CYCLES_PER_COINCIDENCE) the input
+ * is aliased to a negative frequency so the rising edge we're looking for
+ * appears as a falling edge. Account for this by inverting the input so
+ * that the aliased falling edge appears to be rising.
+ * If (SAMPLE_CLKS_PER_COINCIDENCE < INPUT_CYCLES_PER_COINCIDENCE) the input
+ * is aliased to a positive frequency so unmodified input can be used.
+ */
 always @(posedge samplingClk) begin
     value_m   <= value_a;
     value_d0  <= value_m;
     value_d1  <= value_d0;
     value_d2  <= value_d1;
-    value_d3  <= value_d2;
+
+    if (SAMPLE_CLKS_PER_COINCIDENCE > INPUT_CYCLES_PER_COINCIDENCE) begin
+        value_d3 <= ~value_d2;
+    end
+    else begin
+        value_d3 <= value_d2;
+    end
 end
 
-assign value[i] = !(value_d3^value_d2);
+assign value[i] = value_d3;
 
 end
 endgenerate
@@ -170,7 +185,7 @@ always @(posedge samplingClk) begin
     /*
      * Acquisition counters
      */
-    if (sampleCounter == (SAMPLE_CLKS_PER_COINCIDENCE-1)) begin
+    if (sampleCounter == (2*SAMPLE_CLKS_PER_COINCIDENCE-1)) begin
         sampleCounter <= 0;
         if (cycleCountDone) begin
             firstCycle <= 1;
