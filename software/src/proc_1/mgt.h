@@ -60,7 +60,14 @@
 #define CSR_R_LOL_STATE_MASK    REG_GEN_MASK(CSR_R_LOL_STATE_SHIFT, CSR_R_LOL_STATE_SIZE)
 #define CSR_R_LOL_STATE_R(reg)  REG_GEN_READ(reg, CSR_R_LOL_STATE_SHIFT, CSR_R_LOL_STATE_SIZE)
 
-#define CSR_R_RESET_DONE        (CSR_R_TX_FSM_RESET_DONE | \
+#define CSR_R_RESET_DONE_MASK   (CSR_R_TX_FSM_RESET_DONE | \
+                                    CSR_R_RX_FSM_RESET_DONE | \
+                                    CSR_R_TX_RESET_DONE | \
+                                    CSR_R_RX_RESET_DONE | \
+                                    CSR_R_CPLL_LOCKED | \
+                                    CSR_R_CPLL_LOSS_OF_LOCK)
+
+#define CSR_R_RESET_DONE         (CSR_R_TX_FSM_RESET_DONE | \
                                     CSR_R_RX_FSM_RESET_DONE | \
                                     CSR_R_TX_RESET_DONE | \
                                     CSR_R_RX_RESET_DONE | \

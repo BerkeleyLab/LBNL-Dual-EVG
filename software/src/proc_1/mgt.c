@@ -131,7 +131,7 @@ mgtReset(int mgtBitmap)
 
         for (lane = 0 ; lane < EYESCAN_LANECOUNT/2; lane++) {
             csr = GPIO_READ(REG(csrBaseIdx, lane));
-            resetDone = csr & CSR_R_RESET_DONE;
+            resetDone = csr & CSR_R_RESET_DONE_MASK;
             reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
             reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
 
@@ -147,7 +147,7 @@ mgtReset(int mgtBitmap)
                     break;
                 }
                 csr = GPIO_READ(REG(csrBaseIdx, lane));
-                resetDone = csr & CSR_R_RESET_DONE;
+                resetDone = csr & CSR_R_RESET_DONE_MASK;
                 reg1Value = GPIO_READ(REG(GPIO_IDX_EVG_1_0_DRP_CSR, lane));
                 reg2Value = GPIO_READ(REG(GPIO_IDX_EVG_2_0_DRP_CSR, lane));
             }
