@@ -53,7 +53,7 @@ fatal(const char *fmt, ...)
     va_list args;
     unsigned int now, then = MICROSECONDS_SINCE_BOOT();
     unsigned int limit = 0;
-    unsigned int a[4];
+    unsigned int a[5];
 
     for (;;) {
         if (((now = MICROSECONDS_SINCE_BOOT()) - then) >= limit) {
@@ -62,7 +62,8 @@ fatal(const char *fmt, ...)
             a[1] = va_arg(args, unsigned int);
             a[2] = va_arg(args, unsigned int);
             a[3] = va_arg(args, unsigned int);
-            sprintf(msgBuf, fmt, a[0], a[1], a[2], a[3]);
+            a[4] = va_arg(args, unsigned int);
+            sprintf(msgBuf, fmt, a[0], a[1], a[2], a[3], a[4]);
             va_end(args);
             printf("*** Fatal error: %s\n", msgBuf);
             displayShowFatal(msgBuf);
@@ -79,14 +80,15 @@ void
 warn(const char *fmt, ...)
 {
     va_list args;
-    unsigned int a[4];
+    unsigned int a[5];
 
     va_start(args, fmt);
     a[0] = va_arg(args, unsigned int);
     a[1] = va_arg(args, unsigned int);
     a[2] = va_arg(args, unsigned int);
     a[3] = va_arg(args, unsigned int);
-    sprintf(msgBuf, fmt, a[0], a[1], a[2], a[3]);
+    a[4] = va_arg(args, unsigned int);
+    sprintf(msgBuf, fmt, a[0], a[1], a[2], a[3], a[4]);
     va_end(args);
     printf("*** Warning: %s\n", msgBuf);
     displayShowWarning(msgBuf);

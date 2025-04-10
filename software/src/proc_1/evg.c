@@ -64,8 +64,10 @@
 #define SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR       0x2
 #define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
 
-#define MONITOR_CHANNELS_PER_EVG    2
-#define SEQ_WARN_WAITING_TIME       1 // s
+#define MONITOR_CHANNELS_PER_EVG        2
+#define SEQ_WARN_WAITING_TIME           1 // s
+#define COINCIDENCE_TIMEOUT             500000 // us
+#define REQUEST_COINCIDENCE_INTERVAL    2000000 // us
 
 static struct evgInfo {
     uint16_t    csrIdx;
@@ -121,6 +123,12 @@ evgStatusFifoAcceptWr(struct evgInfo *evgp, int accept)
     }
 
     GPIO_WRITE(evgp->csrStatusFifoIdx, statusFifoWr);
+}
+
+static void
+evgStatusFifoForceWr(struct evgInfo *evgp)
+{
+    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
 }
 
 static uint32_t
@@ -264,9 +272,20 @@ fillDefaultSequence(struct evgInfo *evgp)
 static void
 findPhase(void)
 {
+    uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
+
     sharedMemory->requestCoincidenceMeasurement = 1;
     while (sharedMemory->requestCoincidenceMeasurement) {
-        microsecondSpin(10);
+        uint32_t now = MICROSECONDS_SINCE_BOOT();
+        // If there is no Tx clock (possibly because there was
+        // no ref clock), we could be stuck here forever. Even
+        // if the ref clock returns, we wouldn't be able to
+        // re-enable Tx clock, as mgtReset() is performed
+        // by the same processor
+        if ((now - whenStarted) > COINCIDENCE_TIMEOUT) {
+            warn("Coincidence measurement request timeout");
+            break;
+        }
     }
 }
 
@@ -278,6 +297,7 @@ align(struct evgInfo *evgp)
 {
     int pass = 0;
     int phaseOffset, phaseError;
+
     for (;;) {
         pass++;
         findPhase();
@@ -318,9 +338,9 @@ int
 evgAlign(void)
 {
     int ret = 1;
+    struct evgInfo *evgp = NULL;
 
     if (CFG_MGT_TX_REF_ALIGN == 1) {
-        struct evgInfo *evgp;
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
             if (!align(evgp)) {
                 ret = 0;
@@ -334,10 +354,37 @@ evgAlign(void)
         findPhase();
     }
 
+    // In case we are re-align due to a loss of lock, we need to force
+    // the sequencer module to send it's current status after the re-lock.
+    // Otherwise the sequencer status bits will get stuck on the previous
+    // value, which are likely not true anymore.
+    for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
+        evgStatusFifoForceWr(evgp);
+        // Wait for register to be updated
+        microsecondSpin(1000);
+    }
+
     if (!sharedMemory->requestAlignment) {
         sharedMemory->requestAlignment = 1;
     }
     return ret;
+}
+
+void
+evgCrank(void)
+{
+    static uint32_t then;
+
+    if ((MICROSECONDS_SINCE_BOOT() - then) > REQUEST_COINCIDENCE_INTERVAL) {
+        then = MICROSECONDS_SINCE_BOOT();
+
+        // Preserve last measurement for debugging purposes, until we
+        // actually want to take a new measurement due to a reset
+        int lostAlignment = sharedMemory->wasAligned && !sharedMemory->isAligned;
+        if (!lostAlignment) {
+            sharedMemory->requestCoincidenceMeasurement = 1;
+        }
+    }
 }
 
 void
@@ -353,7 +400,7 @@ evgInit(void)
 
         // On startup force a valid intial value to the status
         // register
-        GPIO_WRITE(evgp->csrIdx, SEQ_CSR_FORCE_UPDATE_STATUS_REG);
+        evgStatusFifoForceWr(evgp);
         // Wait for register to be updated
         microsecondSpin(1000);
 
@@ -518,7 +565,6 @@ evgFetchCoincidenceStatus(uint32_t *ap)
         ap[idx++] = sharedMemory->referenceFrequency[i];
     }
     ap[idx++] = sharedMemory->isAligned;
-    sharedMemory->requestCoincidenceMeasurement = 1;
     return idx;
 }
 

@@ -28,6 +28,8 @@ module devg_marble_top #(
     output MGT_TX_2_P, MGT_TX_2_N,
     input  MGT_RX_2_P, MGT_RX_2_N,
 
+    // Currently unsused, but kept here for compatibility
+    // and possible future use
     input  FMC1_CLK0_M2C_P, FMC1_CLK0_M2C_N,
     input  FMC2_CLK0_M2C_P, FMC2_CLK0_M2C_N,
 
@@ -207,16 +209,9 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire FMC1_CLK0_M2C, FMC2_CLK0_M2C;
-IBUFDS f1IBUF (.I(FMC1_CLK0_M2C_P), .IB(FMC1_CLK0_M2C_N),
-               .O(FMC1_CLK0_M2C));
-IBUFDS f2IBUF (.I(FMC2_CLK0_M2C_P), .IB(FMC2_CLK0_M2C_N),
-               .O(FMC2_CLK0_M2C));
-
-BUFG f1BUFG (.I(FMC1_CLK0_M2C), .O(evg1RefClk));
-BUFG f2BUFG (.I(FMC2_CLK0_M2C), .O(evg2RefClk));
-
 wire evg1HeartbeatRequest, evg2HeartbeatRequest;
+wire sysRealignToggle;
+wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -229,8 +224,11 @@ coincidenceRecorder #(
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_COINC_CSR]),
+    .sysRealignToggle(sysRealignToggle),
+    .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
-    .value_a({evg1RefClk, evg1TxClk}),
+    .refClk({evg1TxClk, evg1RefClk}),
+    .coincidenceMarker(evg1CoincidenceMarker),
     .txClk(evg1TxClk),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
@@ -244,9 +242,11 @@ coincidenceRecorder #(
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysRealignToggleIn(sysRealignToggle),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
-    .value_a({evg2RefClk, evg2TxClk}),
+    .refClk({evg2TxClk, evg2RefClk}),
+    .coincidenceMarker(evg2CoincidenceMarker),
     .txClk(evg2TxClk),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
@@ -374,6 +374,7 @@ wire evg1RxClkIn;
 wire evg1TxClkIn;
 wire evg1RefClkUnbuf;
 IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
+BUFG f1BUFG (.I(evg1RefClkUnbuf), .O(evg1RefClk));
 
 wire gt0_qplloutclk_i, gt0_qplloutrefclk_i;
 mgtWrapper #(.EVG(1),
@@ -521,6 +522,7 @@ wire evg2RxClkIn;
 wire evg2TxClkIn;
 wire evg2RefClkUnbuf;
 IBUFDS_GTE2 evg2RefBuf (.I(MGT_CLK_1_P), .IB(MGT_CLK_1_N), .O(evg2RefClkUnbuf));
+BUFG f2BUFG (.I(evg2RefClkUnbuf), .O(evg2RefClk));
 
 mgtWrapper #(.EVG(2),
              .SAMPLING_CLOCK_RATE(500000000),
@@ -792,7 +794,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
-     (diagnostic1Select == 3'h3) ? { evg2HeartbeatRequest, evg1TxClk } :
+     (diagnostic1Select == 3'h3) ? { BRARAlignClock, evg1CoincidenceMarker } :
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BROrbitClockDiv4Clock} :
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
@@ -817,7 +819,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
      (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
-     (diagnostic2Select == 3'h3) ? { evg1HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h3) ? { AROrbitClock, evg2CoincidenceMarker } :
      (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
      (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
      (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :

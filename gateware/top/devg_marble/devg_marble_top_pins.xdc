@@ -104,14 +104,6 @@ set_property -dict {PACKAGE_PIN R3} [get_ports MGT_RX_2_N]
 ##set_property -dict {PACKAGE_PIN G4} [get_ports MGT_RX_t2_P]
 ##set_property -dict {PACKAGE_PIN G3} [get_ports MGT_RX_t2_N]
 
-# Direct monitoring of MGT reference clocks
-# FMC1 -- H4/H5
-set_property -dict {PACKAGE_PIN F17 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports FMC1_CLK0_M2C_P]
-set_property -dict {PACKAGE_PIN E17 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports FMC1_CLK0_M2C_N]
-# FMC2 -- H4/H5
-set_property -dict {PACKAGE_PIN Y23 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports FMC2_CLK0_M2C_P]
-set_property -dict {PACKAGE_PIN AA24 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports FMC2_CLK0_M2C_N]
-
 # Bank 0 setup
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]

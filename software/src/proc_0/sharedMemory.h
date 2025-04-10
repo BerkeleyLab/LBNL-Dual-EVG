@@ -27,17 +27,21 @@ struct sharedRAM_UDP {
 };
 
 struct sharedRAM {
-    int     enableEPICSprocessor;
-    int     resetFPGA;
-    int     debug;
-    int     loopbackRequest;
-    int     loopbackActual;
+    int         enableEPICSprocessor;
+    int         resetFPGA;
+    uint32_t    debug;
+    int         loopbackRequest;
+    int         loopbackActual;
 
     struct systemParameters systemParameters;
 
     int      requestCoincidenceMeasurement;
     int      requestAlignment;
+    int      wasAligned;
     int      isAligned;
+    int      lolState;
+    uint16_t lolStateMGTBitmap;
+    uint16_t lolStateMGTLane;
     uint32_t coincidence[SHARED_RAM_COINCIDENCE_COUNT];
     int16_t  pllPhaseOffset[EVG_COUNT];
     int16_t  pllPhaseError[EVG_COUNT];
@@ -53,7 +57,7 @@ struct sharedRAM {
     int     stdoutBufHead;
     int     stdoutBufTail;
 };
-    
+
 #define sharedMemory ((volatile struct sharedRAM *)(XPAR_SHARED_RAM_S_AXI_BASEADDR))
 #define debugFlags (sharedMemory->debug)
 

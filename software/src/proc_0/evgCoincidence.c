@@ -13,14 +13,6 @@
 #include "sharedMemory.h"
 #include "util.h"
 
-#define DATA_WIDTH 10
-#define DATA_MASK ((1 << DATA_WIDTH) - 1)
-
-#define CSR_W_START           0x80000000
-#define CSR_W_SET_COINCIDENCE 0x40000000
-#define CSR_W_REALIGN         0x20000000
-#define CSR_R_BUSY            0x80000000
-
 static struct evgInfo {
     uint16_t evgIndex;
     uint16_t csrIndex;
@@ -43,6 +35,45 @@ static struct evgInfo {
     }
 };
 
+// Only call this when not capturing a new histogram
+static int
+readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
+{
+    uint32_t whenStarted = MICROSECONDS_SINCE_BOOT();
+    uint32_t reg;
+    int pass = 0;
+    int timeout = 0;
+
+    GPIO_WRITE(evgp->csrIndex, MUX_SEL_WR_W(muxSel) | ADDRESS_WR_W(address));
+    reg = GPIO_READ(evgp->csrIndex);
+
+    while ((ADDRESS_RB_R(reg) != address) ||
+            (MUX_SEL_RB_R(reg) != muxSel)) {
+        pass++;
+
+        if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50) {
+            warn("Coincidence histogram read timeout");
+            timeout = 1;
+
+            if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
+                printf("Coincidence readout address %d:%d muxSel %d:%d\n",
+                        address, ADDRESS_RB_R(reg),
+                        muxSel, MUX_SEL_RB_R(reg));
+            }
+
+            break;
+        }
+
+        reg = GPIO_READ(evgp->csrIndex);
+    }
+
+   if (timeout) {
+       return 0;
+   }
+
+    return DATA_HIST_R(reg);
+}
+
 /*
  * Find midpoint of rising edge
  */
@@ -53,15 +84,14 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
     const int debounceLimit = evgp->samplesPerCycle / 5;
     int consecutiveZeroCount = 0;
     int indexOfFirstNonZero = -1;
+    int indexOfLastNonZero = -1;
     int i;
 
     evgp->addressOfRisingEdge[inputIndex] = -1;
     evgp->jitter[inputIndex] = -1;
     for (i = 0 ; i < loopLimit ; i++) {
-        int n;
         int address = i % evgp->samplesPerCycle;
-        GPIO_WRITE(evgp->csrIndex, (inputIndex << 24) | address);
-        n = GPIO_READ(evgp->csrIndex) & DATA_MASK;
+        int n = readCoincidenceHist(evgp, inputIndex, address);
         if (n == 0) {
             consecutiveZeroCount++;
         }
@@ -70,17 +100,19 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
              && (indexOfFirstNonZero < 0)) {
                 indexOfFirstNonZero = i;
             }
-            if (indexOfFirstNonZero >= 0) {
-                if ((n >= (DATA_MASK / 2))
-                 && (evgp->addressOfRisingEdge[inputIndex] < 0)) {
-                    evgp->addressOfRisingEdge[inputIndex] = address;
-                }
-                if (n == DATA_MASK) {
-                    evgp->jitter[inputIndex] = i - indexOfFirstNonZero;
-                    break;
-                }
-            }
+
             consecutiveZeroCount = 0;
+        }
+
+        if (indexOfFirstNonZero >= 0) {
+            if (n == 0 && (indexOfLastNonZero < 0)) {
+                indexOfLastNonZero = i;
+                evgp->jitter[inputIndex] = (indexOfLastNonZero - indexOfFirstNonZero) / 2;
+                evgp->addressOfRisingEdge[inputIndex] =
+                    (indexOfFirstNonZero + evgp->jitter[inputIndex]) %
+                    evgp->samplesPerCycle;
+                break;
+            }
         }
     }
 }
@@ -125,15 +157,17 @@ evgCoincidenceCrank(void)
 {
     struct evgInfo *evgp;
     static int active;
+    static int reportedAlignTimeout;
+    static uint32_t whenWarned;
     static uint32_t whenStarted;
 
     if (sharedMemory->requestAlignment) {
         int good = 1, a;
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
             if ((a = evgp->addressOfRisingEdge[0]) >= 0) {
-                /* Account for clock domain crossing delay */
-                a = (a - 2 + evgp->samplesPerCycle) % evgp->samplesPerCycle;
-                GPIO_WRITE(evgp->csrIndex, CSR_W_SET_COINCIDENCE | a);
+                /* Account for clock domain crossing delay (4 FF + 1 DPRAM write)*/
+                a = (a - 5 + evgp->samplesPerCycle) % evgp->samplesPerCycle;
+                GPIO_WRITE(evgp->csrIndex, CSR_W_SET_COINCIDENCE | ADDRESS_WR_W(a));
             }
             else {
                 good = 0;
@@ -143,12 +177,13 @@ evgCoincidenceCrank(void)
             microsecondSpin(10);
             for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
                 for (int i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
-                    evgp->oldAddressOfRisingEdge[i] = 
+                    evgp->oldAddressOfRisingEdge[i] =
                                                    evgp->addressOfRisingEdge[i];
                 }
                 GPIO_WRITE(evgp->csrIndex, CSR_W_REALIGN);
             }
-            sharedMemory->isAligned = 1;
+            reportedAlignTimeout = 0;
+            sharedMemory->wasAligned = sharedMemory->isAligned = 1;
         }
         sharedMemory->requestAlignment = 0;
     }
@@ -170,6 +205,14 @@ evgCoincidenceCrank(void)
         sharedMemory->requestCoincidenceMeasurement = 0;
     }
     else if (sharedMemory->requestCoincidenceMeasurement) {
+        if (sharedMemory->wasAligned && !sharedMemory->isAligned) {
+            if (!reportedAlignTimeout) {
+                reportedAlignTimeout = 1;
+                warn("Alignment lost");
+                evgCoincidenceShow(0);
+            }
+        }
+
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
             GPIO_WRITE(evgp->csrIndex, CSR_W_START);
             evgp->acquiring = 1;
@@ -186,18 +229,17 @@ evgCoincidenceShow(int showData)
     int a, i;
 
     for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
+        // Make sure the coincidence recorder is not acquiring and not busy.
+        // Otherwise we would mess up the coincidence measurement
         while (evgp->acquiring) {
             evgCoincidenceCrank();
         }
-        GPIO_WRITE(evgp->csrIndex, CSR_W_START);
-        while (GPIO_READ(evgp->csrIndex) & CSR_R_BUSY) continue;
+
         if (showData) {
             for (a = 0 ; a < evgp->samplesPerCycle ; a++) {
                 printf("%d", a);
                 for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
-                    int n;
-                    GPIO_WRITE(evgp->csrIndex, (i << 24) | a);
-                    n = GPIO_READ(evgp->csrIndex) & DATA_MASK;
+                    int n = readCoincidenceHist(evgp, i, a);
                     printf(" %d", n);
                 }
                 printf("\n");
@@ -205,10 +247,11 @@ evgCoincidenceShow(int showData)
         }
         for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
             findCoincidence(evgp, i);
-            printf("EVG:%d Input:%d Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
-                              i, evgp->addressOfRisingEdge[i], evgp->jitter[i]);
+            printf("EVG:%d Input:%d Coinc %d Old Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
+                              i, evgp->addressOfRisingEdge[i], evgp->oldAddressOfRisingEdge[i],
+                              evgp->jitter[i]);
         }
-        printf("EVG:%d Tx:Ref %d\n", evgp->evgIndex + 1, 
+        printf("EVG:%d Tx:Ref %d\n", evgp->evgIndex + 1,
                                   sharedMemory->pllPhaseOffset[evgp->evgIndex]);
     }
 }
@@ -223,4 +266,6 @@ evgCoincidenceInit(void)
             evgp->addressOfRisingEdge[i] = -1;
         }
     }
+
+    sharedMemory->wasAligned = sharedMemory->isAligned = 0;
 }
