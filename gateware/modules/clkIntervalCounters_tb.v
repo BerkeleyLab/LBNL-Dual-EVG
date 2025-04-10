@@ -21,12 +21,12 @@ initial begin
         $display("PASS");
 end
 
-wire microsecondsSinceBoot;
-wire secondsSinceBoot;
+wire [31:0] microsecondsSinceBoot;
+wire [31:0] secondsSinceBoot;
 wire PPS;
+
 clkIntervalCounters #(
-    .CLK_RATE(100),
-    .SIMULATION("true"))
+    .CLK_RATE(100))
   clkIntervalCounters(
     .clk(clk),
     .microsecondsSinceBoot(microsecondsSinceBoot),

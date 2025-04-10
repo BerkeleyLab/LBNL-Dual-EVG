@@ -192,7 +192,7 @@ static int
 cmdDEBUG(int argc, char **argv)
 {
     char *endp;
-    int d;
+    uint32_t d;
     int sFlag = 0;
 
     if ((argc > 1) && (strcmp(argv[1], "-s") == 0)) {
@@ -201,7 +201,7 @@ cmdDEBUG(int argc, char **argv)
         argv++;
     }
     if (argc > 1) {
-        d = strtol(argv[1], &endp, 16);
+        d = strtoul(argv[1], &endp, 16);
         if (*endp == '\0') {
             debugFlags = d;
         }
@@ -485,6 +485,114 @@ cmdPLL(int argc, char **argv)
     return 0;
 }
 
+/*
+ * Set coincide couint manually (mainly for testing)
+ */
+static int
+cmdCoinc(int argc, char **argv, int evgNumber)
+{
+    char *endp;
+    int a = 0;
+    uint32_t csrIdx = 0;
+
+    switch (evgNumber) {
+    case 0:
+        csrIdx = GPIO_IDX_EVG_1_COINC_CSR;
+        break;
+    case 1:
+        csrIdx = GPIO_IDX_EVG_2_COINC_CSR;
+        break;
+    default:
+        warn("Invalid EVG number");
+        return 0;
+    }
+
+    if (argc == 1) {
+        printf("Coincidence commands expects an argument\n");
+    }
+    else {
+        a = strtol(argv[1], &endp, 0);
+        if (*endp != '\0') {
+            printf("Bad value\n");
+            return 1;
+        }
+
+        GPIO_WRITE(csrIdx, CSR_W_SET_COINCIDENCE | ADDRESS_WR_W(a));
+        printf("EVG %d coincidence count: %d\n", evgNumber + 1, a);
+    }
+
+    return 0;
+}
+
+static int
+cmdCoincEvg1(int argc, char **argv)
+{
+    return cmdCoinc(argc, argv, 0);
+}
+
+static int
+cmdCoincEvg2(int argc, char **argv)
+{
+    return cmdCoinc(argc, argv, 1);
+}
+
+/*
+ * Get LOL state (mainly for testing)
+ */
+static int
+cmdLOL(int argc, char **argv, int evgNumber)
+{
+    char *endp;
+    int state = 0;
+    uint16_t lane = 0;
+    uint16_t evgBitmap = 0;
+
+    switch (evgNumber) {
+    case 0:
+        evgBitmap = 0x1;
+        break;
+    case 1:
+        evgBitmap = 0x2;
+        break;
+    default:
+        warn("Invalid EVG number");
+        return 0;
+    }
+
+    if (argc > 1) {
+        lane = strtoul(argv[1], &endp, 0);
+        if (*endp != '\0') {
+            return 1;
+        }
+    }
+
+    /* Set EVG and lane */
+    sharedMemory->lolStateMGTBitmap = evgBitmap;
+    sharedMemory->lolStateMGTLane = lane;
+    microsecondSpin(1000);
+
+    state = sharedMemory->lolState;
+    if (state < 0) {
+        return 1;
+    }
+
+    printf("EVG %d LOL state: %d\n", evgNumber + 1, state);
+
+    return 0;
+}
+
+static int
+cmdLOLEvg1(int argc, char **argv)
+{
+    return cmdLOL(argc, argv, 0);
+}
+
+static int
+cmdLOLEvg2(int argc, char **argv)
+{
+    return cmdLOL(argc, argv, 1);
+}
+
 static int
 cmdREG(int argc, char **argv)
 {
@@ -534,7 +642,7 @@ cmdTLOG(int argc, char **argv, int evgNumber)
         gpioIdxEventLogTicks = GPIO_IDX_EVG_2_TLOG_TICKS;
         break;
     default:
-        warn("[!] Invalid EVG number - TLOG command aborted.");
+        warn("Invalid EVG number");
         return 0;
     }
     /* argc determinates the operation to perform */
@@ -667,6 +775,10 @@ commandHandler(int argc, char **argv)
       { "tlog1",      cmdTLOGevg1,    "Timing system event logger (EVG1)"  },
       { "tlog2",      cmdTLOGevg2,    "Timing system event logger (EVG2)"  },
       { "tod",        cmdNTP,         "Set time-of-day (NTP) host address" },
+      { "cmdC1",      cmdCoincEvg1,   "Set coincidence value (EVG1)"       },
+      { "cmdC2",      cmdCoincEvg2,   "Set coincidence value (EVG2)"       },
+      { "lol1",       cmdLOLEvg1,     "Get Loss of lock stats (EVG1)"      },
+      { "lol2",       cmdLOLEvg2,     "Get Loss of lock stats (EVG2)"      },
     };
 
     if (argc <= 0)

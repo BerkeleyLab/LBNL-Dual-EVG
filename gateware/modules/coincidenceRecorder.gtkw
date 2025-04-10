@@ -1,0 +1,179 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Tue Apr  1 22:53:02 2025
+[*]
+[dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/coincidenceRecorder.vcd"
+[dumpfile_mtime] "Tue Apr  1 22:49:45 2025"
+[dumpfile_size] 11965893
+[savefile] "/home/lrusso/repos/dual-evg/gateware/modules/coincidenceRecorder.gtkw"
+[timestart] 55438000
+[size] 1910 1110
+[pos] 0 0
+*-18.700001 56738300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] coincidenceRecorder_tb.
+[treeopen] coincidenceRecorder_tb.coincidenceRecorder1.
+[sst_width] 305
+[signals_width] 377
+[sst_expanded] 1
+[sst_vpaned_height] 419
+@200
+-TB
+@420
+coincidenceRecorder_tb.e
+@28
+coincidenceRecorder_tb.good
+coincidenceRecorder_tb.haveHeartbeat[2:1]
+@420
+coincidenceRecorder_tb.hbCount
+@28
+coincidenceRecorder_tb.isAligned[2:1]
+coincidenceRecorder_tb.rf1clk
+coincidenceRecorder_tb.rf1clk_d
+coincidenceRecorder_tb.rf1clk_p
+coincidenceRecorder_tb.rf1heartbeat
+coincidenceRecorder_tb.rf2clk
+coincidenceRecorder_tb.rf2clk_d
+coincidenceRecorder_tb.rf2clk_p
+coincidenceRecorder_tb.rf2heartbeat
+coincidenceRecorder_tb.sysClk
+@24
+coincidenceRecorder_tb.sysCsr1[31:0]
+@28
+coincidenceRecorder_tb.sysCsr1strobe
+@22
+coincidenceRecorder_tb.sysCsr2[31:0]
+@28
+coincidenceRecorder_tb.sysCsr2strobe
+@22
+coincidenceRecorder_tb.sysGPIO_OUT[31:0]
+@28
+coincidenceRecorder_tb.sysRealignToggle
+@200
+-align1
+@22
+coincidenceRecorder_tb.align1.a[23:0]
+@28
+coincidenceRecorder_tb.align1.newValue
+coincidenceRecorder_tb.align1.oldValue
+@24
+coincidenceRecorder_tb.align1.risingEdge[23:0]
+@200
+-align2
+@22
+coincidenceRecorder_tb.align2.a[23:0]
+@28
+coincidenceRecorder_tb.align2.newValue
+coincidenceRecorder_tb.align2.oldValue
+@24
+coincidenceRecorder_tb.align2.risingEdge[23:0]
+@200
+-DUT 1
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.samplingClk
+coincidenceRecorder_tb.coincidenceRecorder1.refClk[1:0]
+@200
+-genblk2[0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[0].value_a
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[0].value_m
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[0].value_d0
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[0].value_d1
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[0].value_d2
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[0].value_d3
+@200
+-genblk2[1]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[1].value_a
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[1].value_m
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[1].value_d0
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[1].value_d1
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[1].value_d2
+coincidenceRecorder_tb.coincidenceRecorder1.genblk2[1].value_d3
+@200
+-DUT 1 logic
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.value[1:0]
+coincidenceRecorder_tb.coincidenceRecorder1.busy
+coincidenceRecorder_tb.coincidenceRecorder1.coincidenceMarker
+coincidenceRecorder_tb.coincidenceRecorder1.coincidenceStretchActive
+@23
+coincidenceRecorder_tb.coincidenceRecorder1.coincidenceStretchCounter[3:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.cycleCountDone
+@22
+coincidenceRecorder_tb.coincidenceRecorder1.cycleCount[3:0]
+coincidenceRecorder_tb.coincidenceRecorder1.dpramQ[5:0]
+coincidenceRecorder_tb.coincidenceRecorder1.dpramRBAddress[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.firstCycle
+coincidenceRecorder_tb.coincidenceRecorder1.firstCycle_d
+coincidenceRecorder_tb.coincidenceRecorder1.muxSel
+@22
+coincidenceRecorder_tb.coincidenceRecorder1.readAddress[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sampMuxSel
+@22
+coincidenceRecorder_tb.coincidenceRecorder1.sampRBAddress[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sampRBMuxSel
+@22
+coincidenceRecorder_tb.coincidenceRecorder1.sampReadAddress[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sampReadMux[2:0]
+coincidenceRecorder_tb.coincidenceRecorder1.sampleCountCoincidenceToggle
+coincidenceRecorder_tb.coincidenceRecorder1.sampleCountCoincidenceToggle_d
+coincidenceRecorder_tb.coincidenceRecorder1.sampleCountCoincidenceToggle_m
+@24
+coincidenceRecorder_tb.coincidenceRecorder1.sampleCountCoincidence[8:0]
+coincidenceRecorder_tb.coincidenceRecorder1.sampleCounter[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.startMatch
+coincidenceRecorder_tb.coincidenceRecorder1.startToggle
+coincidenceRecorder_tb.coincidenceRecorder1.startToggle_m
+coincidenceRecorder_tb.coincidenceRecorder1.sysClk
+coincidenceRecorder_tb.coincidenceRecorder1.sysCsrStrobe
+@22
+coincidenceRecorder_tb.coincidenceRecorder1.sysCsr[31:0]
+coincidenceRecorder_tb.coincidenceRecorder1.sysGPIO_OUT[31:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sysMuxSel
+@24
+coincidenceRecorder_tb.coincidenceRecorder1.sysRBAddress[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sysRBMuxSel
+@24
+coincidenceRecorder_tb.coincidenceRecorder1.sysReadAddress[8:0]
+@c00024
+coincidenceRecorder_tb.coincidenceRecorder1.sysReadMux[2:0]
+@28
+(0)coincidenceRecorder_tb.coincidenceRecorder1.sysReadMux[2:0]
+(1)coincidenceRecorder_tb.coincidenceRecorder1.sysReadMux[2:0]
+(2)coincidenceRecorder_tb.coincidenceRecorder1.sysReadMux[2:0]
+@1401204
+-group_end
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sysRealignToggle
+coincidenceRecorder_tb.coincidenceRecorder1.sysRealignToggleIn
+coincidenceRecorder_tb.coincidenceRecorder1.sysSampleCountCoincidenceToggle
+@24
+coincidenceRecorder_tb.coincidenceRecorder1.sysSampleCountCoincidence[8:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.sysStartToggle
+coincidenceRecorder_tb.coincidenceRecorder1.txClk
+coincidenceRecorder_tb.coincidenceRecorder1.txCoincidenceMarker
+coincidenceRecorder_tb.coincidenceRecorder1.txCoincidenceMarker_d
+coincidenceRecorder_tb.coincidenceRecorder1.txCoincidenceMarker_m
+@24
+coincidenceRecorder_tb.coincidenceRecorder1.txHeartbeatCounter[11:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.txHeartbeatStrobe
+coincidenceRecorder_tb.coincidenceRecorder1.txRealignMatch
+coincidenceRecorder_tb.coincidenceRecorder1.txRealignToggle
+coincidenceRecorder_tb.coincidenceRecorder1.txRealignToggle_m
+@24
+coincidenceRecorder_tb.coincidenceRecorder1.writeAddress[8:0]
+coincidenceRecorder_tb.coincidenceRecorder1.writeData[5:0]
+@28
+coincidenceRecorder_tb.coincidenceRecorder1.writeEnable
+[pattern_trace] 1
+[pattern_trace] 0

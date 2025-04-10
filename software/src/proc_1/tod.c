@@ -114,6 +114,7 @@ static void
 serverCallback(void *replyHandle, char *payload, int length)
 {
     struct ntpPacket *ntp = (struct ntpPacket *)payload;
+
     if (debugFlags & DEBUGFLAG_TOD) {
         printf("Received NTP:%d\n", length);
     }
@@ -125,7 +126,7 @@ serverCallback(void *replyHandle, char *payload, int length)
         if (GPIO_READ(GPIO_IDX_NTP_SERVER_STATUS) &
                                               NTP_SERVER_STATUS_SECONDS_VALID) {
             seconds = GPIO_READ(GPIO_IDX_NTP_SERVER_SECONDS);
-            for (;;) {
+            for (int i = 0; i < 500; i++) {
                 uint32_t s;
                 fraction = GPIO_READ(GPIO_IDX_NTP_SERVER_FRACTION);
                 s = GPIO_READ(GPIO_IDX_NTP_SERVER_SECONDS);

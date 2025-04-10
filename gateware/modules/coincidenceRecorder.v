@@ -5,15 +5,20 @@ module coincidenceRecorder #(
     parameter CYCLES_PER_ACQUISITION       = -1,
     parameter SAMPLE_CLKS_PER_COINCIDENCE  = -1,
     parameter INPUT_CYCLES_PER_COINCIDENCE = -1,
-    parameter TX_CLK_PER_HEARTBEAT         = -1
+    parameter TX_CLK_PER_HEARTBEAT         = -1,
+    parameter SAMPLE_COUNTER_WIDTH         = $clog2(SAMPLE_CLKS_PER_COINCIDENCE)
     ) (
     input         sysClk,
     input         sysCsrStrobe,
     input  [31:0] sysGPIO_OUT,
     output [31:0] sysCsr,
+    output reg    sysRealignToggle = 0,
+    input         sysRealignToggleIn,
 
-    input                     samplingClk,
-    input [CHANNEL_COUNT-1:0] value_a,
+    input                             samplingClk,
+    input [CHANNEL_COUNT-1:0]         refClk,
+    output                            coincidenceMarker,
+    output [SAMPLE_COUNTER_WIDTH-1:0] sampleCounterDbg,
 
     input  txClk,
     output txHeartbeatStrobe);
@@ -38,49 +43,69 @@ wire cycleCountDone = cycleCount[CYCLE_COUNT_WIDTH-1];
  * Count samples in a cycle
  * Free running so phase of input signal remains constant between acquisitions.
  */
-localparam SAMPLE_COUNTER_WIDTH = $clog2(SAMPLE_CLKS_PER_COINCIDENCE);
 reg [SAMPLE_COUNTER_WIDTH-1:0] sampleCounter = 0;
 reg firstCycle = 0, firstCycle_d = 0;
 
+assign sampleCounterDbg = sampleCounter;
+
 /*
  * Sample input signal
- * If (SAMPLE_CLKS_PER_COINCIDENCE > INPUT_CYCLES_PER_COINCIDENCE) the input
- * is aliased to a negative frequency so the rising edge we're looking for
- * appears as a falling edge.  Account for this by inverting the input so
- * that the aliased falling edge appears to be rising.
- * If (SAMPLE_CLKS_PER_COINCIDENCE < INPUT_CYCLES_PER_COINCIDENCE) the input
- * is aliased to a positive frequency so unmodified input can be used.
+ * Because using clock as data is not well defined with the 2 clocks
+ * having an "uncontrolable" routing delay, generate a /2 signal using
+ * the measured clock
  */
-(*ASYNC_REG="true"*) reg [CHANNEL_COUNT-1:0] value_m = 0;
-reg [CHANNEL_COUNT-1:0] value = 0;
-always @(posedge samplingClk) begin
-    if (SAMPLE_CLKS_PER_COINCIDENCE > INPUT_CYCLES_PER_COINCIDENCE) begin
-        value_m <= ~value_a;
-    end
-    else begin
-        value_m <= value_a;
-    end
-    value   <= value_m;
+wire [CHANNEL_COUNT-1:0] value;
+
+genvar i;
+generate
+for(i = 0; i < CHANNEL_COUNT; i = i + 1) begin
+
+reg value_a = 0;
+(*ASYNC_REG="true"*) reg value_m = 0, value_d0 = 0;
+(*KEEP="true"*) reg value_d1 = 0, value_d2 = 0, value_d3 = 0;
+
+always @(posedge refClk[i]) begin
+    value_a <= !value_a;
 end
+
+always @(posedge samplingClk) begin
+    value_m   <= value_a;
+    value_d0  <= value_m;
+    value_d1  <= value_d0;
+    value_d2  <= value_d1;
+    value_d3  <= value_d2;
+end
+
+assign value[i] = !(value_d3^value_d2);
+
+end
+endgenerate
 
 /*
  * Histogram dual-port RAM
  */
+localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 localparam SUM_WIDTH = $clog2(CYCLES_PER_ACQUISITION+1);
 localparam DPRAM_WIDTH = CHANNEL_COUNT * SUM_WIDTH;
-reg [SAMPLE_COUNTER_WIDTH-1:0] sysReadAddress, writeAddress;
-wire [SAMPLE_COUNTER_WIDTH-1:0] readAddress = cycleCountDone ? sysReadAddress
+wire [SAMPLE_COUNTER_WIDTH-1:0] sampReadAddress;
+reg [SAMPLE_COUNTER_WIDTH-1:0] dpramRBAddress = 0;
+reg [SAMPLE_COUNTER_WIDTH-1:0] sysReadAddress = 0, writeAddress = 0;
+wire [SAMPLE_COUNTER_WIDTH-1:0] readAddress = cycleCountDone ? sampReadAddress
                                                              : sampleCounter;
 reg writeEnable = 0;
+wire [MUXSEL_WIDTH-1:0] sampMuxSel;
+reg [MUXSEL_WIDTH-1:0] muxSel = 0;
 reg [DPRAM_WIDTH-1:0] dpram [0:(1<<SAMPLE_COUNTER_WIDTH)-1], dpramQ;
 wire [DPRAM_WIDTH-1:0] writeData;
 always @(posedge samplingClk) begin
+    muxSel <= sampMuxSel;
+    dpramRBAddress <= readAddress;
     dpramQ <= dpram[readAddress];
     if (writeEnable) begin
         dpram[writeAddress] <= writeData;
     end
 end
-genvar i;
+
 generate
 for (i = 0 ; i < CHANNEL_COUNT ; i = i + 1) begin
     assign writeData[i*SUM_WIDTH+:SUM_WIDTH] = {{SUM_WIDTH-1{1'b0}}, value[i]} +
@@ -88,6 +113,16 @@ for (i = 0 ; i < CHANNEL_COUNT ; i = i + 1) begin
                                               : dpramQ[i*SUM_WIDTH+:SUM_WIDTH]);
 end
 endgenerate
+
+// Data read by sysClk
+reg [MUXSEL_WIDTH-1:0] sampRBMuxSel = 0;
+reg [SUM_WIDTH-1:0] sampReadMux = 0;
+reg [SAMPLE_COUNTER_WIDTH-1:0] sampRBAddress = 0;
+always @(posedge samplingClk) begin
+    sampRBMuxSel <= muxSel;
+    sampRBAddress <= dpramRBAddress;
+    sampReadMux <= dpramQ[muxSel*SUM_WIDTH+:SUM_WIDTH];
+end
 
 /*
  * Acquisition trigger
@@ -106,6 +141,8 @@ reg [SAMPLE_COUNTER_WIDTH-1:0] sysSampleCountCoincidence = ~0;
 reg [SAMPLE_COUNTER_WIDTH-1:0] sampleCountCoincidence = ~0;
 reg [3:0] coincidenceStretchCounter = 0;
 wire coincidenceStretchActive = coincidenceStretchCounter[3];
+
+assign coincidenceMarker = coincidenceStretchActive;
 
 /*
  * Acquisition
@@ -170,10 +207,10 @@ end
 
 //////////////////////////////////////////////////////////////////////////////
 // System clock domain
-localparam MUXSEL_WIDTH = $clog2(CHANNEL_COUNT);
 reg [MUXSEL_WIDTH-1:0] sysMuxSel = 0;
-reg [SUM_WIDTH-1:0] sysReadMux;
-reg sysRealignToggle = 0;
+wire [MUXSEL_WIDTH-1:0] sysRBMuxSel;
+wire [SUM_WIDTH-1:0] sysReadMux;
+wire [SAMPLE_COUNTER_WIDTH-1:0] sysRBAddress;
 always @(posedge sysClk) begin
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
@@ -191,10 +228,28 @@ always @(posedge sysClk) begin
             sysMuxSel <= sysGPIO_OUT[24+:MUXSEL_WIDTH];
         end
     end
-    sysReadMux <= dpramQ[sysMuxSel*SUM_WIDTH+:SUM_WIDTH];
 end
-assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysMuxSel,
-                  {24-SUM_WIDTH{1'b0}}, sysReadMux };
+
+// This is slow (1 inClk clocks + 3 outClk clocks)
+forwardData #(
+    .DATA_WIDTH(MUXSEL_WIDTH+SAMPLE_COUNTER_WIDTH))
+  forwardDataToSamp (
+    .inClk(sysClk),
+    .inData({sysMuxSel, sysReadAddress}),
+    .outClk(samplingClk),
+    .outData({sampMuxSel, sampReadAddress}));
+
+// This is slow (1 inClk clocks + 3 outClk clocks)
+forwardData #(
+    .DATA_WIDTH(MUXSEL_WIDTH+SUM_WIDTH+SAMPLE_COUNTER_WIDTH))
+  forwardDataToSys (
+    .inClk(samplingClk),
+    .inData({sampRBMuxSel, sampReadMux, sampRBAddress}),
+    .outClk(sysClk),
+    .outData({sysRBMuxSel, sysReadMux, sysRBAddress}));
+
+assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysRBMuxSel,
+                  {24-SAMPLE_COUNTER_WIDTH-SUM_WIDTH{1'b0}}, sysRBAddress, sysReadMux };
 
 //////////////////////////////////////////////////////////////////////////////
 // Transmiter (EVG) clock domain
@@ -222,7 +277,7 @@ always @(posedge txClk) begin
      txCoincidenceMarker   <= txCoincidenceMarker_m;
      txCoincidenceMarker_d <= txCoincidenceMarker;
 
-    txRealignToggle_m <= sysRealignToggle;
+    txRealignToggle_m <= sysRealignToggleIn;
     txRealignToggle   <= txRealignToggle_m;
 
     if (txRealignToggle != txRealignMatch) begin

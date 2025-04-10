@@ -83,8 +83,10 @@ crankRealignStateMachine(int value)
     if (value == match[i]) {
         i++;
         if (i == (sizeof match / sizeof match[0])) {
-            mgtTxReset(0x3);
-            evgAlign();
+            if (mgtReset(0x3)) {
+                printf("MGT reset succeeded on 0x%08X\n", 0x3);
+                evgAlign();
+            }
         }
     }
     else if (value == match[0]) {
@@ -135,6 +137,7 @@ sysmonFetch(uint32_t *args)
     ap += fmcIOfetchStatus(ap);
     *ap++ = GPIO_READ(GPIO_IDX_SWAPOUT_CYCLE_CSR);
     ap += fetchFanSpeeds(ap);
+    ap += mgtFetchStatus(ap);
     return ap - args;
 }
 

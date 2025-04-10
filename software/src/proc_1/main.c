@@ -74,6 +74,7 @@ main(void)
         ipcCrank();
         todCrank();
         mgtCrank();
+        evgCrank();
         if (debugFlags & DEBUGFLAG_SHOW_SEQUENCES) {
             int e, s;
             debugFlags &= ~DEBUGFLAG_SHOW_SEQUENCES;
