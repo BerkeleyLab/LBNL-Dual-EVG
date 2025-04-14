@@ -38,13 +38,18 @@ and redirect stdout/stderr to a file so you can inspect it later:
 
 ```bash
 ARM_TOOLCHAIN_LOCATION=/media/Xilinx/Vivado/2020.2.2/Vitis/2020.2/gnu/microblaze/lin
-(time make CROSS_COMPILE=${ARM_TOOLCHAIN_LOCATION}/bin/mb- APP=devg PLATFORM=marble && notify-send 'Compilation SUCCESS' || notify-send 'Compilation ERROR'; date) 2>&1 | tee make_output
+(time make CROSS_COMPILE=${ARM_TOOLCHAIN_LOCATION}/bin/mb- APP=devg PLATFORM=marble EVIO_TYPE=evio && notify-send 'Compilation SUCCESS' || notify-send 'Compilation ERROR'; date) 2>&1 | tee make_output
 ```
 
 For now the following APPs are supported:
 
 * devg
 * devg_test
+
+For now the following EVIO_TYPEs are supported:
+
+* evio
+* evio_trig_nibble_reversed
 
 ### Deploying
 
