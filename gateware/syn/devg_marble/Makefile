@@ -13,6 +13,7 @@ include ../../../dir_list.mk
 # Top level design name
 TARGET ?= devg_marble
 FPGA_APPLICATION ?= devg
+EVIO_TYPE ?= evio
 
 VENDOR_PLATFORM_DIR = $(PLATFORM_DIR)/$(FPGA_VENDOR)
 TARGET_PLATFORM_DIR = $(VENDOR_PLATFORM_DIR)/$(FPGA_PLATFORM)/$(FPGA_APPLICATION)
@@ -45,7 +46,7 @@ include $(BUILD_DIR)/top_rules.mk
 UNISIM_CRAP += -e 'GTXE2_CHANNEL|MMCME2_ADV'
 
 # Top level files for depedency tracking
-SYSTEM_TOP_PINS_XDC = $(TARGET)_top_pins.xdc evio.xdc
+SYSTEM_TOP_PINS_XDC = $(TARGET)_top_pins.xdc $(EVIO_TYPE).xdc
 SYSTEM_TOP_TIM_XDC = $(TARGET)_top_tim.xdc
 
 # ip_cores generation scripts/names
