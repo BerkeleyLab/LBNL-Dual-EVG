@@ -26,7 +26,7 @@ gw_devg_marble:
     - make clean && PATH=$XILINX_VIVADO/bin:$PATH make devg_marble_top.bit && PATH=$XILINX_VIVADO/bin:$PATH make devg_marble_top.mmi
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 7 days
+    expire_in: 4 weeks
     paths:
       - gateware/syn/devg_marble/devg_marble_top.bit
       - gateware/syn/devg_marble/devg_marble_top.mmi
@@ -41,7 +41,7 @@ gw_devg_test_marble:
     - make clean && PATH=$XILINX_VIVADO/bin:$PATH make devg_test_marble_top.bit && PATH=$XILINX_VIVADO/bin:$PATH make devg_test_marble_top.mmi
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 7 days
+    expire_in: 4 weeks
     paths:
       - gateware/syn/devg_test_marble/devg_test_marble_top.bit
       - gateware/syn/devg_test_marble/devg_test_marble_top.mmi
@@ -56,7 +56,7 @@ gw_devg_test_internal_pps_marble:
     - make clean && PATH=$XILINX_VIVADO/bin:$PATH make devg_test_internal_pps_marble_top.bit && PATH=$XILINX_VIVADO/bin:$PATH make devg_test_internal_pps_marble_top.mmi
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 7 days
+    expire_in: 4 weeks
     paths:
       - gateware/syn/devg_test_internal_pps_marble/devg_test_internal_pps_marble_top.bit
       - gateware/syn/devg_test_internal_pps_marble/devg_test_internal_pps_marble_top.mmi
@@ -79,7 +79,7 @@ sw_devg_marble:
       artifacts: true
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 7 days
+    expire_in: 4 weeks
     paths:
       - software/app/devg/proc_0/devg_marble_proc_0.elf
       - software/app/devg/proc_1/devg_marble_proc_1.elf
@@ -99,7 +99,7 @@ sw_devg_test_marble:
       artifacts: true
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 7 days
+    expire_in: 4 weeks
     paths:
       - software/app/devg_test/proc_0/devg_test_marble_proc_0.elf
       - software/app/devg_test/proc_1/devg_test_marble_proc_1.elf
@@ -119,7 +119,7 @@ sw_devg_test_internal_pps_marble:
       artifacts: true
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 7 days
+    expire_in: 4 weeks
     paths:
       - software/app/devg_test/proc_0/devg_test_internal_pps_marble_proc_0.elf
       - software/app/devg_test/proc_1/devg_test_internal_pps_marble_proc_1.elf
