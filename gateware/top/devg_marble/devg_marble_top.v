@@ -418,7 +418,7 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("true"))
+    .DEBUG("false"))
   evg1 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
