@@ -41,21 +41,21 @@ set_property -dict {PACKAGE_PIN K17 IOSTANDARD LVCMOS25 PULLUP true} [get_ports 
 #  swapped. because we can't change this design for this dual-evg project
 #  we are changing the pin assignments to fix this.
 
-# LA19_P -- H14
-set_property -dict {PACKAGE_PIN H14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[0]}]
-# LA19_N -- G14
-set_property -dict {PACKAGE_PIN G14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[1]}]
-# LA21_P -- D14
-set_property -dict {PACKAGE_PIN D14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[2]}]
-# LA21_N -- D13
-set_property -dict {PACKAGE_PIN D13 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[3]}]
 # LA24_P -- A9
-set_property -dict {PACKAGE_PIN A9 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[4]}]
+set_property -dict {PACKAGE_PIN A9 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[0]}]
 # LA24_N -- A8
-set_property -dict {PACKAGE_PIN A8 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[5]}]
-# LA28_P -- J13
+set_property -dict {PACKAGE_PIN A8 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[1]}]
+# LA19_P -- H14
+set_property -dict {PACKAGE_PIN H14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[2]}]
+# LA19_N -- G14
+set_property -dict {PACKAGE_PIN G14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[3]}]
+# LA21_P -- D14
+set_property -dict {PACKAGE_PIN D14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[4]}]
+# LA21_N -- D13
+set_property -dict {PACKAGE_PIN D13 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[5]}]
+# LA28_P -- H31
 set_property -dict {PACKAGE_PIN J13 IOSTANDARD LVCMOS25} [get_ports FMC1_auxInput]
-# LA28_N -- H13
+# LA28_N -- H32
 set_property -dict {PACKAGE_PIN H13 IOSTANDARD LVCMOS25} [get_ports {FMC1_diagnosticIn[0]}]
 
 # FMC 2
@@ -96,18 +96,23 @@ set_property -dict {PACKAGE_PIN W25 IOSTANDARD LVCMOS25 PULLUP true} [get_ports 
 # LA16_N -- G19
 set_property -dict {PACKAGE_PIN W26 IOSTANDARD LVCMOS25 PULLUP true} [get_ports {FMC2_fireflyPresent_n[5]}]
 
-# LA19_P -- K23
-set_property -dict {PACKAGE_PIN K23 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[0]}]
-# LA19_N -- J23
-set_property -dict {PACKAGE_PIN J23 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[1]}]
-# LA21_P -- J21
-set_property -dict {PACKAGE_PIN J21 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[2]}]
-# LA21_N -- H22
-set_property -dict {PACKAGE_PIN H22 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[3]}]
+# !!! WARNING WARNING WARNING !!!
+#  There is an error on the fo_board, in which the PMOD connector is nibble
+#  swapped. because we can't change this design for this dual-evg project
+#  we are changing the pin assignments to fix this.
+
 # LA24_P -- J24
-set_property -dict {PACKAGE_PIN J24 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[4]}]
+set_property -dict {PACKAGE_PIN J24 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[0]}]
 # LA24_N -- J25
-set_property -dict {PACKAGE_PIN J25 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[5]}]
+set_property -dict {PACKAGE_PIN J25 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[1]}]
+# LA19_P -- K23
+set_property -dict {PACKAGE_PIN K23 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[2]}]
+# LA19_N -- J23
+set_property -dict {PACKAGE_PIN J23 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[3]}]
+# LA21_P -- J21
+set_property -dict {PACKAGE_PIN J21 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[4]}]
+# LA21_N -- H22
+set_property -dict {PACKAGE_PIN H22 IOSTANDARD LVCMOS25} [get_ports {FMC2_hwTrigger[5]}]
 # LA28_P -- G25
 set_property -dict {PACKAGE_PIN G25 IOSTANDARD LVCMOS25} [get_ports FMC2_auxInput]
 # LA28_N -- G26
