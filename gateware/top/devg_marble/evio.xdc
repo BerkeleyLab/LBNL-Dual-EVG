@@ -36,11 +36,6 @@ set_property -dict {PACKAGE_PIN K16 IOSTANDARD LVCMOS25 PULLUP true} [get_ports 
 # LA16_N -- G19
 set_property -dict {PACKAGE_PIN K17 IOSTANDARD LVCMOS25 PULLUP true} [get_ports {FMC1_fireflyPresent_n[5]}]
 
-# !!! WARNING WARNING WARNING !!!
-#  There is an error on the fo_board, in which the PMOD connector is nibble
-#  swapped. because we can't change this design for this dual-evg project
-#  we are changing the pin assignments to fix this.
-
 # LA19_P -- H14
 set_property -dict {PACKAGE_PIN H14 IOSTANDARD LVCMOS25} [get_ports {FMC1_hwTrigger[0]}]
 # LA19_N -- G14
