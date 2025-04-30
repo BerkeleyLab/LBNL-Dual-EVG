@@ -37,7 +37,7 @@
 
 #include <stdint.h>
 
-#define FMCIO_CSR_HW_STATUS_MASK  0x3F0000
+#define FMCIO_CSR_HW_STATUS_MASK  0xFF0000
 #define FMCIO_CSR_HW_STATUS_SHIFT 16
 
 int fmcIOfetchStatus(uint32_t *ap);
