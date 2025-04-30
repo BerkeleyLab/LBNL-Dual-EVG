@@ -1,6 +1,4 @@
 // Generate hardware-iniated event requests
-// Most significant bit of hardware triggers is input 1.
-// Least significant bit of hardware triggers is input HARDWARE_TRIGGER_COUNT.
 
 module evgHardwareTrigger #(
     parameter HARDWARE_TRIGGER_COUNT = -1,
@@ -47,8 +45,7 @@ for (chan = 0 ; chan < HARDWARE_TRIGGER_COUNT ; chan = chan + 1) begin : hw
         in_s <= in_m;
         if (!in_s) begin
             if (debounceDone && (myCode != EVCODE_IDLE)) begin
-                eventToggles[HARDWARE_TRIGGER_COUNT-1-chan] <=
-                                   !eventToggles[HARDWARE_TRIGGER_COUNT-1-chan];
+                eventToggles[chan] <= !eventToggles[chan];
             end
             debounceCounter <= 0;
         end
@@ -62,11 +59,13 @@ wire [HARDWARE_TRIGGER_COUNT-1:0] pendingChannels = eventToggles ^ eventMatches;
 
 // Priority encoder
 // Not parameterized, but simple
-if (HARDWARE_TRIGGER_COUNT != 6) begin
+if (HARDWARE_TRIGGER_COUNT != 8) begin
     NeedToChangePriorityEncoderFirmware();
 end
-wire [ADDRESS_WIDTH-1:0] priorityBitnum = pendingChannels[5] ? 4 :
-                                          pendingChannels[4] ? 3 :
+wire [ADDRESS_WIDTH-1:0] priorityBitnum = pendingChannels[7] ? 7 :
+                                          pendingChannels[6] ? 6 :
+                                          pendingChannels[5] ? 5 :
+                                          pendingChannels[4] ? 4 :
                                           pendingChannels[3] ? 3 :
                                           pendingChannels[2] ? 2 :
                                           pendingChannels[1] ? 1 : 0;

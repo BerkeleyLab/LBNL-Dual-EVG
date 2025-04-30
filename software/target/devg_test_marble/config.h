@@ -4,7 +4,7 @@
  */
 #define CFG_MINIMUM_INJECTION_CYCLE_MS      990
 #define CFG_MAXIMUM_INJECTION_CYCLE_MS      2010
-#define CFG_HARDWARE_TRIGGER_COUNT          6
+#define CFG_HARDWARE_TRIGGER_COUNT          8
 #define CFG_EVIO_DIAG_IN_COUNT              1
 #define CFG_EVIO_FMC_COUNT                  2
 #define CFG_EVIO_DIAG_OUT_COUNT             2

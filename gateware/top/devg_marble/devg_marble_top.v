@@ -410,6 +410,10 @@ BUFG evg1TxBuf (.I(evg1TxClkOut), .O(evg1TxClk));
 assign evg1RxClkIn = evg1RxClk;
 assign evg1TxClkIn = evg1TxClk;
 
+wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC1_hwTrigger_remap =
+    {FMC1_hwTrigger[3], FMC1_hwTrigger[2], FMC1_hwTrigger[1], FMC1_hwTrigger[0],
+     1'b0, 1'b0, FMC1_hwTrigger[5], FMC1_hwTrigger[4]};
+
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -418,7 +422,7 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("true"))
+    .DEBUG("false"))
   evg1 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
@@ -433,7 +437,7 @@ evg #(
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
     .sysSequencerStatusFIFOCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR]),
     .sysSequencerStatusFifo(GPIO_IN[GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR]),
-    .hwTriggers_a(FMC1_hwTrigger),
+    .hwTriggers_a(FMC1_hwTrigger_remap),
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
@@ -557,6 +561,10 @@ BUFG evg2TxBuf (.I(evg2TxClkOut), .O(evg2TxClk));
 assign evg2RxClkIn = evg2RxClk;
 assign evg2TxClkIn = evg2TxClk;
 
+wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC2_hwTrigger_remap =
+    {FMC2_hwTrigger[3], FMC2_hwTrigger[2], FMC2_hwTrigger[1], FMC2_hwTrigger[0],
+     1'b0, 1'b0, FMC2_hwTrigger[5], FMC2_hwTrigger[4]};
+
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -580,7 +588,7 @@ evg #(
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
     .sysSequencerStatusFIFOCSRstrobe(GPIO_STROBES[GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR]),
     .sysSequencerStatusFifo(GPIO_IN[GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR]),
-    .hwTriggers_a(FMC2_hwTrigger),
+    .hwTriggers_a(FMC2_hwTrigger_remap),
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
