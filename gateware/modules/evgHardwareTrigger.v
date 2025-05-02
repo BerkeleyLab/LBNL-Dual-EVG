@@ -70,7 +70,7 @@ wire [ADDRESS_WIDTH-1:0] priorityBitnum = pendingChannels[7] ? 7 :
                                           pendingChannels[2] ? 2 :
                                           pendingChannels[1] ? 1 : 0;
 wire [HARDWARE_TRIGGER_COUNT-1:0] priorityChannelBit = 1 << priorityBitnum;
-wire [ADDRESS_WIDTH-1:0] priorityIndex=HARDWARE_TRIGGER_COUNT-1-priorityBitnum;
+wire [ADDRESS_WIDTH-1:0] priorityIndex=priorityBitnum;
 wire [EVENTCODE_WIDTH-1:0] priorityChannelEvent =
                     eventCodes[priorityIndex*EVENTCODE_WIDTH+:EVENTCODE_WIDTH];
 
