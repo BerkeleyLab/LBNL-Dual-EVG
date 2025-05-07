@@ -109,6 +109,7 @@ fetchFanSpeeds(uint32_t *ap)
     for (i = 0 ; i < CFG_FAN_COUNT ; i++) {
         if (shift > 16) {
             *ap++ = v;
+            v = 0;
             count++;
             shift = 0;
         }
