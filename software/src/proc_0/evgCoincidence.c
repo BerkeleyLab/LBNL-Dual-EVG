@@ -52,7 +52,6 @@ readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
         pass++;
 
         if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50) {
-            warn("Coincidence histogram read timeout");
             timeout = 1;
 
             if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
@@ -68,7 +67,7 @@ readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
     }
 
    if (timeout) {
-       return 0;
+       return -1;
    }
 
     return DATA_HIST_R(reg);
@@ -92,6 +91,12 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
     for (i = 0 ; i < loopLimit ; i++) {
         int address = i % evgp->samplesPerCycle;
         int n = readCoincidenceHist(evgp, inputIndex, address);
+
+        if (n < 0) {
+            warn("Coincidence histogram read timeout");
+            break;
+        }
+
         if (n == 0) {
             consecutiveZeroCount++;
         }
@@ -240,11 +245,18 @@ evgCoincidenceShow(int showData)
                 printf("%d", a);
                 for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
                     int n = readCoincidenceHist(evgp, i, a);
+
+                    if (n < 0) {
+                        printf("\n Timeout reading coincidence histogram %d sample %d\n",
+                                i, a);
+                        return;
+                    }
                     printf(" %d", n);
                 }
                 printf("\n");
             }
         }
+
         for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
             findCoincidence(evgp, i);
             printf("EVG:%d Input:%d Coinc %d Old Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
