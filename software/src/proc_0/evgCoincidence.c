@@ -163,7 +163,6 @@ evgCoincidenceCrank(void)
     struct evgInfo *evgp;
     static int active;
     static int reportedAlignTimeout;
-    static uint32_t whenWarned;
     static uint32_t whenStarted;
 
     if (sharedMemory->requestAlignment) {
