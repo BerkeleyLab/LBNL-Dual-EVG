@@ -52,7 +52,6 @@ readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
         pass++;
 
         if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50) {
-            warn("Coincidence histogram read timeout");
             timeout = 1;
 
             if (debugFlags & DEBUGFLAG_SHOW_COINC_ADDR_RB) {
@@ -68,7 +67,7 @@ readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
     }
 
    if (timeout) {
-       return 0;
+       return -1;
    }
 
     return DATA_HIST_R(reg);
@@ -77,7 +76,7 @@ readCoincidenceHist(struct evgInfo *evgp, int muxSel, int address)
 /*
  * Find midpoint of rising edge
  */
-static void
+static int
 findCoincidence(struct evgInfo *evgp, int inputIndex)
 {
     const int loopLimit = (evgp->samplesPerCycle * 3) / 2;
@@ -85,13 +84,18 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
     int consecutiveZeroCount = 0;
     int indexOfFirstNonZero = -1;
     int indexOfLastNonZero = -1;
-    int i;
+    int i = 0;
 
     evgp->addressOfRisingEdge[inputIndex] = -1;
     evgp->jitter[inputIndex] = -1;
     for (i = 0 ; i < loopLimit ; i++) {
         int address = i % evgp->samplesPerCycle;
         int n = readCoincidenceHist(evgp, inputIndex, address);
+
+        if (n < 0) {
+            return -1;
+        }
+
         if (n == 0) {
             consecutiveZeroCount++;
         }
@@ -111,21 +115,23 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
                 evgp->addressOfRisingEdge[inputIndex] =
                     (indexOfFirstNonZero + evgp->jitter[inputIndex]) %
                     evgp->samplesPerCycle;
-                break;
+                return 0;
             }
         }
     }
 }
 
-static void
+static int
 evgCoincidence(struct evgInfo *evgp)
 {
-    int i;
+    int i = 0;
+    int ret = 0;
     int phaseOffset, phaseError;
+
     for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
         int diff;
         const int coincidenceIndex = (evgp->evgIndex * EVG_COINCIDENCE_COUNT) + i;
-        findCoincidence(evgp, i);
+        ret |= findCoincidence(evgp, i);
         sharedMemory->coincidence[coincidenceIndex] = (evgp->jitter[i] << 16) |
                                         (evgp->addressOfRisingEdge[i] & 0xFFFF);
         diff = (evgp->addressOfRisingEdge[i] - evgp->oldAddressOfRisingEdge[i] +
@@ -150,6 +156,8 @@ evgCoincidence(struct evgInfo *evgp)
     }
     sharedMemory->pllPhaseOffset[evgp->evgIndex] = phaseOffset;
     sharedMemory->pllPhaseError[evgp->evgIndex] = phaseError;
+
+    return (ret < 0) ? -1 : 0;
 }
 
 void
@@ -158,7 +166,7 @@ evgCoincidenceCrank(void)
     struct evgInfo *evgp;
     static int active;
     static int reportedAlignTimeout;
-    static uint32_t whenWarned;
+    static int reportedCoincTimeout;
     static uint32_t whenStarted;
 
     if (sharedMemory->requestAlignment) {
@@ -183,6 +191,7 @@ evgCoincidenceCrank(void)
                 GPIO_WRITE(evgp->csrIndex, CSR_W_REALIGN);
             }
             reportedAlignTimeout = 0;
+            reportedCoincTimeout = 0;
             sharedMemory->wasAligned = sharedMemory->isAligned = 1;
         }
         sharedMemory->requestAlignment = 0;
@@ -191,11 +200,15 @@ evgCoincidenceCrank(void)
         for (evgp = evgs ; evgp < &evgs[EVG_COUNT] ; evgp++) {
             if (evgp->acquiring) {
                 if (!(GPIO_READ(evgp->csrIndex) & CSR_R_BUSY)) {
-                    evgCoincidence(evgp);
-                    evgp->acquiring = 0;
+                    if (evgCoincidence(evgp) >= 0) {
+                        evgp->acquiring = 0;
+                    }
                 }
                 if ((MICROSECONDS_SINCE_BOOT() - whenStarted) > 50000) {
-                    warn("Coincidence test timeout");
+                    if (!reportedCoincTimeout) {
+                        warn("Coincidence test timeout");
+                        reportedCoincTimeout = 1;
+                    }
                     evgp->acquiring = 0;
                 }
                 return;
@@ -240,11 +253,18 @@ evgCoincidenceShow(int showData)
                 printf("%d", a);
                 for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
                     int n = readCoincidenceHist(evgp, i, a);
+
+                    if (n < 0) {
+                        printf("\n Timeout reading coincidence histogram %d sample %d\n",
+                                i, a);
+                        return;
+                    }
                     printf(" %d", n);
                 }
                 printf("\n");
             }
         }
+
         for (i = 0 ; i < EVG_COINCIDENCE_COUNT ; i++) {
             findCoincidence(evgp, i);
             printf("EVG:%d Input:%d Coinc %d Old Coinc %d (jitter %d)\n", evgp->evgIndex + 1,
