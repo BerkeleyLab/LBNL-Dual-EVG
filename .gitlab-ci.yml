@@ -23,7 +23,7 @@ gw_devg_marble:
     - cd gateware/syn/devg_marble && ls /non-free
   stage: gateware
   script:
-    - make clean && PATH=$XILINX_VIVADO/bin:$PATH make devg_marble_top.bit && PATH=$XILINX_VIVADO/bin:$PATH make devg_marble_top.mmi
+    - make EVIO_TYPE=${EVIO_TYPE} clean && PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_marble_top.bit && PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_marble_top.mmi
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 4 weeks
