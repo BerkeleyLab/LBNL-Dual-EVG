@@ -1,0 +1,1 @@
+set prio_xci_files { $XCI_FILES }
