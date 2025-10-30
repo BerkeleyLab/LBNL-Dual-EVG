@@ -80,10 +80,10 @@ __ST7789V_HDR_FILES =\
 	lv_font.h \
 	st7789v.h
 
-ifeq ($(TARGET),devg_test_marble)
+ifeq ($(TARGET),devg_test_alsu_marble)
 	__ST7789V_SRC_FILES += \
 		st7789v_stub.c
-else ifeq ($(TARGET),devg_test_internal_pps_marble)
+else ifeq ($(TARGET),devg_test_internal_pps_alsu_marble)
 	__ST7789V_SRC_FILES += \
 		st7789v_stub.c
 endif

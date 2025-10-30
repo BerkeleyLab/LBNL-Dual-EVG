@@ -80,7 +80,7 @@ __ST7789V_HDR_FILES =\
 	lv_font.h \
 	st7789v.h
 
-ifeq ($(TARGET),devg_marble)
+ifeq ($(TARGET),devg_alsu_marble)
 	__ST7789V_SRC_FILES += \
 		st7789v.c
 endif
