@@ -3,10 +3,7 @@ THIS_DIR := $(__THIS_DIR:/=)
 
 include ../../../dir_list.mk
 
-PLATFORM     ?= marble
-APP          ?= devg_test_alsu
-
-TARGET       = $(APP)_$(PLATFORM)
+TARGET       ?= devg_test_alsu_marble
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 GIT_COMMIT   = $(shell git rev-parse --short=8 --verify HEAD || echo "NOCOMMIT")
 PROC_0_ELF   = $(THIS_DIR)/proc_0/$(TARGET)_proc_0.elf
