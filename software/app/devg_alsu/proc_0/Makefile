@@ -7,7 +7,7 @@ BIT      ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.bit
 PROC_NAME  = proc_0
 CPU_NAME   = microblaze_0
 TARGET_DIR = $(SW_TGT_DIR)/$(TARGET)
-BSP_DIR    = $(SW_DEVG_APP_DIR)/$(PROC_NAME)/$(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_NAME)
+BSP_DIR    = $(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_NAME)
 
 all: $(TARGET)_$(PROC_NAME) $(TARGET)_$(PROC_NAME).elf $(TARGET)_$(PROC_NAME).elf.size
 
