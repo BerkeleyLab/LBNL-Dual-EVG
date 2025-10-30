@@ -4,7 +4,7 @@ THIS_DIR := $(__THIS_DIR:/=)
 include ../../../dir_list.mk
 
 PLATFORM     ?= marble
-APP          ?= devg_test
+APP          ?= devg_test_alsu
 
 TARGET       = $(APP)_$(PLATFORM)
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)

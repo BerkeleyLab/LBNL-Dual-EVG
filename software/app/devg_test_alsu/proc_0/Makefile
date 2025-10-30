@@ -1,6 +1,6 @@
 include ../../../../dir_list.mk
 
-TARGET   ?= devg_test_marble
+TARGET   ?= devg_test_alsu_marble
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 BIT      ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.bit
 
@@ -103,7 +103,7 @@ LIB_DIRS = $(BSP_DIR)/lib
 LIB_FLAGS = $(addprefix -L, $(LIB_DIRS))
 LIBS = -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
 
-ifeq ($(TARGET),devg_test_marble)
+ifeq ($(TARGET),devg_test_alsu_marble)
 	USER_FLAGS += -D__TARGET_DEVG_TEST_MARBLE__
 else
 	USER_FLAGS += -D__TARGET_NOT_RECOGNIZED__
