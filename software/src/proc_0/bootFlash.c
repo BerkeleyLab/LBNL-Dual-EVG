@@ -101,7 +101,11 @@ spiFlashTxRx(struct spiflash_s *spi, const uint8_t *tx_data, uint32_t tx_len,
     while (tx_len--) {
         int w = *tx_data++;
         int b;
-//printf(" %02X", w);
+
+        if(debugFlags & DEBUGFLAG_BOOT_FLASH) {
+            printf(" %02X", w);
+        }
+
         for (b = 0x80 ; b != 0 ; b >>= 1) {
             GPIO_WRITE(GPIO_IDX_QSPI_FLASH_CSR,
                    ((w & b) ? CSR_W_MOSI_SET : CSR_W_MOSI_CLR) | CSR_W_CLK_CLR);
