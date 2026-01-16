@@ -1,6 +1,6 @@
 include ../../../../dir_list.mk
 
-TARGET   ?= devg_marble
+TARGET   ?= devg_test_alsu_marble
 GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 BIT      ?= $(GW_DEVG_TGT_DIR)/$(TARGET)_top.bit
 
@@ -23,7 +23,7 @@ __SRC_FILES = \
 	iicFMC.c \
 	iicProc.c \
 	main.c \
-	mgtClkSwitch.c \
+	mgtClkSwitchTest.c \
 	mmcMailbox.c \
 	platform.c \
 	sysmon.c \
@@ -80,9 +80,12 @@ __ST7789V_HDR_FILES =\
 	lv_font.h \
 	st7789v.h
 
-ifeq ($(TARGET),devg_marble)
+ifeq ($(TARGET),devg_test_alsu_marble)
 	__ST7789V_SRC_FILES += \
-		st7789v.c
+		st7789v_stub.c
+else ifeq ($(TARGET),devg_test_internal_pps_alsu_marble)
+	__ST7789V_SRC_FILES += \
+		st7789v_stub.c
 endif
 
 ST7789V_SRC_FILES = $(addprefix $(ST7789V_DIR)/, $(__ST7789V_SRC_FILES))
@@ -100,8 +103,8 @@ LIB_DIRS = $(BSP_DIR)/lib
 LIB_FLAGS = $(addprefix -L, $(LIB_DIRS))
 LIBS = -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
 
-ifeq ($(TARGET),devg_marble)
-	USER_FLAGS += -D__TARGET_DEVG_MARBLE__
+ifeq ($(TARGET),devg_test_alsu_marble)
+	USER_FLAGS += -D__TARGET_DEVG_TEST_MARBLE__
 else
 	USER_FLAGS += -D__TARGET_NOT_RECOGNIZED__
 endif
@@ -121,4 +124,4 @@ vpath *.h $(SW_SRC_DIR)/$(PROC_NAME) $(ST7789V_DIR) $(TARGET_DIR)
 vpath *.o $(SW_SRC_DIR)/$(PROC_NAME) $(ST7789V_DIR)
 
 # Actual build rules
-include $(SW_DEVG_APP_DIR)/bottom_rules.mk
+include $(SW_DEVG_TEST_APP_DIR)/bottom_rules.mk

@@ -127,6 +127,9 @@ mmcMailboxRead16(unsigned int address)
         if (v == v0) return v;
         v0 = v;
     }
+
+    /* Pick a better value? */
+    return 0;
 }
 
 static void

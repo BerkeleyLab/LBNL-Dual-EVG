@@ -129,5 +129,6 @@ set_property -dict {PACKAGE_PIN J4} [get_ports QSFP2_RX_4_P]
 set_property -dict {PACKAGE_PIN J3} [get_ports QSFP2_RX_4_N]
 
 # Bank 0 setup
-set_property CFGBVS VCCO [current_design]
-set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property CFGBVS VCCO                     [current_design]
+set_property CONFIG_VOLTAGE 3.3              [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]

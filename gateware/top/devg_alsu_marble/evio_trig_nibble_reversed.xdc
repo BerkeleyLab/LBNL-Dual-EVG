@@ -1,0 +1,1 @@
+../devg_marble/evio_trig_nibble_reversed.xdc

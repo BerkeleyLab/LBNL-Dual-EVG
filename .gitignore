@@ -29,10 +29,16 @@ _xilinx/
 # BSP-generated directories
 software/app/devg/proc_0/devg_marble_proc_0
 software/app/devg/proc_1/devg_marble_proc_1
+software/app/devg_alsu/proc_0/devg_alsu_marble_proc_0
+software/app/devg_alsu/proc_1/devg_alsu_marble_proc_1
 software/app/devg_test/proc_0/devg_test_marble_proc_0
 software/app/devg_test/proc_1/devg_test_marble_proc_1
+software/app/devg_test_alsu/proc_0/devg_test_alsu_marble_proc_0
+software/app/devg_test_alsu/proc_1/devg_test_alsu_marble_proc_1
 software/app/devg_test/proc_0/devg_test_internal_pps_marble_proc_0
 software/app/devg_test/proc_1/devg_test_internal_pps_marble_proc_1
+software/app/devg_test_alsu/proc_0/devg_test_internal_pps_alsu_marble_proc_0
+software/app/devg_test_alsu/proc_1/devg_test_internal_pps_alsu_marble_proc_1
 
 ######################
 # Modelsim
