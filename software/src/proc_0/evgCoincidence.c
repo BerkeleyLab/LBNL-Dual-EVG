@@ -119,6 +119,8 @@ findCoincidence(struct evgInfo *evgp, int inputIndex)
             }
         }
     }
+
+    return -1;
 }
 
 static int
