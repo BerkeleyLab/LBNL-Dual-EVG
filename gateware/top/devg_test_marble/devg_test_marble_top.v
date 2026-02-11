@@ -716,8 +716,8 @@ assign PMOD1_7 = !bncT[3];
 generate
 for (i = 0 ; i < BNC_NUM_CHANNELS ; i = i + 1) begin : bnc_interface
 
-assign bncT[i] = (!bncDirToBuff[i])? bncDataToBuff[i] : bncDirToBuff[i];
-assign bncDataIn[i] = !bncDirToBuff[i];
+assign bncT[i] = bncDirToBuff[i];
+assign bncDataIn[i] = bncDataToBuff[i];
 assign bncDataFromBuff[i] = (bncDirToBuff[i])? bncDataOut[i] : 1'b0;
 
 end
