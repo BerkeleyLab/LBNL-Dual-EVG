@@ -1,3 +1,6 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
 /*
  * Configuration parameters shared between software and firmware
  * The restrictions noted in gpio.h apply here, too.
@@ -37,3 +40,5 @@
 // Disable MGT Tx:Ref alignement, as we are using
 // Automatic MGT TX alignment
 #define CFG_MGT_TX_REF_ALIGN               0
+
+#endif
