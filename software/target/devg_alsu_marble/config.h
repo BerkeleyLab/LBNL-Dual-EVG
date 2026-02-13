@@ -21,6 +21,12 @@
 #define CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE  6346000
 #define CFG_EVG1_CLK_PER_HEARTBEAT          126920000
 
+// Alternate values to work with ALS SR. Used for alternate
+// injection sequence synchronization
+#define CFG_ALT_EVG1_CLK_PER_BR_AR_ALIGNMENT    10250
+#define CFG_ALT_EVG1_CLK_PER_BR_AR_COINCIDENCE  6232000
+#define CFG_ALT_EVG1_CLK_PER_HEARTBEAT          124640000
+
 #define CFG_EVG2_CLK_PER_RF_COINCIDENCE     669
 #define CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK   76
 #define CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK   82
