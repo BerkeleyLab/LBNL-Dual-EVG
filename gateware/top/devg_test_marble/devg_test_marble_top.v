@@ -518,7 +518,7 @@ wire swapoutSequenceStart;
 wire [15:0] evg2TxData;
 wire  [1:0] evg2TxCharIsK;
 swapoutSequenceControl
-    #(.CLOCK_PER_ARSR_COINCIDENCE(CFG_EVG2_CLOCK_PER_ARSR_COINCIDENCE),
+    #(.CLOCK_PER_ARSR_COINCIDENCE(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE),
       .DEBUG("false"))
   swapoutSequenceControl (
     .sysClk(sysClk),
