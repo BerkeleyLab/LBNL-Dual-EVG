@@ -676,13 +676,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .GPIO_OUT(GPIO_OUT),
           .csr(BRARAlignClockStatus),
 
-          .evrClk(evg1TxClk),
-          .evrHeartbeatMarker(evg1HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+          .clk(evg1TxClk),
+          .heartbeatMarker(evg1HeartbeatRequest),
+          .pulsePerSecondMarker(evgPpsMarker_f1),
 
-          .evrClkGenSynced(BRARAlignClockSynced),
-          .evrClkGen(BRARAlignClock),
-          .evrClkGenStrobe());
+          .clkGenSynced(BRARAlignClockSynced),
+          .clkGen(BRARAlignClock),
+          .clkGenStrobe());
 
 wire [31:0] BROrbitClockDiv4ClockStatus;
 wire BROrbitClockDiv4ClockSynced;
@@ -695,13 +695,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .GPIO_OUT(GPIO_OUT),
           .csr(BROrbitClockDiv4ClockStatus),
 
-          .evrClk(evg1TxClk),
-          .evrHeartbeatMarker(evg1HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+          .clk(evg1TxClk),
+          .heartbeatMarker(evg1HeartbeatRequest),
+          .pulsePerSecondMarker(evgPpsMarker_f1),
 
-          .evrClkGenSynced(BROrbitClockDiv4ClockSynced),
-          .evrClkGen(BROrbitClockDiv4Clock),
-          .evrClkGenStrobe());
+          .clkGenSynced(BROrbitClockDiv4ClockSynced),
+          .clkGen(BROrbitClockDiv4Clock),
+          .clkGenStrobe());
 
 wire [31:0] BRARCoincClockStatus;
 wire BRARCoincClockSynced;
@@ -714,13 +714,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .GPIO_OUT(GPIO_OUT),
           .csr(BRARCoincClockStatus),
 
-          .evrClk(evg1TxClk),
-          .evrHeartbeatMarker(evg1HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+          .clk(evg1TxClk),
+          .heartbeatMarker(evg1HeartbeatRequest),
+          .pulsePerSecondMarker(evgPpsMarker_f1),
 
-          .evrClkGenSynced(BRARCoincClockSynced),
-          .evrClkGen(BRARCoincClock),
-          .evrClkGenStrobe());
+          .clkGenSynced(BRARCoincClockSynced),
+          .clkGen(BRARCoincClock),
+          .clkGenStrobe());
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
@@ -735,13 +735,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .GPIO_OUT(GPIO_OUT),
           .csr(AROrbitClockStatus),
 
-          .evrClk(evg2TxClk),
-          .evrHeartbeatMarker(evg2HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+          .clk(evg2TxClk),
+          .heartbeatMarker(evg2HeartbeatRequest),
+          .pulsePerSecondMarker(evgPpsMarker_f2),
 
-          .evrClkGenSynced(AROrbitClockSynced),
-          .evrClkGen(AROrbitClock),
-          .evrClkGenStrobe());
+          .clkGenSynced(AROrbitClockSynced),
+          .clkGen(AROrbitClock),
+          .clkGenStrobe());
 
 wire [31:0] SROrbitClockStatus;
 wire SROrbitClockSynced;
@@ -754,13 +754,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .GPIO_OUT(GPIO_OUT),
           .csr(SROrbitClockStatus),
 
-          .evrClk(evg2TxClk),
-          .evrHeartbeatMarker(evg2HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+          .clk(evg2TxClk),
+          .heartbeatMarker(evg2HeartbeatRequest),
+          .pulsePerSecondMarker(evgPpsMarker_f2),
 
-          .evrClkGenSynced(SROrbitClockSynced),
-          .evrClkGen(SROrbitClock),
-          .evrClkGenStrobe());
+          .clkGenSynced(SROrbitClockSynced),
+          .clkGen(SROrbitClock),
+          .clkGenStrobe());
 
 wire [31:0] ARSRCoincClockStatus;
 wire ARSRCoincClockSynced;
@@ -773,13 +773,13 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .GPIO_OUT(GPIO_OUT),
           .csr(ARSRCoincClockStatus),
 
-          .evrClk(evg2TxClk),
-          .evrHeartbeatMarker(evg2HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+          .clk(evg2TxClk),
+          .heartbeatMarker(evg2HeartbeatRequest),
+          .pulsePerSecondMarker(evgPpsMarker_f2),
 
-          .evrClkGenSynced(ARSRCoincClockSynced),
-          .evrClkGen(ARSRCoincClock),
-          .evrClkGenStrobe());
+          .clkGenSynced(ARSRCoincClockSynced),
+          .clkGen(ARSRCoincClock),
+          .clkGenStrobe());
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
