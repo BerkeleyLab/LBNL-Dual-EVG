@@ -11,19 +11,19 @@ module clkGen #(
     input       [31:0] GPIO_OUT,
     output wire [31:0] csr,
 
-    input                           evrClk,
-    (*mark_debug=DEBUG*) input      evrHeartbeatMarker,
-    (*mark_debug=DEBUG*) input      evrPulsePerSecondMarker,
-    (*mark_debug=DEBUG*) output reg evrClkGenSynced = 0,
-    (*mark_debug=DEBUG*) output reg evrClkGen = 0,
-    (*mark_debug=DEBUG*) output reg evrClkGenStrobe = 0);
+    input                           clk,
+    (*mark_debug=DEBUG*) input      heartbeatMarker,
+    (*mark_debug=DEBUG*) input      pulsePerSecondMarker,
+    (*mark_debug=DEBUG*) output reg clkGenSynced = 0,
+    (*mark_debug=DEBUG*) output reg clkGen = 0,
+    (*mark_debug=DEBUG*) output reg clkGenStrobe = 0);
 
 localparam DIVISOR_WIDTH = 24;
 localparam COUNTER_WIDTH = DIVISOR_WIDTH - 1;
 
 generate
 if ($clog2(DEFAULT_RATE_COUNT+1) > DIVISOR_WIDTH) begin
-    DEFAULT_EVR_RATE_COUNT_bigger_than_DIVISOR_WIDTH();
+    DEFAULT_RATE_COUNT_bigger_than_DIVISOR_WIDTH();
 end
 endgenerate
 
@@ -39,43 +39,43 @@ end
 
 wire heartBeatValid, pulsePerSecondValid;
 assign csr = {sysClkDivisor,
-              {8-3{1'b0}}, pulsePerSecondValid, heartBeatValid, evrClkGenSynced};
+              {8-3{1'b0}}, pulsePerSecondValid, heartBeatValid, clkGenSynced};
 
-(*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] evrCounter = 0;
-reg evrHeartbeatMarker_d;
-always @(posedge evrClk) begin
-    evrHeartbeatMarker_d <= evrHeartbeatMarker;
-    if (evrHeartbeatMarker && !evrHeartbeatMarker_d) begin
-        evrClkGen <= 1;
-        evrClkGenStrobe <= 1;
-        evrCounter <= reloadHi;
-        evrClkGenSynced <= (!evrClkGen && (evrCounter == 0));
+(*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] counter = 0;
+reg heartbeatMarker_d;
+always @(posedge clk) begin
+    heartbeatMarker_d <= heartbeatMarker;
+    if (heartbeatMarker && !heartbeatMarker_d) begin
+        clkGen <= 1;
+        clkGenStrobe <= 1;
+        counter <= reloadHi;
+        clkGenSynced <= (!clkGen && (counter == 0));
     end
-    else if (evrCounter == 0) begin
-        evrClkGen <= !evrClkGen;
-        if (evrClkGen) begin
-            evrClkGenStrobe <= 0;
-            evrCounter <= reloadLo;
+    else if (counter == 0) begin
+        clkGen <= !clkGen;
+        if (clkGen) begin
+            clkGenStrobe <= 0;
+            counter <= reloadLo;
         end
         else begin
-            evrClkGenStrobe <= 1;
-            evrCounter <= reloadHi;
+            clkGenStrobe <= 1;
+            counter <= reloadHi;
         end
     end else begin
-        evrClkGenStrobe <= 0;
-        evrCounter <= evrCounter - 1;
+        clkGenStrobe <= 0;
+        counter <= counter - 1;
     end
 end
 
 markerWatchdog #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
                       .DEBUG(DEBUG))
   hbWatchdog (.sysClk(sysClk),
-              .evrMarker(evrHeartbeatMarker),
+              .markerIn(heartbeatMarker),
               .isValid(heartBeatValid));
 
 markerWatchdog #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
                       .DEBUG(DEBUG))
   ppsWatchdog (.sysClk(sysClk),
-               .evrMarker(evrPulsePerSecondMarker),
+               .markerIn(pulsePerSecondMarker),
                .isValid(pulsePerSecondValid));
 endmodule

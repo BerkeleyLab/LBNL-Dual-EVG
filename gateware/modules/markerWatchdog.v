@@ -3,7 +3,7 @@ module markerWatchdog #(
     parameter DEBUG            = "false"
     ) (
     input      sysClk,
-    input      evrMarker,
+    input      markerIn,
     output reg isValid = 0);
 
 localparam UPPER_LIMIT = ((SYSCLK_FREQUENCY * 11) / 10);
@@ -12,7 +12,7 @@ localparam LOWER_LIMIT = ((SYSCLK_FREQUENCY *  9) / 10);
 (*mark_debug=DEBUG*) reg marker_m, marker, marker_d;
 
 always @(posedge sysClk) begin
-    marker_m <= evrMarker;
+    marker_m <= markerIn;
     marker   <= marker_m;
     marker_d <= marker;
     if (marker && !marker_d) begin
