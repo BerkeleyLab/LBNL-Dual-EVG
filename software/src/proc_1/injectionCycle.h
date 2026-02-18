@@ -36,16 +36,76 @@
 #define _INJECTION_CYCLE_H_
 
 #include <stdint.h>
+#include "util.h"
 
-#define INJ_CSR_R_POWER_LINE_VALID 0x80000000
-#define injectionCycleIsPowerLineValid() \
-                                  ((GPIO_READ(GPIO_IDX_INJECTION_CYCLE_CSR) & \
-                                               INJ_CSR_R_POWER_LINE_VALID) != 0)
+/*
+ * Definitions for CSR
+ */
+
+#define CSR_INJ_W_SET_CYCLE_MILLISECONDS            (1UL << 31)
+#define CSR_INJ_W_MANUAL_TRIGGER                    (1UL << 7)
+#define CSR_INJ_W_DISABLE_TIMED_CYCLES              (1UL << 1)
+#define CSR_INJ_W_ENABLE_TIMED_CYCLES               (1UL << 0)
+
+#define CSR_INJ_R_POWER_LINE_VALID                  0x80000000
+#define injectionCycleIsPowerLineValid()            ((GPIO_READ(GPIO_IDX_INJECTION_CYCLE_CSR) & \
+                                                        CSR_INJ_R_POWER_LINE_VALID) != 0)
+
+/*
+ * Definitions for Alignment CSR W
+ */
+
+#define CSR_INJ_ALIGN_W_SET_ALIGN_SEL               (1UL << 31)
+
+#define CSR_INJ_ALIGN_W_SET_HEARTBEAT_SEL           (1UL << 30)
+
+#define CSR_INJ_ALIGN_W_SEL_SIZE                    3
+#define CSR_INJ_ALIGN_W_SEL_SHIFT                   0
+#define CSR_INJ_ALIGN_W_SEL_MASK                    REG_GEN_MASK(CSR_INJ_ALIGN_W_SEL_SHIFT, \
+                                                    CSR_INJ_ALIGN_W_SEL_SIZE)
+#define CSR_INJ_ALIGN_W_SEL_W(value)                REG_GEN_WRITE(value, CSR_INJ_ALIGN_W_SEL_SHIFT, \
+                                                    CSR_INJ_ALIGN_W_SEL_SIZE)
+
+/*
+ * Definitions for Alignment CSR R
+ */
+
+#define CSR_INJ_ALIGN_R_COUNTER_SYNCED_SIZE         8
+#define CSR_INJ_ALIGN_R_COUNTER_SYNCED_SHIFT        0
+#define CSR_INJ_ALIGN_R_COUNTER_SYNCED_MASK         REG_GEN_MASK(CSR_INJ_ALIGN_R_COUNTER_SYNCED_SHIFT, \
+                                                    CSR_INJ_ALIGN_R_COUNTER_SYNCED_SIZE)
+#define CSR_INJ_ALIGN_R_COUNTER_SYNCED_R(reg)       REG_GEN_READ(reg, CSR_INJ_ALIGN_R_COUNTER_SYNCED_SHIFT, \
+                                                    CSR_INJ_ALIGN_R_COUNTER_SYNCED_SIZE)
+
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_SIZE      4
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_SHIFT     8
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_MASK      REG_GEN_MASK(CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_SHIFT, \
+                                                    CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_SIZE)
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_R(reg)    REG_GEN_READ(reg, CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_SHIFT, \
+                                                    CSR_INJ_ALIGN_R_COUNTER_SEL_LATCH_SIZE)
+
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_SIZE            4
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_SHIFT           12
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_MASK            REG_GEN_MASK(CSR_INJ_ALIGN_R_COUNTER_SEL_SHIFT, \
+                                                       CSR_INJ_ALIGN_R_COUNTER_SEL_SIZE)
+#define CSR_INJ_ALIGN_R_COUNTER_SEL_R(reg)          REG_GEN_READ(reg, CSR_INJ_ALIGN_R_COUNTER_SEL_SHIFT, \
+                                                       CSR_INJ_ALIGN_R_COUNTER_SEL_SIZE)
+
+#define CSR_INJ_ALIGN_R_HB_SEL_SIZE                 4
+#define CSR_INJ_ALIGN_R_HB_SEL_SHIFT                16
+#define CSR_INJ_ALIGN_R_HB_SEL_MASK                 REG_GEN_MASK(CSR_INJ_ALIGN_R_HB_SEL_SHIFT, \
+                                                            CSR_INJ_ALIGN_R_HB_SEL_SIZE)
+#define CSR_INJ_ALIGN_R_HB_SEL_R(reg)               REG_GEN_READ(reg, CSR_INJ_ALIGN_R_HB_SEL_SHIFT, \
+                                                            CSR_INJ_ALIGN_R_HB_SEL_SIZE)
 
 void injectionCycleEnable(int enable);
 void injectionCycleManualTrigger(void);
 void injectionCycleSetBaseInterval(int milliseconds);
 void injectionCycleExtendInterval(int milliseconds);
 int injectionCycleFetchStatus(uint32_t *ap);
+void injectionAlignSetAlignSel(int sel);
+void injectionAlignSetHeartbeatSel(int sel);
+int injectionAlignGetAlignSel(void);
+int injectionAlignGetHbSel(void);
 
 #endif /* _INJECTION_CYCLE_H_ */

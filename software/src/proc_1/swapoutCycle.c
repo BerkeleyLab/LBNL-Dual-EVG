@@ -36,5 +36,35 @@
 void
 swapoutCycleEnable(int offset)
 {
-    GPIO_WRITE(GPIO_IDX_SWAPOUT_CYCLE_CSR, offset);
+    GPIO_WRITE(GPIO_IDX_SWAPOUT_CYCLE_CSR, CSR_ALIGN_W_OFFSET_W(offset));
+}
+
+void
+swapoutAlignSetAlignSel(int sel)
+{
+    GPIO_WRITE(GPIO_IDX_SWAPOUT_ALIGN_CSR, CSR_SWAPOUT_ALIGN_W_SET_ALIGN_SEL |
+            CSR_SWAPOUT_ALIGN_W_SEL_W(sel));
+}
+
+void
+swapoutAlignSetHeartbeatSel(int sel)
+{
+    GPIO_WRITE(GPIO_IDX_SWAPOUT_ALIGN_CSR, CSR_SWAPOUT_ALIGN_W_SET_HEARTBEAT_SEL |
+            CSR_SWAPOUT_ALIGN_W_SEL_W(sel));
+}
+
+int
+injectionAlignGetAlignSel()
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+
+    return CSR_INJ_ALIGN_R_COUNTER_SEL_R(reg);
+}
+
+int
+injectionAlignGetHbSel()
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+
+    return CSR_INJ_ALIGN_R_HB_SEL_R(reg);
 }

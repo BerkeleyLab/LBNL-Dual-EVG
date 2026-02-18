@@ -35,6 +35,75 @@
 #ifndef _SWAPOUT_CYCLE_H_
 #define _SWAPOUT_CYCLE_H_
 
+#include <stdint.h>
+#include "util.h"
+
+/*
+ * Definitions for CSR
+ */
+
+#define CSR_SWAPOUT_R_NOT_SYNCED                        0x80000000
+#define swapoutIsUnsynched()                            ((GPIO_READ(GPIO_IDX_SWAPOUT_CYCLE_CSR) & \
+                                                            CSR_SWAPOUT_R_NOT_SYNCED) != 0)
+
+#define CSR_SWAPOUT_W_OFFSET_SIZE                       16
+#define CSR_SWAPOUT_W_OFFSET_SHIFT                      0
+#define CSR_SWAPOUT_W_OFFSET_MASK                       REG_GEN_MASK(CSR_SWAPOUT_W_OFFSET_SHIFT, \
+                                                            CSR_SWAPOUT_W_OFFSET_SIZE)
+#define CSR_SWAPOUT_W_OFFSET_W(value)                   REG_GEN_WRITE(value, CSR_SWAPOUT_W_OFFSET_SHIFT, \
+                                                            CSR_SWAPOUT_W_OFFSET_SIZE)
+
+/*
+ * Definitions for Alignment CSR W
+ */
+
+#define CSR_SWAPOUT_ALIGN_W_SET_ALIGN_SEL               (1UL << 31)
+
+#define CSR_SWAPOUT_ALIGN_W_SET_HEARTBEAT_SEL           (1UL << 30)
+
+#define CSR_SWAPOUT_ALIGN_W_SEL_SIZE                    3
+#define CSR_SWAPOUT_ALIGN_W_SEL_SHIFT                   0
+#define CSR_SWAPOUT_ALIGN_W_SEL_MASK                    REG_GEN_MASK(CSR_SWAPOUT_ALIGN_W_SEL_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_W_SEL_SIZE)
+#define CSR_SWAPOUT_ALIGN_W_SEL_W(value)                REG_GEN_WRITE(value, CSR_SWAPOUT_ALIGN_W_SEL_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_W_SEL_SIZE)
+
+/*
+ * Definitions for Alignment CSR R
+ */
+
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_SIZE         8
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_SHIFT        0
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_MASK         REG_GEN_MASK(CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_SIZE)
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_R(reg)       REG_GEN_READ(reg, CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_COUNTER_SYNCED_SIZE)
+
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_SIZE      4
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_SHIFT     8
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_MASK      REG_GEN_MASK(CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_SIZE)
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_R(reg)    REG_GEN_READ(reg, CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_LATCH_SIZE)
+
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_SIZE            4
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_SHIFT           12
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_MASK            REG_GEN_MASK(CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_SIZE)
+#define CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_R(reg)          REG_GEN_READ(reg, CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_SIZE)
+
+#define CSR_SWAPOUT_ALIGN_R_HB_SEL_SIZE                 4
+#define CSR_SWAPOUT_ALIGN_R_HB_SEL_SHIFT                16
+#define CSR_SWAPOUT_ALIGN_R_HB_SEL_MASK                 REG_GEN_MASK(CSR_SWAPOUT_ALIGN_R_HB_SEL_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_HB_SEL_SIZE)
+#define CSR_SWAPOUT_ALIGN_R_HB_SEL_R(reg)               REG_GEN_READ(reg, CSR_SWAPOUT_ALIGN_R_HB_SEL_SHIFT, \
+                                                            CSR_SWAPOUT_ALIGN_R_HB_SEL_SIZE)
+
 void swapoutCycleEnable(int offset);
+void swapoutAlignSetAlignSel(int sel);
+void swapoutAlignSetHeartbeatSel(int sel);
+int injectionAlignGetAlignSel(void);
+int injectionAlignGetHbSel(void);
 
 #endif /* _SWAPOUT_CYCLE_H_ */

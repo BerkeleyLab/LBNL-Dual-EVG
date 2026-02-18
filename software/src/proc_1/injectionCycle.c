@@ -36,11 +36,6 @@
 #define MINIMUM_INJECTION_PERIOD_MILLISECONDS  1000
 #define MAXIMUM_INJECTION_PERIOD_MILLISECONDS  ((1UL << 16) - 1)
 
-#define CSR_W_SET_CYCLE_MILLISECONDS    (1UL << 31)
-#define CSR_W_MANUAL_TRIGGER            (1UL << 7)
-#define CSR_W_DISABLE_TIMED_CYCLES      (1UL << 1)
-#define CSR_W_ENABLE_TIMED_CYCLES       (1UL << 0)
-
 static unsigned int baseInterval = MINIMUM_INJECTION_PERIOD_MILLISECONDS;
 static unsigned int maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS -
                                           MINIMUM_INJECTION_PERIOD_MILLISECONDS;
@@ -92,4 +87,34 @@ injectionCycleFetchStatus(uint32_t *ap)
     int idx = 0;
     ap[idx++] = GPIO_READ(GPIO_IDX_INJECTION_CYCLE_CSR);
     return idx;
+}
+
+void
+injectionAlignSetAlignSel(int sel)
+{
+    GPIO_WRITE(GPIO_IDX_INJECTION_ALIGN_CSR, CSR_INJ_ALIGN_W_SET_ALIGN_SEL |
+            CSR_INJ_ALIGN_W_SEL_W(sel));
+}
+
+void
+injectionAlignSetHeartbeatSel(int sel)
+{
+    GPIO_WRITE(GPIO_IDX_INJECTION_ALIGN_CSR, CSR_INJ_ALIGN_W_SET_HEARTBEAT_SEL |
+            CSR_INJ_ALIGN_W_SEL_W(sel));
+}
+
+int
+injectionAlignGetAlignSel()
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+
+    return CSR_INJ_ALIGN_R_COUNTER_SEL_R(reg);
+}
+
+int
+injectionAlignGetHbSel()
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+
+    return CSR_INJ_ALIGN_R_HB_SEL_R(reg);
 }
