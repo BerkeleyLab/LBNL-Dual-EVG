@@ -230,6 +230,20 @@ cmdDumpScreen(int argc, char **argv)
 }
 
 static int
+cmdGSTB(int argc, char **argv)
+{
+    char *endp;
+    uint32_t reg;
+    if (argc > 1) {
+        uint32_t reg = strtol(argv[1], &endp, 10);
+        if (*endp == '\0') {
+            GPIO_WRITE(GPIO_IDX_EVENT_HW_STROBE_GEN, reg & 0xFF);
+        }
+    }
+    printf("Event target: %d\n", GPIO_READ(GPIO_IDX_EVENT_HW_STROBE_GEN) & 0xFF);
+}
+
+static int
 cmdFMON(int argc, char **argv)
 {
     int i;
@@ -767,6 +781,7 @@ commandHandler(int argc, char **argv)
       { "dumpscreen", cmdDumpScreen,  "Perform screen dump via console"    },
       { "eyescan",    eyescanCommand, "Perform transceiver eye scan"       },
       { "fmon",       cmdFMON,        "Show clock frequencies"             },
+      { "gstb",       cmdGSTB,        "Event strobe on PMOD2_4/5"          },
       { "log",        cmdLOG,         "Replay startup console output"      },
       { "mac",        cmdMAC,         "Set Ethernet MAC address"           },
       { "net",        cmdNET,         "Set network parameters"             },
