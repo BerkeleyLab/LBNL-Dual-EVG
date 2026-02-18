@@ -336,6 +336,7 @@ wire ppsMarker = sysPpsMarker_f1;
 /////////////////////////////////////////////////////////////////////////////
 // First generator (injector)
 wire injectorSequenceStart;
+wire evg1HeartbeatAlign, evg1HeartbeatCore;
 wire [15:0] evg1TxData;
 wire  [1:0] evg1TxCharIsK;
 injectorSequenceControl #(
@@ -346,12 +347,16 @@ injectorSequenceControl #(
         CFG_EVG1_CLK_PER_HEARTBEAT}))
   injectorSequenceControl (
     .sysClk(sysClk),
-    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_CYCLE_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_CYCLE_CSR]),
     .sysStatus(GPIO_IN[GPIO_IDX_INJECTION_CYCLE_CSR]),
+    .sysCsrAlignStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_ALIGN_CSR]),
+    .sysAlignStatus(GPIO_IN[GPIO_IDX_INJECTION_ALIGN_CSR]),
     .powerline_a(powerlineMarker),
     .evgTxClk(evg1TxClk),
     .evgHeartbeat(evg1HeartbeatRequest),
+    .evgHeartbeatAlign(evg1HeartbeatAlign),
+    .evgHeartbeatCore(evg1HeartbeatCore),
     .evgSequenceStart(injectorSequenceStart));
 
 wire [3:0] qsfp1RxP = {QSFP1_RX_4_P, QSFP1_RX_3_P, QSFP1_RX_2_P, QSFP1_RX_1_P};
@@ -459,7 +464,7 @@ evg #(
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .evgHeartbeatRequest(evg1HeartbeatRequest[0]),
+    .evgHeartbeatRequest(evg1HeartbeatRequestCore),
     .evgSequenceStart(injectorSequenceStart),
     .evgPPStoggle(evgPpsToggle_f1),
     .evgSeconds(evgPosixSeconds_f1),
@@ -524,18 +529,26 @@ assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
 wire swapoutSequenceStart;
+wire evg2HeartbeatAlign, evg2HeartbeatCore;
 wire [15:0] evg2TxData;
 wire  [1:0] evg2TxCharIsK;
 swapoutSequenceControl
     #(.CLOCK_PER_ARSR_COINCIDENCE(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE),
       .DEBUG("false"))
+swapoutSequenceControl #(
+    .ALIGNMENT_SYNC_COUNT(CFG_EVG2_HEARTBEAT_COUNT),
+    .TX_CLK_PER_ALIGNMENT(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE))
   swapoutSequenceControl (
     .sysClk(sysClk),
-    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
     .sysStatus(GPIO_IN[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
+    .sysCsrAlignStrobe(GPIO_STROBES[GPIO_IDX_SWAPOUT_ALIGN_CSR]),
+    .sysAlignStatus(GPIO_IN[GPIO_IDX_SWAPOUT_ALIGN_CSR]),
     .evgTxClk(evg2TxClk),
-    .evgHeartbeatRequest(evg2HeartbeatRequest),
+    .evgHeartbeat(evg2HeartbeatRequest),
+    .evgHeartbeatAlign(evg2HeartbeatAlign),
+    .evgHeartbeatCore(evg2HeartbeatCore),
     .evgSequenceStart(swapoutSequenceStart));
 
 wire [3:0] qsfp2RxP = {QSFP2_RX_4_P, QSFP2_RX_3_P, QSFP2_RX_2_P, QSFP2_RX_1_P};
@@ -643,7 +656,7 @@ evg #(
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
-    .evgHeartbeatRequest(evg2HeartbeatRequest),
+    .evgHeartbeatRequest(evg2HeartbeatCore),
     .evgSequenceStart(swapoutSequenceStart),
     .evgPPStoggle(evgPpsToggle_f2),
     .evgSeconds(evgPosixSeconds_f2),
@@ -783,7 +796,7 @@ pulseStretcher #(
   evg2HeartbeatPulseStretcher (
     .clk(evg2TxClk),
     .rst_a(!evg2TxResetDone),
-    .pulse_a(evg2HeartbeatRequest),
+    .pulse_a(evg2HeartbeatCore),
     .pulseStretch(evg2HeartbeatStretch)
 );
 
@@ -898,7 +911,8 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 wire evg1DiagnosticOut =
      (diagnostic1Select == 2'h1) ? evg1RefClk :
      (diagnostic1Select == 2'h2) ? evg1TxClk :
-     (diagnostic1Select == 2'h3) ? evg1HeartbeatRequest[0] :
+     (diagnostic2Select == 2'h3) ? evg1HeartbeatCore :
+     (diagnostic2Select == 2'h4) ? evg1HeartbeatAlign :
                                      diagnostic1ProgrammableOutputs;
 
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic2ProgrammableOutputs;
@@ -919,7 +933,8 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 wire evg2DiagnosticOut =
      (diagnostic2Select == 2'h1) ? evg2RefClk :
      (diagnostic2Select == 2'h2) ? evg2TxClk :
-     (diagnostic2Select == 2'h3) ? evg2HeartbeatRequest :
+     (diagnostic2Select == 2'h3) ? evg2HeartbeatCore :
+     (diagnostic2Select == 2'h4) ? evg2HeartbeatAlign :
                                      diagnostic2ProgrammableOutputs;
 
 ///////////////////////////////////////////////////////////////////////////////
