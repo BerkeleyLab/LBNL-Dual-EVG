@@ -209,7 +209,9 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire evg1HeartbeatRequest, evg2HeartbeatRequest;
+wire [CFG_EVG1_HEARTBEAT_COUNT-1:0] evg1HeartbeatRequest;
+wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
+wire evg1AltHeartbeatRequest;
 wire sysRealignToggle;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 
@@ -218,7 +220,10 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(1023),
     .SAMPLE_CLKS_PER_COINCIDENCE(CFG_EVG2_CLK_PER_RF_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
-    .TX_CLK_PER_HEARTBEAT(CFG_EVG1_CLK_PER_HEARTBEAT))
+    .HEARTBEAT_GEN_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
+    .TX_CLK_PER_HEARTBEAT({
+        CFG_EVG1_ALT_CLK_PER_HEARTBEAT,
+        CFG_EVG1_CLK_PER_HEARTBEAT}))
   coincidenceRecorder1 (
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_COINC_CSR]),
@@ -237,6 +242,7 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(1023),
     .SAMPLE_CLKS_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG2_CLK_PER_RF_COINCIDENCE),
+    .HEARTBEAT_GEN_COUNT(CFG_EVG2_HEARTBEAT_COUNT),
     .TX_CLK_PER_HEARTBEAT(CFG_EVG2_CLK_PER_HEARTBEAT))
   coincidenceRecorder2 (
     .sysClk(sysClk),
@@ -357,7 +363,10 @@ wire [15:0] evg1TxData;
 wire  [1:0] evg1TxCharIsK;
 injectorSequenceControl #(
     .SYSCLK_RATE(SYSCLK_FREQUENCY),
-    .TXCLK_PER_BR_AR_ALIGNMENT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT))
+    .ALIGNMENT_SYNC_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
+    .TX_CLK_PER_ALIGNMENT({
+        CFG_EVG1_ALT_CLK_PER_HEARTBEAT,
+        CFG_EVG1_CLK_PER_HEARTBEAT}))
   injectorSequenceControl (
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_CYCLE_CSR]),
@@ -441,7 +450,7 @@ evg #(
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .evgHeartbeatRequest(evg1HeartbeatRequest),
+    .evgHeartbeatRequest(evg1HeartbeatRequest[0]),
     .evgSequenceStart(injectorSequenceStart),
     .evgPPStoggle(evgPpsToggle_f1),
     .evgSeconds(evgPosixSeconds_f1),
@@ -517,7 +526,7 @@ swapoutSequenceControl
     .sysGPIO_OUT(GPIO_OUT),
     .sysStatus(GPIO_IN[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
     .evgTxClk(evg2TxClk),
-    .evgHeartbeatRequest(evg2HeartbeatRequest),
+    .evgHeartbeatRequest(evg2HeartbeatRequest[0]),
     .evgSequenceStart(swapoutSequenceStart));
 
 wire evg2RxClkOut;
@@ -592,7 +601,7 @@ evg #(
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
-    .evgHeartbeatRequest(evg2HeartbeatRequest),
+    .evgHeartbeatRequest(evg2HeartbeatRequest[0]),
     .evgSequenceStart(swapoutSequenceStart),
     .evgPPStoggle(evgPpsToggle_f2),
     .evgSeconds(evgPosixSeconds_f2),
@@ -677,7 +686,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(BRARAlignClockStatus),
 
           .clk(evg1TxClk),
-          .heartbeatMarker(evg1HeartbeatRequest),
+          .heartbeatMarker(evg1HeartbeatRequest[0]),
           .pulsePerSecondMarker(evgPpsMarker_f1),
 
           .clkGenSynced(BRARAlignClockSynced),
@@ -696,7 +705,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(BROrbitClockDiv4ClockStatus),
 
           .clk(evg1TxClk),
-          .heartbeatMarker(evg1HeartbeatRequest),
+          .heartbeatMarker(evg1HeartbeatRequest[0]),
           .pulsePerSecondMarker(evgPpsMarker_f1),
 
           .clkGenSynced(BROrbitClockDiv4ClockSynced),
@@ -715,7 +724,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(BRARCoincClockStatus),
 
           .clk(evg1TxClk),
-          .heartbeatMarker(evg1HeartbeatRequest),
+          .heartbeatMarker(evg1HeartbeatRequest[0]),
           .pulsePerSecondMarker(evgPpsMarker_f1),
 
           .clkGenSynced(BRARCoincClockSynced),
@@ -801,11 +810,11 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOutputSelect(diagnostic1Select));
 assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
-     (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
+     (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest[0], evg1TxClk } :
      (diagnostic1Select == 3'h3) ? { BRARAlignClock, evg1CoincidenceMarker } :
-     (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BROrbitClockDiv4Clock} :
-     (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
-     (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
+     (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest[0], BROrbitClockDiv4Clock} :
+     (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest[0], BRARAlignClock} :
+     (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest[0], BRARCoincClock} :
      (diagnostic1Select == 3'h7) ? { BRARAlignClock, BRARCoincClock} :
                                      diagnostic1ProgrammableOutputs;
 
@@ -826,11 +835,11 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOutputSelect(diagnostic2Select));
 assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
-     (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest[0], evg2TxClk } :
      (diagnostic2Select == 3'h3) ? { AROrbitClock, evg2CoincidenceMarker } :
-     (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
-     (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
-     (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :
+     (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest[0], AROrbitClock } :
+     (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest[0], SROrbitClock } :
+     (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest[0], ARSRCoincClock } :
      (diagnostic2Select == 3'h7) ? { AROrbitClock, ARSRCoincClock } :
                                      diagnostic2ProgrammableOutputs;
 

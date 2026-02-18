@@ -171,14 +171,19 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire evg1HeartbeatRequest, evg2HeartbeatRequest;
+wire [CFG_EVG1_HEARTBEAT_COUNT-1:0] evg1HeartbeatRequest;
+wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
+wire evg1AltHeartbeatRequest;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
     .CYCLES_PER_ACQUISITION(1023),
     .SAMPLE_CLKS_PER_COINCIDENCE(CFG_EVG2_CLK_PER_RF_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
-    .TX_CLK_PER_HEARTBEAT(CFG_EVG1_CLK_PER_HEARTBEAT))
+    .HEARTBEAT_GEN_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
+    .TX_CLK_PER_HEARTBEAT({
+        CFG_EVG1_ALT_CLK_PER_HEARTBEAT,
+        CFG_EVG1_CLK_PER_HEARTBEAT}))
   coincidenceRecorder1 (
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_COINC_CSR]),
@@ -194,6 +199,7 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(1023),
     .SAMPLE_CLKS_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG2_CLK_PER_RF_COINCIDENCE),
+    .HEARTBEAT_GEN_COUNT(CFG_EVG2_HEARTBEAT_COUNT),
     .TX_CLK_PER_HEARTBEAT(CFG_EVG2_CLK_PER_HEARTBEAT))
   coincidenceRecorder2 (
     .sysClk(sysClk),
@@ -334,7 +340,10 @@ wire [15:0] evg1TxData;
 wire  [1:0] evg1TxCharIsK;
 injectorSequenceControl #(
     .SYSCLK_RATE(SYSCLK_FREQUENCY),
-    .TXCLK_PER_BR_AR_ALIGNMENT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT))
+    .ALIGNMENT_SYNC_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
+    .TX_CLK_PER_ALIGNMENT({
+        CFG_EVG1_ALT_CLK_PER_HEARTBEAT,
+        CFG_EVG1_CLK_PER_HEARTBEAT}))
   injectorSequenceControl (
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_CYCLE_CSR]),
@@ -450,7 +459,7 @@ evg #(
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .evgHeartbeatRequest(evg1HeartbeatRequest),
+    .evgHeartbeatRequest(evg1HeartbeatRequest[0]),
     .evgSequenceStart(injectorSequenceStart),
     .evgPPStoggle(evgPpsToggle_f1),
     .evgSeconds(evgPosixSeconds_f1),
@@ -761,7 +770,7 @@ pulseStretcher #(
   evg1HeartbeatPulseStretcher (
     .clk(evg1TxClk),
     .rst_a(!evg1TxResetDone),
-    .pulse_a(evg1HeartbeatRequest),
+    .pulse_a(evg1HeartbeatRequest[0]),
     .pulseStretch(evg1HeartbeatStretch)
 );
 
@@ -889,7 +898,7 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 wire evg1DiagnosticOut =
      (diagnostic1Select == 2'h1) ? evg1RefClk :
      (diagnostic1Select == 2'h2) ? evg1TxClk :
-     (diagnostic1Select == 2'h3) ? evg1HeartbeatRequest :
+     (diagnostic1Select == 2'h3) ? evg1HeartbeatRequest[0] :
                                      diagnostic1ProgrammableOutputs;
 
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic2ProgrammableOutputs;
