@@ -94,6 +94,7 @@
 #define GPIO_IDX_NTP_SERVER_F2_FRACTION  48 // NTP F2 fractional seconds (R)
 #define GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR 49 // EVG 1 sequencer status FIFO
 #define GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR 50 // EVG 2 sequencer status FIFO
+#define GPIO_IDX_EVENT_HW_STROBE_GEN     51 // HW strobe on event generation
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
