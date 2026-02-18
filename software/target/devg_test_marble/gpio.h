@@ -73,27 +73,29 @@
 #define GPIO_IDX_EVG_2_HW_CSR            27 // EVG 2 hardware trigger control
 #define GPIO_IDX_EVG_2_SW_CSR            28 // EVG 2 software trigger control
 #define GPIO_IDX_INJECTION_CYCLE_CSR     29 // Injection cycle control
-#define GPIO_IDX_SWAPOUT_CYCLE_CSR       30 // Swapout cycle control
-#define GPIO_IDX_NTP_SERVER_STATUS       31 // NTP server status (R)
-#define GPIO_IDX_NTP_SERVER_SECONDS      32 // NTP server seconds (R/W)
-#define GPIO_IDX_NTP_SERVER_FRACTION     33 // NTP fractional seconds (R)
-#define GPIO_IDX_MMC_MAILBOX             34 // Communicate with MMC
-#define GPIO_IDX_EVG_1_DISP_LOG_CSR      35 // EVG 1 display event logger
-#define GPIO_IDX_EVG_2_DISP_LOG_CSR      36 // EVG 2 display event logger
-#define GPIO_IDX_GITHASH                 37 // Git 32-bit hash
-#define GPIO_IDX_EVG_1_TLOG_CSR          38 // EVG 1 tlog event logger control
-#define GPIO_IDX_EVG_1_TLOG_TICKS        39 // EVG 1 tlog event logger ticks
-#define GPIO_IDX_EVG_2_TLOG_CSR          40 // EVG 2 tlog event logger control
-#define GPIO_IDX_EVG_2_TLOG_TICKS        41 // EVG 2 tlog event logger ticks
-#define GPIO_IDX_EVG_1_SEQ_SECONDS_CSR   42 // EVG 1 sequencer status seconds
-#define GPIO_IDX_EVG_1_SEQ_FRACTION_CSR  43 // EVG 1 sequencer status fraction
-#define GPIO_IDX_EVG_2_SEQ_SECONDS_CSR   44 // EVG 2 sequencer status seconds
-#define GPIO_IDX_EVG_2_SEQ_FRACTION_CSR  45 // EVG 2 sequencer status fraction
-#define GPIO_IDX_NTP_SERVER_F2_STATUS    46 // NTP server F2 status (R)
-#define GPIO_IDX_NTP_SERVER_F2_SECONDS   47 // NTP server F2 seconds (R/W)
-#define GPIO_IDX_NTP_SERVER_F2_FRACTION  48 // NTP F2 fractional seconds (R)
-#define GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR 49 // EVG 1 sequencer status FIFO
-#define GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR 50 // EVG 2 sequencer status FIFO
+#define GPIO_IDX_INJECTION_ALIGN_CSR     30 // Injection align control
+#define GPIO_IDX_SWAPOUT_CYCLE_CSR       31 // Swapout cycle control
+#define GPIO_IDX_SWAPOUT_ALIGN_CSR       32 // Swapout align control
+#define GPIO_IDX_NTP_SERVER_STATUS       33 // NTP server status (R)
+#define GPIO_IDX_NTP_SERVER_SECONDS      34 // NTP server seconds (R/W)
+#define GPIO_IDX_NTP_SERVER_FRACTION     35 // NTP fractional seconds (R)
+#define GPIO_IDX_MMC_MAILBOX             36 // Communicate with MMC
+#define GPIO_IDX_EVG_1_DISP_LOG_CSR      37 // EVG 1 display event logger
+#define GPIO_IDX_EVG_2_DISP_LOG_CSR      38 // EVG 2 display event logger
+#define GPIO_IDX_GITHASH                 39 // Git 32-bit hash
+#define GPIO_IDX_EVG_1_TLOG_CSR          40 // EVG 1 tlog event logger control
+#define GPIO_IDX_EVG_1_TLOG_TICKS        41 // EVG 1 tlog event logger ticks
+#define GPIO_IDX_EVG_2_TLOG_CSR          42 // EVG 2 tlog event logger control
+#define GPIO_IDX_EVG_2_TLOG_TICKS        43 // EVG 2 tlog event logger ticks
+#define GPIO_IDX_EVG_1_SEQ_SECONDS_CSR   44 // EVG 1 sequencer status seconds
+#define GPIO_IDX_EVG_1_SEQ_FRACTION_CSR  45 // EVG 1 sequencer status fraction
+#define GPIO_IDX_EVG_2_SEQ_SECONDS_CSR   46 // EVG 2 sequencer status seconds
+#define GPIO_IDX_EVG_2_SEQ_FRACTION_CSR  47 // EVG 2 sequencer status fraction
+#define GPIO_IDX_NTP_SERVER_F2_STATUS    48 // NTP server F2 status (R)
+#define GPIO_IDX_NTP_SERVER_F2_SECONDS   49 // NTP server F2 seconds (R/W)
+#define GPIO_IDX_NTP_SERVER_F2_FRACTION  50 // NTP F2 fractional seconds (R)
+#define GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR 51 // EVG 1 sequencer status FIFO
+#define GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR 52 // EVG 2 sequencer status FIFO
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
