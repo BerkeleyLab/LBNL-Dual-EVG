@@ -810,9 +810,31 @@ assign PMOD2_1 = evg2HeartbeatStretch;
 assign PMOD2_2 = ppsStretch;
 assign PMOD2_3 = powerlineStretch;
 
-// Unused
-assign PMOD2_4 = 1'b0;
-assign PMOD2_5 = 1'b0;
+// Output strobe on signal generation
+reg [7:0] evgCmpCode = 0;
+reg [63:0] evg1CmpOut = 0, evg2CmpOut = 0;
+always @(posedge sysClk) begin
+  if (GPIO_STROBES[GPIO_IDX_EVENT_HW_STROBE_GEN]) begin
+    evgCmpCode <= GPIO_OUT[7:0];
+  end
+end
+always @(posedge evg1TxClk) begin
+  if (evg1TxData[7:0] == evgCmpCode && evgCmpCode != 0) begin
+    evg1CmpOut <= {64{1'b1}};
+  end else begin
+    evg1CmpOut <= {evg1CmpOut[62:0], 1'b0};
+  end
+end
+always @(posedge evg2TxClk) begin
+  if (evg2TxData[7:0] == evgCmpCode && evgCmpCode != 0) begin
+    evg2CmpOut <= {64{1'b1}};
+  end else begin
+    evg2CmpOut <= {evg2CmpOut[62:0], 1'b0};
+  end
+end
+assign GPIO_IN[GPIO_IDX_EVENT_HW_STROBE_GEN] = {24'b0, evgCmpCode};
+assign PMOD2_4 = evg1CmpOut[63];
+assign PMOD2_5 = evg2CmpOut[63];
 
 // Buttons
 assign PMOD2_6 = 1'b1;
