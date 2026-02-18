@@ -6,23 +6,30 @@ module injectorSequenceControl #(
         TX_CLK_PER_ALIGNMENT             = {-32'd1, -32'd1}
     ) (
     input              sysClk,
-    input              sysCsrStrobe,
     input       [31:0] sysGPIO_OUT,
+
+    input              sysCsrStrobe,
     output wire [31:0] sysStatus,
+
+    input              sysCsrAlignStrobe,
+    output wire [31:0] sysAlignStatus,
 
     input              powerline_a,
 
     input                               evgTxClk,
     input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
+    output                              evgHeartbeatAlign,
+    output                              evgHeartbeatCore,
     output reg                          evgSequenceStart = 0);
 
-localparam ALIGNMENT_SYNC_COUNT_MAX_WIDTH = 4;
+localparam ALIGNMENT_SYNC_COUNT_MAX_WIDTH = 3;
 
 if (ALIGNMENT_SYNC_COUNT > (1 << ALIGNMENT_SYNC_COUNT_MAX_WIDTH)) begin
-    ALIGNMENT_SYNC_COUNT_is_bigger_than_4 err();
+    ALIGNMENT_SYNC_COUNT_is_bigger_than_8 err();
 end
 
-localparam ALIGNMENT_SYNC_COUNT_WIDTH = $clog2(ALIGNMENT_SYNC_COUNT);
+localparam ALIGNMENT_SYNC_COUNT_WIDTH = (ALIGNMENT_SYNC_COUNT <= 1)?
+    1 : $clog2(ALIGNMENT_SYNC_COUNT);
 
 ///////////////////////////////////////////////////////////////////////////////
 // System clock domain
@@ -40,7 +47,6 @@ localparam CYCLE_COUNTER_WIDTH = CYCLE_COUNTER_RELOAD_WIDTH + 1;
 reg [CYCLE_COUNTER_WIDTH-1:0] sysCycleCounter = 0;
 wire sysCycleCounterDone = sysCycleCounter[CYCLE_COUNTER_WIDTH-1];
 reg [CYCLE_COUNTER_RELOAD_WIDTH-1:0] sysCycleCounterReload = 1400 - 2;
-reg [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0 ] sysAlignCounterSel = 0;
 reg sysCycleEnabled = 0;
 reg sysInjectorStartToggle = 0;
 
@@ -55,9 +61,6 @@ always @(posedge sysClk) begin
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
             sysCycleCounterReload <= sysGPIO_OUT[CYCLE_COUNTER_RELOAD_WIDTH-1:0];
-        end
-        else if (sysGPIO_OUT[30]) begin
-            sysAlignCounterSel <= sysGPIO_OUT[ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0];
         end
         else begin
             if (sysGPIO_OUT[1]) begin
@@ -88,6 +91,19 @@ always @(posedge sysClk) begin
     end
 end
 
+reg [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0 ] sysAlignCounterSel = 0;
+reg [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0 ] sysEvgHeartbeatSel = 0;
+always @(posedge sysClk) begin
+    if (sysCsrAlignStrobe) begin
+        if (sysGPIO_OUT[31]) begin
+            sysAlignCounterSel <= sysGPIO_OUT[ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0];
+        end
+        else if (sysGPIO_OUT[30]) begin
+            sysEvgHeartbeatSel <= sysGPIO_OUT[ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0];
+        end
+    end
+end
+
 // Power line trigger
 wire sysPowerline, sysPowerlineTimeout;
 powerlineTrigger #(.CLK_RATE(SYSCLK_RATE))
@@ -102,20 +118,25 @@ powerlineTrigger #(.CLK_RATE(SYSCLK_RATE))
 // Event generator clock domain
 
 
-// Forward alignCounterSel to TX clk
+// Forward to TX clk
 
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] alignCounterSel;
+wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgHeartbeatSel;
 
 forwardData #(
-    .DATA_WIDTH(ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
+    .DATA_WIDTH(ALIGNMENT_SYNC_COUNT_MAX_WIDTH+
+                ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
   forwardData (
     .inClk(sysClk),
-    .inData(sysAlignCounterSel),
+    .inData({sysAlignCounterSel,
+            sysEvgHeartbeatSel}),
     .outClk(evgTxClk),
-    .outData(alignCounterSel));
+    .outData({alignCounterSel,
+              evgHeartbeatSel}));
 
 wire [ALIGNMENT_SYNC_COUNT-1:0] alignmentCounterDone;
 wire [ALIGNMENT_SYNC_COUNT-1:0] alignmentCounterSynced;
+wire alignmentCounterSyncedAll = &alignmentCounterSynced;
 
 genvar i;
 generate
@@ -189,11 +210,28 @@ always @(posedge evgTxClk) begin
     endcase
 end
 
+// Alignement heartbeat
+wire [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] evgHeartbeatAlignSel =
+    alignCounterSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
+assign evgHeartbeatAlign = evgHeartbeat[evgHeartbeatAlignSel];
+
+// EVG heartbeat
+wire [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] evgHeartbeatCoreSel =
+    evgHeartbeatSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
+assign evgHeartbeatCore = evgHeartbeat[evgHeartbeatCoreSel];
+
 // Don't bother with CDC for alignmentCounterSynced. This is a very slow
-// signal. Sampled approx. once a sec.
-assign sysStatus = { !sysPowerlineTimeout, alignmentCounterSynced,
-                     {24-1-ALIGNMENT_SYNC_COUNT-CYCLE_COUNTER_RELOAD_WIDTH{1'b0}},
+// signal. Sampled ~ @1s.
+assign sysStatus = { !sysPowerlineTimeout, alignmentCounterSyncedAll,
+                     {24-2-CYCLE_COUNTER_RELOAD_WIDTH{1'b0}},
                      sysCycleCounterReload,
-                     sysAlignCounterSel, {4-1{1'b0}}, sysCycleEnabled };
+                     {8-1{1'b0}}, sysCycleEnabled };
+
+// in TX CLK domain, but these signals change only ~@1s
+assign sysAlignStatus = {{12{1'b0}},
+                        {4-ALIGNMENT_SYNC_COUNT_MAX_WIDTH{1'b0}}, evgHeartbeatSel,
+                        {4-ALIGNMENT_SYNC_COUNT_MAX_WIDTH{1'b0}}, alignCounterSel,
+                        {4-ALIGNMENT_SYNC_COUNT_WIDTH{1'b0}}, alignCounterSelLatch,
+                        {8-ALIGNMENT_SYNC_COUNT{1'b0}}, alignmentCounterSynced };
 
 endmodule

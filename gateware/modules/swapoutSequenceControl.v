@@ -1,18 +1,33 @@
 // Provide sequencer start signals for accumulator/storage swap
 module swapoutSequenceControl #(
-    parameter CLOCK_PER_ARSR_COINCIDENCE = -1,
-    parameter DEBUG                      = "false"
+    parameter ALIGNMENT_SYNC_COUNT      =  2,
+    parameter [ALIGNMENT_SYNC_COUNT*32-1:0]
+        TX_CLK_PER_ALIGNMENT             = {-32'd1, -32'd1}
     ) (
     input              sysClk,
-    input              sysCsrStrobe,
     input       [31:0] sysGPIO_OUT,
+
+    input              sysCsrStrobe,
     output wire [31:0] sysStatus,
 
-    input                           evgTxClk,
-    (*mark_debug=DEBUG*) input      evgHeartbeatRequest,
-    (*mark_debug=DEBUG*) output reg evgSequenceStart = 0);
+    input              sysCsrAlignStrobe,
+    output wire [31:0] sysAlignStatus,
+
+    input                               evgTxClk,
+    input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
+    output                              evgHeartbeatAlign,
+    output                              evgHeartbeatCore,
+    output reg                          evgSequenceStart = 0);
 
 localparam OFFSET_WIDTH = 16;
+localparam ALIGNMENT_SYNC_COUNT_MAX_WIDTH = 3;
+
+if (ALIGNMENT_SYNC_COUNT > (1 << ALIGNMENT_SYNC_COUNT_MAX_WIDTH)) begin
+    ALIGNMENT_SYNC_COUNT_is_bigger_than_8 err();
+end
+
+localparam ALIGNMENT_SYNC_COUNT_WIDTH = (ALIGNMENT_SYNC_COUNT <= 1)?
+    1 : $clog2(ALIGNMENT_SYNC_COUNT);
 
 ///////////////////////////////////////////////////////////////////////////////
 // System clock domain
@@ -27,39 +42,59 @@ always @(posedge sysClk) begin
     end
 end
 
+reg [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0 ] sysAlignCounterSel = 0;
+reg [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0 ] sysEvgHeartbeatSel = 0;
+always @(posedge sysClk) begin
+    if (sysCsrAlignStrobe) begin
+        if (sysGPIO_OUT[31]) begin
+            sysAlignCounterSel <= sysGPIO_OUT[ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0];
+        end
+        else if (sysGPIO_OUT[30]) begin
+            sysEvgHeartbeatSel <= sysGPIO_OUT[ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0];
+        end
+    end
+end
+
 ///////////////////////////////////////////////////////////////////////////////
 // Event generator clock domain
 
-// Detect cycle start requests
-(*ASYNC_REG="true"*) reg swapoutStartToggle_m = 0;
-reg swapoutStartToggle = 0, swapoutStartToggle_d = 0;
-reg evgHeartbeatRequest_d = 1;
-reg evgHeartbeatFault = 1;
+// Forward to TX clk
 
-// Detect AR/SR coincidence
-localparam COINC_COUNTER_RELOAD = CLOCK_PER_ARSR_COINCIDENCE - 2;
-localparam COINC_COUNTER_WIDTH = $clog2(COINC_COUNTER_RELOAD+1) + 1;
-(*mark_debug=DEBUG*)
-reg [COINC_COUNTER_WIDTH-1:0] coincCounter = COINC_COUNTER_RELOAD;
-wire coincidenceDetect = coincCounter[COINC_COUNTER_WIDTH-1];
-always @(posedge evgTxClk) begin
-    evgHeartbeatRequest_d <= evgHeartbeatRequest;
-    if (evgHeartbeatRequest && !evgHeartbeatRequest_d) begin
-        coincCounter <= COINC_COUNTER_RELOAD;
-        if (coincidenceDetect) begin
-            evgHeartbeatFault <= 0;
-        end
-        else begin
-            evgHeartbeatFault <= 1;
-        end
-    end
-    else if (coincidenceDetect) begin
-        coincCounter <= COINC_COUNTER_RELOAD;
-    end
-    else begin
-        coincCounter <= coincCounter - 1;
-    end
+wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] alignCounterSel;
+wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgHeartbeatSel;
+
+forwardData #(
+    .DATA_WIDTH(ALIGNMENT_SYNC_COUNT_MAX_WIDTH+
+                ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
+  forwardData (
+    .inClk(sysClk),
+    .inData({sysAlignCounterSel,
+            sysEvgHeartbeatSel}),
+    .outClk(evgTxClk),
+    .outData({alignCounterSel,
+              evgHeartbeatSel}));
+
+wire [ALIGNMENT_SYNC_COUNT-1:0] alignmentCounterDone;
+wire [ALIGNMENT_SYNC_COUNT-1:0] alignmentCounterSynced;
+wire alignmentCounterSyncedAll = &alignmentCounterSynced;
+
+genvar i;
+generate
+for (i = 0; i < ALIGNMENT_SYNC_COUNT; i = i + 1) begin
+
+localparam TX_CLK_PER_ALIGNMENT_LOCAL = TX_CLK_PER_ALIGNMENT[i*32+:32];
+
+alignmentGenerator #(
+    .CLK_PER_ALIGNMENT(TX_CLK_PER_ALIGNMENT_LOCAL))
+  alignmentGenerator (
+    .clk(evgTxClk),
+
+    .heartbeatStrobe(evgHeartbeat[i]),
+    .alignmentCounterDone(alignmentCounterDone[i]),
+    .alignmentCounterSynced(alignmentCounterSynced[i]));
+
 end
+endgenerate
 
 // Synchronization state machine
 // FIXME: This code is my best guess at what's needed for starting a swapout sequence.
@@ -67,9 +102,15 @@ localparam ST_IDLE              = 2'd0,
            ST_AWAIT_COINCIDENCE = 2'd1,
            ST_OFFSETTING        = 2'd2,
            ST_TRIGGER           = 2'd3;
-(*mark_debug=DEBUG*) reg [1:0] swapoutStartState = ST_IDLE;
-(*mark_debug=DEBUG*) reg [OFFSET_WIDTH:0] offsetCounter = 0;
+reg [1:0] swapoutStartState = ST_IDLE;
+reg [OFFSET_WIDTH:0] offsetCounter = 0;
 wire offsetCounterDone = offsetCounter[OFFSET_WIDTH];
+// Latch only the part that will be used
+reg [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] alignCounterSelLatch = 0;
+
+// Detect cycle start requests
+(*ASYNC_REG="true"*) reg swapoutStartToggle_m = 0;
+reg swapoutStartToggle = 0, swapoutStartToggle_d = 0;
 
 always @(posedge evgTxClk) begin
     swapoutStartToggle_m <= sysSwapoutStartToggle_d;
@@ -81,10 +122,11 @@ always @(posedge evgTxClk) begin
         evgSequenceStart <= 0;
         if (swapoutStartToggle != swapoutStartToggle_d) begin
             swapoutStartState <= ST_AWAIT_COINCIDENCE;
+            alignCounterSelLatch <= alignCounterSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
         end
     end
     ST_AWAIT_COINCIDENCE: begin
-        if (coincidenceDetect) begin
+        if (alignmentCounterDone[alignCounterSelLatch]) begin
             offsetCounter <= {1'b0, sysOffset};
             swapoutStartState <= ST_OFFSETTING;
         end
@@ -103,6 +145,23 @@ always @(posedge evgTxClk) begin
     endcase
 end
 
-assign sysStatus = {evgHeartbeatFault, {32-1-OFFSET_WIDTH{1'b0}}, sysOffset };
+// Alignement heartbeat
+wire [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] evgHeartbeatAlignSel =
+    alignCounterSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
+assign evgHeartbeatAlign = evgHeartbeat[evgHeartbeatAlignSel];
+
+// EVG heartbeat
+wire [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] evgHeartbeatCoreSel =
+    evgHeartbeatSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
+assign evgHeartbeatCore = evgHeartbeat[evgHeartbeatCoreSel];
+
+assign sysStatus = {!alignmentCounterSyncedAll, {32-1-OFFSET_WIDTH{1'b0}}, sysOffset };
+
+// in TX CLK domain, but these signals change only ~@1s
+assign sysAlignStatus = {{12{1'b0}},
+                        {4-ALIGNMENT_SYNC_COUNT_MAX_WIDTH{1'b0}}, evgHeartbeatSel,
+                        {4-ALIGNMENT_SYNC_COUNT_MAX_WIDTH{1'b0}}, alignCounterSel,
+                        {4-ALIGNMENT_SYNC_COUNT_WIDTH{1'b0}}, alignCounterSelLatch,
+                        {8-ALIGNMENT_SYNC_COUNT{1'b0}}, alignmentCounterSynced };
 
 endmodule
