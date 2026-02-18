@@ -5,7 +5,9 @@ module coincidenceRecorder #(
     parameter CYCLES_PER_ACQUISITION       = -1,
     parameter SAMPLE_CLKS_PER_COINCIDENCE  = -1,
     parameter INPUT_CYCLES_PER_COINCIDENCE = -1,
-    parameter TX_CLK_PER_HEARTBEAT         = -1,
+    parameter HEARTBEAT_GEN_COUNT          =  2,
+    parameter [HEARTBEAT_GEN_COUNT*32-1:0]
+        TX_CLK_PER_HEARTBEAT = {-32'd1, -32'd1},
     parameter SAMPLE_COUNTER_WIDTH         = $clog2(SAMPLE_CLKS_PER_COINCIDENCE)
     ) (
     input         sysClk,
@@ -21,11 +23,11 @@ module coincidenceRecorder #(
     output [SAMPLE_COUNTER_WIDTH-1:0] sampleCounterDbg,
 
     input  txClk,
-    output txHeartbeatStrobe);
+    output  [HEARTBEAT_GEN_COUNT-1:0] txHeartbeatStrobe);
 
 /* Sanity check -- fake '$error()' */
 if (((CYCLES_PER_ACQUISITION + 1) & CYCLES_PER_ACQUISITION) != 0) begin
-    CYCLES_PER_ACQUISITION_is_not_one_less_than_a_power_of_2();
+    CYCLES_PER_ACQUISITION_is_not_one_less_than_a_power_of_2 err();
 end
 
 //////////////////////////////////////////////////////////////////////////////
@@ -253,47 +255,23 @@ assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysRBMuxSel,
 
 //////////////////////////////////////////////////////////////////////////////
 // Transmiter (EVG) clock domain
-// Generate coincidence and heartbeat strobes
+// Generate heartbeat strobe
 
-localparam TX_HB_COUNTER_RELOAD = TX_CLK_PER_HEARTBEAT - 2;
-localparam TX_HB_COUNTER_WIDTH = $clog2(TX_HB_COUNTER_RELOAD+1) + 1;
-reg [TX_HB_COUNTER_WIDTH-1:0] txHeartbeatCounter = 0;
-assign txHeartbeatStrobe = txHeartbeatCounter[TX_HB_COUNTER_WIDTH-1];
+generate
+for (i = 0; i < HEARTBEAT_GEN_COUNT; i = i + 1) begin
 
-/*
- * Resync when alignment point changes
- */
-(*ASYNC_REG="true"*) reg txRealignToggle_m = 0;
-reg txRealignToggle = 0, txRealignMatch = 0;
+localparam TX_CLK_PER_HEARTBEAT_LOCAL = TX_CLK_PER_HEARTBEAT[i*32+:32];
 
-/*
- * Coincidence marker from acquisition domain
- */
-(*ASYNC_REG="true"*) reg txCoincidenceMarker_m = 0;
-reg txCoincidenceMarker = 0, txCoincidenceMarker_d = 0;
+heartbeatGenerator # (
+    .TX_CLK_PER_HEARTBEAT(TX_CLK_PER_HEARTBEAT_LOCAL))
+  heartbeatGenerator (
+    .txClk(txClk),
 
-always @(posedge txClk) begin
-     txCoincidenceMarker_m <= coincidenceStretchActive;
-     txCoincidenceMarker   <= txCoincidenceMarker_m;
-     txCoincidenceMarker_d <= txCoincidenceMarker;
+    .sampCoincidenceMarker(coincidenceMarker),
+    .sysRealignToggleIn(sysRealignToggleIn),
+    .txHeartbeatStrobe(txHeartbeatStrobe[i]));
 
-    txRealignToggle_m <= sysRealignToggleIn;
-    txRealignToggle   <= txRealignToggle_m;
-
-    if (txRealignToggle != txRealignMatch) begin
-        txHeartbeatCounter <= TX_HB_COUNTER_RELOAD;
-        if (txCoincidenceMarker != txCoincidenceMarker_d) begin
-            txRealignMatch <= !txRealignMatch;
-        end
-    end
-    else begin
-        if (txHeartbeatStrobe) begin
-            txHeartbeatCounter <= TX_HB_COUNTER_RELOAD;
-        end
-        else begin
-            txHeartbeatCounter <= txHeartbeatCounter - 1;
-        end
-    end
 end
+endgenerate
 
 endmodule

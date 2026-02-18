@@ -1,7 +1,9 @@
 // Provide sequencer start signals for injector
 module injectorSequenceControl #(
-    parameter SYSCLK_RATE = -1,
-    parameter TXCLK_PER_BR_AR_ALIGNMENT = -1
+    parameter SYSCLK_RATE               = -1,
+    parameter ALIGNMENT_SYNC_COUNT      =  2,
+    parameter [ALIGNMENT_SYNC_COUNT*32-1:0]
+        TX_CLK_PER_ALIGNMENT             = {-32'd1, -32'd1}
     ) (
     input              sysClk,
     input              sysCsrStrobe,
@@ -10,9 +12,17 @@ module injectorSequenceControl #(
 
     input              powerline_a,
 
-    input      evgTxClk,
-    input      evgHeartbeat,
-    output reg evgSequenceStart = 0);
+    input                               evgTxClk,
+    input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
+    output reg                          evgSequenceStart = 0);
+
+localparam ALIGNMENT_SYNC_COUNT_MAX_WIDTH = 4;
+
+if (ALIGNMENT_SYNC_COUNT > (1 << ALIGNMENT_SYNC_COUNT_MAX_WIDTH)) begin
+    ALIGNMENT_SYNC_COUNT_is_bigger_than_4 err();
+end
+
+localparam ALIGNMENT_SYNC_COUNT_WIDTH = $clog2(ALIGNMENT_SYNC_COUNT);
 
 ///////////////////////////////////////////////////////////////////////////////
 // System clock domain
@@ -30,8 +40,10 @@ localparam CYCLE_COUNTER_WIDTH = CYCLE_COUNTER_RELOAD_WIDTH + 1;
 reg [CYCLE_COUNTER_WIDTH-1:0] sysCycleCounter = 0;
 wire sysCycleCounterDone = sysCycleCounter[CYCLE_COUNTER_WIDTH-1];
 reg [CYCLE_COUNTER_RELOAD_WIDTH-1:0] sysCycleCounterReload = 1400 - 2;
+reg [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0 ] sysAlignCounterSel = 0;
 reg sysCycleEnabled = 0;
 reg sysInjectorStartToggle = 0;
+
 always @(posedge sysClk) begin
     if (sysClkDividerDone) begin
         sysClkDivider <= SYSCLK_DIVIDER_RELOAD;
@@ -39,9 +51,13 @@ always @(posedge sysClk) begin
     else begin
         sysClkDivider <= sysClkDivider - 1;
     end
+
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
-            sysCycleCounterReload<=sysGPIO_OUT[CYCLE_COUNTER_RELOAD_WIDTH-1:0];
+            sysCycleCounterReload <= sysGPIO_OUT[CYCLE_COUNTER_RELOAD_WIDTH-1:0];
+        end
+        else if (sysGPIO_OUT[30]) begin
+            sysAlignCounterSel <= sysGPIO_OUT[ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0];
         end
         else begin
             if (sysGPIO_OUT[1]) begin
@@ -55,6 +71,7 @@ always @(posedge sysClk) begin
             end
         end
     end
+
     if (sysCycleEnabled) begin
         if (sysClkDividerDone) begin
             if (sysCycleCounterDone) begin
@@ -84,12 +101,39 @@ powerlineTrigger #(.CLK_RATE(SYSCLK_RATE))
 ///////////////////////////////////////////////////////////////////////////////
 // Event generator clock domain
 
-// Produce booster/accumulator bucket alignment coincidence marker
-localparam ALIGNMENT_COUNTER_RELOAD = TXCLK_PER_BR_AR_ALIGNMENT - 2;
-localparam ALIGNMENT_COUNTER_WIDTH = $clog2(ALIGNMENT_COUNTER_RELOAD+1)+1;
-reg [ALIGNMENT_COUNTER_WIDTH-1:0] alignmentCounter;
-wire alignmentCounterDone = alignmentCounter[ALIGNMENT_COUNTER_WIDTH-1];
-reg alignmentCounterSynced = 0;
+
+// Forward alignCounterSel to TX clk
+
+wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] alignCounterSel;
+
+forwardData #(
+    .DATA_WIDTH(ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
+  forwardData (
+    .inClk(sysClk),
+    .inData(sysAlignCounterSel),
+    .outClk(evgTxClk),
+    .outData(alignCounterSel));
+
+wire [ALIGNMENT_SYNC_COUNT-1:0] alignmentCounterDone;
+wire [ALIGNMENT_SYNC_COUNT-1:0] alignmentCounterSynced;
+
+genvar i;
+generate
+for (i = 0; i < ALIGNMENT_SYNC_COUNT; i = i + 1) begin
+
+localparam TX_CLK_PER_ALIGNMENT_LOCAL = TX_CLK_PER_ALIGNMENT[i*32+:32];
+
+alignmentGenerator #(
+    .CLK_PER_ALIGNMENT(TX_CLK_PER_ALIGNMENT_LOCAL))
+  alignmentGenerator (
+    .clk(evgTxClk),
+
+    .heartbeatStrobe(evgHeartbeat[i]),
+    .alignmentCounterDone(alignmentCounterDone[i]),
+    .alignmentCounterSynced(alignmentCounterSynced[i]));
+
+end
+endgenerate
 
 // Detect cycle start requests
 (*ASYNC_REG="true"*) reg injectorStartToggle_m = 0;
@@ -106,6 +150,8 @@ localparam ST_IDLE             = 2'd0,
            ST_AWAIT_ALIGNMENT  = 2'd2,
            ST_TRIGGER          = 2'd3;
 reg [1:0] injectorStartState = ST_IDLE;
+// Latch only the part that will be used
+reg [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] alignCounterSelLatch = 0;
 
 always @(posedge evgTxClk) begin
     injectorStartToggle_m <= sysInjectorStartToggle;
@@ -117,22 +163,12 @@ always @(posedge evgTxClk) begin
     powerlineTimeout_m <= sysPowerlineTimeout;
     powerlineTimeout   <= powerlineTimeout_m;
 
-    if (evgHeartbeat) begin
-        alignmentCounterSynced <= alignmentCounterDone;
-        alignmentCounter <= ALIGNMENT_COUNTER_RELOAD;
-    end
-    else if (alignmentCounterDone) begin
-        alignmentCounter <= ALIGNMENT_COUNTER_RELOAD;
-    end
-    else begin
-        alignmentCounter <= alignmentCounter - 1;
-    end
-
     case (injectorStartState)
     ST_IDLE: begin
         evgSequenceStart <= 0;
         if (injectorStartToggle != injectorStartToggle_d) begin
             injectorStartState <= ST_AWAIT_POWER_LINE;
+            alignCounterSelLatch <= alignCounterSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
         end
     end
     ST_AWAIT_POWER_LINE: begin
@@ -141,7 +177,7 @@ always @(posedge evgTxClk) begin
         end
     end
     ST_AWAIT_ALIGNMENT: begin
-        if (alignmentCounterDone) begin
+        if (alignmentCounterDone[alignCounterSelLatch]) begin
             injectorStartState <= ST_TRIGGER;
         end
     end
@@ -153,9 +189,11 @@ always @(posedge evgTxClk) begin
     endcase
 end
 
+// Don't bother with CDC for alignmentCounterSynced. This is a very slow
+// signal. Sampled approx. once a sec.
 assign sysStatus = { !sysPowerlineTimeout, alignmentCounterSynced,
-                     {24-2-CYCLE_COUNTER_RELOAD_WIDTH{1'b0}},
+                     {24-1-ALIGNMENT_SYNC_COUNT-CYCLE_COUNTER_RELOAD_WIDTH{1'b0}},
                      sysCycleCounterReload,
-                     {8-1{1'b0}}, sysCycleEnabled };
+                     sysAlignCounterSel, {4-1{1'b0}}, sysCycleEnabled };
 
 endmodule
