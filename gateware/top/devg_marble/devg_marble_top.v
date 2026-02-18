@@ -211,7 +211,6 @@ mmcMailbox #(.DEBUG("false"))
 // Coincidence detection
 wire [CFG_EVG1_HEARTBEAT_COUNT-1:0] evg1HeartbeatRequest;
 wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
-wire evg1AltHeartbeatRequest;
 wire sysRealignToggle;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 

@@ -173,7 +173,8 @@ mmcMailbox #(.DEBUG("false"))
 // Coincidence detection
 wire [CFG_EVG1_HEARTBEAT_COUNT-1:0] evg1HeartbeatRequest;
 wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
-wire evg1AltHeartbeatRequest;
+wire sysRealignToggle;
+wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -189,8 +190,11 @@ coincidenceRecorder #(
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_COINC_CSR]),
+    .sysRealignToggle(sysRealignToggle),
+    .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
     .refClk({evg1TxClk, evg1RefClk}),
+    .coincidenceMarker(evg1CoincidenceMarker),
     .txClk(evg1TxClk),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
@@ -205,9 +209,11 @@ coincidenceRecorder #(
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysRealignToggleIn(sysRealignToggle),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
     .refClk({evg2TxClk, evg2RefClk}),
+    .coincidenceMarker(evg2CoincidenceMarker),
     .txClk(evg2TxClk),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
@@ -464,7 +470,7 @@ evg #(
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .evgHeartbeatRequest(evg1HeartbeatRequestCore),
+    .evgHeartbeatRequest(evg1HeartbeatCore),
     .evgSequenceStart(injectorSequenceStart),
     .evgPPStoggle(evgPpsToggle_f1),
     .evgSeconds(evgPosixSeconds_f1),
@@ -532,9 +538,6 @@ wire swapoutSequenceStart;
 wire evg2HeartbeatAlign, evg2HeartbeatCore;
 wire [15:0] evg2TxData;
 wire  [1:0] evg2TxCharIsK;
-swapoutSequenceControl
-    #(.CLOCK_PER_ARSR_COINCIDENCE(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE),
-      .DEBUG("false"))
 swapoutSequenceControl #(
     .ALIGNMENT_SYNC_COUNT(CFG_EVG2_HEARTBEAT_COUNT),
     .TX_CLK_PER_ALIGNMENT(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE))
@@ -889,9 +892,127 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
                 DUMMY_FMC1_FAN2_TACH, DUMMY_FMC1_FAN1_TACH}));
 
 //////////////////////////////////////////////////////////////////////////////
+// EVG 1 Rates generation
+wire [31:0] BRARAlignClockStatus;
+wire BRARAlignClockSynced;
+wire BRARAlignClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT),
+          .DEBUG("false"))
+  evgBRARAlignClock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(BRARAlignClockStatus),
+
+          .clk(evg1TxClk),
+          .heartbeatMarker(evg1HeartbeatAlign),
+          .pulsePerSecondMarker(evgPpsMarker_f1),
+
+          .clkGenSynced(BRARAlignClockSynced),
+          .clkGen(BRARAlignClock),
+          .clkGenStrobe());
+
+wire [31:0] BROrbitClockDiv4ClockStatus;
+wire BROrbitClockDiv4ClockSynced;
+wire BROrbitClockDiv4Clock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4),
+          .DEBUG("false"))
+  evgBROrbitClockDiv4Clock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(BROrbitClockDiv4ClockStatus),
+
+          .clk(evg1TxClk),
+          .heartbeatMarker(evg1HeartbeatAlign),
+          .pulsePerSecondMarker(evgPpsMarker_f1),
+
+          .clkGenSynced(BROrbitClockDiv4ClockSynced),
+          .clkGen(BROrbitClockDiv4Clock),
+          .clkGenStrobe());
+
+wire [31:0] BRARCoincClockStatus;
+wire BRARCoincClockSynced;
+wire BRARCoincClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE),
+          .DEBUG("false"))
+  evgBRARCoincClock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(BRARCoincClockStatus),
+
+          .clk(evg1TxClk),
+          .heartbeatMarker(evg1HeartbeatAlign),
+          .pulsePerSecondMarker(evgPpsMarker_f1),
+
+          .clkGenSynced(BRARCoincClockSynced),
+          .clkGen(BRARCoincClock),
+          .clkGenStrobe());
+
+//////////////////////////////////////////////////////////////////////////////
+// EVG 2 Rates generation
+wire [31:0] AROrbitClockStatus;
+wire AROrbitClockSynced;
+wire AROrbitClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK),
+          .DEBUG("false"))
+  evgAROrbitClock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(AROrbitClockStatus),
+
+          .clk(evg2TxClk),
+          .heartbeatMarker(evg2HeartbeatAlign),
+          .pulsePerSecondMarker(evgPpsMarker_f2),
+
+          .clkGenSynced(AROrbitClockSynced),
+          .clkGen(AROrbitClock),
+          .clkGenStrobe());
+
+wire [31:0] SROrbitClockStatus;
+wire SROrbitClockSynced;
+wire SROrbitClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK),
+          .DEBUG("false"))
+  evgSROrbitClock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(SROrbitClockStatus),
+
+          .clk(evg2TxClk),
+          .heartbeatMarker(evg2HeartbeatAlign),
+          .pulsePerSecondMarker(evgPpsMarker_f2),
+
+          .clkGenSynced(SROrbitClockSynced),
+          .clkGen(SROrbitClock),
+          .clkGenStrobe());
+
+wire [31:0] ARSRCoincClockStatus;
+wire ARSRCoincClockSynced;
+wire ARSRCoincClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE),
+          .DEBUG("false"))
+  evgARSRCoincClock (.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(ARSRCoincClockStatus),
+
+          .clk(evg2TxClk),
+          .heartbeatMarker(evg2HeartbeatAlign),
+          .pulsePerSecondMarker(evgPpsMarker_f2),
+
+          .clkGenSynced(ARSRCoincClockSynced),
+          .clkGen(ARSRCoincClock),
+          .clkGenStrobe());
+
+//////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
 
-localparam OUTPUT_SELECT_WIDTH = 2;
+localparam OUTPUT_SELECT_WIDTH = 3;
 
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic1ProgrammableOutputs;
 wire [OUTPUT_SELECT_WIDTH-1:0] diagnostic1Select;
@@ -909,10 +1030,13 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOut(diagnostic1ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic1Select));
 wire evg1DiagnosticOut =
-     (diagnostic1Select == 2'h1) ? evg1RefClk :
-     (diagnostic1Select == 2'h2) ? evg1TxClk :
-     (diagnostic2Select == 2'h3) ? evg1HeartbeatCore :
-     (diagnostic2Select == 2'h4) ? evg1HeartbeatAlign :
+     (diagnostic1Select == 3'h1) ? evg1RefClk :
+     (diagnostic1Select == 3'h2) ? evg1HeartbeatCore :
+     (diagnostic1Select == 3'h3) ? evg1CoincidenceMarker :
+     (diagnostic1Select == 3'h4) ? evg1HeartbeatAlign :
+     (diagnostic1Select == 3'h5) ? BRARAlignClock :
+     (diagnostic1Select == 3'h6) ? BRARCoincClock :
+     (diagnostic1Select == 3'h7) ? BROrbitClockDiv4Clock :
                                      diagnostic1ProgrammableOutputs;
 
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic2ProgrammableOutputs;
@@ -931,11 +1055,14 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOut(diagnostic2ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic2Select));
 wire evg2DiagnosticOut =
-     (diagnostic2Select == 2'h1) ? evg2RefClk :
-     (diagnostic2Select == 2'h2) ? evg2TxClk :
-     (diagnostic2Select == 2'h3) ? evg2HeartbeatCore :
-     (diagnostic2Select == 2'h4) ? evg2HeartbeatAlign :
-                                     diagnostic2ProgrammableOutputs;
+     (diagnostic1Select == 3'h1) ? evg2RefClk :
+     (diagnostic1Select == 3'h2) ? evg2HeartbeatCore :
+     (diagnostic1Select == 3'h3) ? evg2CoincidenceMarker :
+     (diagnostic1Select == 3'h4) ? evg2HeartbeatAlign :
+     (diagnostic1Select == 3'h5) ? SROrbitClock :
+     (diagnostic1Select == 3'h6) ? ARSRCoincClock :
+     (diagnostic1Select == 3'h7) ? evg2TxClk :
+                                     diagnostic1ProgrammableOutputs;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Ethernet
