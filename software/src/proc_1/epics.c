@@ -152,6 +152,7 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
     int lo = cmdp->command & EVG_PROTOCOL_CMD_MASK_LO;
     int idx = cmdp->command & EVG_PROTOCOL_CMD_MASK_IDX;
     int replyArgCount = 0;
+    int ret = 0;
     static int powerUpStatus = 1;
 
     switch (cmdp->command & EVG_PROTOCOL_CMD_MASK_HI) {
@@ -237,6 +238,20 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
                 sharedMemory->loopbackRequest =
                                    (sharedMemory->loopbackRequest & ~mask) |
                                        ((cmdp->args[0] << shift) & mask);
+            }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_INJ_ALIGN_SEL:
+            ret = injectionAlignSetSel(idx, cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
+            }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_SWAPOUT_ALIGN_SEL:
+            ret = swapoutAlignSetSel(idx, cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
             }
             break;
 
