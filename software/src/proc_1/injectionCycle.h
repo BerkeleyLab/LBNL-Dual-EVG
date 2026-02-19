@@ -103,8 +103,8 @@ void injectionCycleManualTrigger(void);
 void injectionCycleSetBaseInterval(int milliseconds);
 void injectionCycleExtendInterval(int milliseconds);
 int injectionCycleFetchStatus(uint32_t *ap);
-void injectionAlignSetAlignSel(int sel);
-void injectionAlignSetHeartbeatSel(int sel);
+void injectionAlignSetAlignSel(unsigned int sel);
+void injectionAlignSetHeartbeatSel(unsigned int sel);
 int injectionAlignGetAlignSel(void);
 int injectionAlignGetHbSel(void);
 

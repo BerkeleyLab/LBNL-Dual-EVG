@@ -40,15 +40,23 @@ swapoutCycleEnable(int offset)
 }
 
 void
-swapoutAlignSetAlignSel(int sel)
+swapoutAlignSetAlignSel(unsigned int sel)
 {
+    if (sel >= CFG_EVG2_HEARTBEAT_COUNT) {
+        return;
+    }
+
     GPIO_WRITE(GPIO_IDX_SWAPOUT_ALIGN_CSR, CSR_SWAPOUT_ALIGN_W_SET_ALIGN_SEL |
             CSR_SWAPOUT_ALIGN_W_SEL_W(sel));
 }
 
 void
-swapoutAlignSetHeartbeatSel(int sel)
+swapoutAlignSetHeartbeatSel(unsigned int sel)
 {
+    if (sel >= CFG_EVG2_HEARTBEAT_COUNT) {
+        return;
+    }
+
     GPIO_WRITE(GPIO_IDX_SWAPOUT_ALIGN_CSR, CSR_SWAPOUT_ALIGN_W_SET_HEARTBEAT_SEL |
             CSR_SWAPOUT_ALIGN_W_SEL_W(sel));
 }

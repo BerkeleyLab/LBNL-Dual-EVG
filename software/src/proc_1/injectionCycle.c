@@ -90,15 +90,23 @@ injectionCycleFetchStatus(uint32_t *ap)
 }
 
 void
-injectionAlignSetAlignSel(int sel)
+injectionAlignSetAlignSel(unsigned int sel)
 {
+    if (sel >= CFG_EVG1_HEARTBEAT_COUNT) {
+        return;
+    }
+
     GPIO_WRITE(GPIO_IDX_INJECTION_ALIGN_CSR, CSR_INJ_ALIGN_W_SET_ALIGN_SEL |
             CSR_INJ_ALIGN_W_SEL_W(sel));
 }
 
 void
-injectionAlignSetHeartbeatSel(int sel)
+injectionAlignSetHeartbeatSel(unsigned int sel)
 {
+    if (sel >= CFG_EVG1_HEARTBEAT_COUNT) {
+        return;
+    }
+
     GPIO_WRITE(GPIO_IDX_INJECTION_ALIGN_CSR, CSR_INJ_ALIGN_W_SET_HEARTBEAT_SEL |
             CSR_INJ_ALIGN_W_SEL_W(sel));
 }
