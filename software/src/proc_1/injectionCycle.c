@@ -44,13 +44,13 @@ void
 injectionCycleEnable(int enable)
 {
     GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, enable ?
-                        CSR_W_ENABLE_TIMED_CYCLES : CSR_W_DISABLE_TIMED_CYCLES);
+                        CSR_INJ_W_ENABLE_TIMED_CYCLES : CSR_INJ_W_DISABLE_TIMED_CYCLES);
 }
 
 void
 injectionCycleManualTrigger(void)
 {
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_W_MANUAL_TRIGGER);
+    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_INJ_W_MANUAL_TRIGGER);
 }
 
 void
@@ -63,7 +63,7 @@ injectionCycleExtendInterval(int milliseconds)
         milliseconds = maxExtension;
     }
     milliseconds += baseInterval;
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_W_SET_CYCLE_MILLISECONDS |
+    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_INJ_W_SET_CYCLE_MILLISECONDS |
                                                             (milliseconds - 2));
 }
 
@@ -90,7 +90,7 @@ injectionCycleFetchStatus(uint32_t *ap)
 }
 
 void
-injectionAlignSetAlignSel(unsigned int sel)
+injectionAlignSetAlignSel(int sel)
 {
     if (sel >= CFG_EVG1_HEARTBEAT_COUNT) {
         return;
@@ -101,7 +101,7 @@ injectionAlignSetAlignSel(unsigned int sel)
 }
 
 void
-injectionAlignSetHeartbeatSel(unsigned int sel)
+injectionAlignSetHeartbeatSel(int sel)
 {
     if (sel >= CFG_EVG1_HEARTBEAT_COUNT) {
         return;
@@ -112,7 +112,26 @@ injectionAlignSetHeartbeatSel(unsigned int sel)
 }
 
 int
-injectionAlignGetAlignSel()
+injectionAlignSetSel(unsigned int idx, int sel)
+{
+    switch (idx) {
+        case 0:
+            injectionAlignSetAlignSel(sel);
+            break;
+
+        case 1:
+            injectionAlignSetHeartbeatSel(sel);
+            break;
+
+        default:
+            return -1;
+    }
+
+    return 0;
+}
+
+int
+injectionAlignGetAlignSel(void)
 {
     uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
 
@@ -120,9 +139,15 @@ injectionAlignGetAlignSel()
 }
 
 int
-injectionAlignGetHbSel()
+injectionAlignGetHbSel(void)
 {
     uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
 
     return CSR_INJ_ALIGN_R_HB_SEL_R(reg);
+}
+
+int
+injectionAlignGetCSR(void)
+{
+    return GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
 }

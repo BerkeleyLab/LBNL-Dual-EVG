@@ -101,9 +101,11 @@
                                                             CSR_SWAPOUT_ALIGN_R_HB_SEL_SIZE)
 
 void swapoutCycleEnable(int offset);
-void swapoutAlignSetAlignSel(unsigned int sel);
-void swapoutAlignSetHeartbeatSel(unsigned int sel);
-int injectionAlignGetAlignSel(void);
-int injectionAlignGetHbSel(void);
+void swapoutAlignSetAlignSel(int sel);
+void swapoutAlignSetHeartbeatSel(int sel);
+int swapoutAlignSetSel(unsigned int idx, int sel);
+int swapoutAlignGetAlignSel(void);
+int swapoutAlignGetHbSel(void);
+int swapoutAlignGetCSR(void);
 
 #endif /* _SWAPOUT_CYCLE_H_ */

@@ -36,11 +36,11 @@
 void
 swapoutCycleEnable(int offset)
 {
-    GPIO_WRITE(GPIO_IDX_SWAPOUT_CYCLE_CSR, CSR_ALIGN_W_OFFSET_W(offset));
+    GPIO_WRITE(GPIO_IDX_SWAPOUT_CYCLE_CSR, CSR_SWAPOUT_W_OFFSET_W(offset));
 }
 
 void
-swapoutAlignSetAlignSel(unsigned int sel)
+swapoutAlignSetAlignSel(int sel)
 {
     if (sel >= CFG_EVG2_HEARTBEAT_COUNT) {
         return;
@@ -51,7 +51,7 @@ swapoutAlignSetAlignSel(unsigned int sel)
 }
 
 void
-swapoutAlignSetHeartbeatSel(unsigned int sel)
+swapoutAlignSetHeartbeatSel(int sel)
 {
     if (sel >= CFG_EVG2_HEARTBEAT_COUNT) {
         return;
@@ -62,17 +62,42 @@ swapoutAlignSetHeartbeatSel(unsigned int sel)
 }
 
 int
-injectionAlignGetAlignSel()
+swapoutAlignSetSel(unsigned int idx, int sel)
 {
-    uint32_t reg = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+    switch (idx) {
+        case 0:
+            swapoutAlignSetAlignSel(sel);
+            break;
 
-    return CSR_INJ_ALIGN_R_COUNTER_SEL_R(reg);
+        case 1:
+            swapoutAlignSetHeartbeatSel(sel);
+            break;
+
+        default:
+            return -1;
+    }
+
+    return 0;
 }
 
 int
-injectionAlignGetHbSel()
+swapoutAlignGetAlignSel(void)
 {
     uint32_t reg = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
 
-    return CSR_INJ_ALIGN_R_HB_SEL_R(reg);
+    return CSR_SWAPOUT_ALIGN_R_COUNTER_SEL_R(reg);
+}
+
+int
+swapoutAlignGetHbSel(void)
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+
+    return CSR_SWAPOUT_ALIGN_R_HB_SEL_R(reg);
+}
+
+int
+swapoutAlignGetCSR(void)
+{
+    return GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
 }
