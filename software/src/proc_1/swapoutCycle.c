@@ -97,7 +97,9 @@ swapoutAlignGetHbSel(void)
 }
 
 int
-swapoutAlignGetCSR(void)
+swapoutAlignFetchStatus(uint32_t *ap)
 {
-    return GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+    int idx = 0;
+    ap[idx++] = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+    return idx;
 }

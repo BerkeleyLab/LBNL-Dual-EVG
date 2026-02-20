@@ -108,6 +108,6 @@ void injectionAlignSetHeartbeatSel(int sel);
 int injectionAlignSetSel(unsigned int idx, int sel);
 int injectionAlignGetAlignSel(void);
 int injectionAlignGetHbSel(void);
-int injectionAlignGetCSR(void);
+int injectionAlignFetchStatus(uint32_t *ap);
 
 #endif /* _INJECTION_CYCLE_H_ */

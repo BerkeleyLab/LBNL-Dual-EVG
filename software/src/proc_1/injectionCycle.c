@@ -147,7 +147,9 @@ injectionAlignGetHbSel(void)
 }
 
 int
-injectionAlignGetCSR(void)
+injectionAlignFetchStatus(uint32_t *ap)
 {
-    return GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+    int idx = 0;
+    ap[idx++] = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+    return idx;
 }

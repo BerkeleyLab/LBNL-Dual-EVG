@@ -106,6 +106,6 @@ void swapoutAlignSetHeartbeatSel(int sel);
 int swapoutAlignSetSel(unsigned int idx, int sel);
 int swapoutAlignGetAlignSel(void);
 int swapoutAlignGetHbSel(void);
-int swapoutAlignGetCSR(void);
+int swapoutAlignFetchStatus(uint32_t *ap);
 
 #endif /* _SWAPOUT_CYCLE_H_ */

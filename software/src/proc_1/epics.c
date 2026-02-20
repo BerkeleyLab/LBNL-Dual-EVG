@@ -139,6 +139,8 @@ sysmonFetch(uint32_t *args)
     *ap++ = GPIO_READ(GPIO_IDX_SWAPOUT_CYCLE_CSR);
     ap += fetchFanSpeeds(ap);
     ap += mgtFetchStatus(ap);
+    ap += injectionAlignFetchStatus(ap);
+    ap += swapoutAlignFetchStatus(ap);
     return ap - args;
 }
 
