@@ -188,6 +188,14 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
             }
             break;
 
+        case EVG_PROTOCOL_CMD_LONGIN_LO_INJ_ALIGN_SEL:
+            replyp->args[0] = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGIN_LO_SWAPOUT_ALIGN_SEL:
+            replyp->args[0] = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
+            break;
+
         default: return -1;
         }
         break;
