@@ -36,7 +36,7 @@ always @(posedge txClk) begin
 
     if (txRealignToggle != txRealignMatch) begin
         txHeartbeatCounter <= TX_HB_COUNTER_RELOAD;
-        if (txCoincidenceMarker != txCoincidenceMarker_d) begin
+        if (txCoincidenceMarker && !txCoincidenceMarker_d) begin
             txRealignMatch <= !txRealignMatch;
         end
     end
