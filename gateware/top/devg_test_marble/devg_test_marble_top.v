@@ -896,7 +896,6 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
-wire [31:0] BRARAlignClockStatus;
 wire BRARAlignClockSynced;
 wire BRARAlignClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -905,7 +904,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgBRARAlignClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(GPIO_OUT),
-          .csr(BRARAlignClockStatus),
+          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]),
 
           .clk(evg1TxClk),
           .heartbeatMarker(evg1HeartbeatAlign),
@@ -915,7 +914,6 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .clkGen(BRARAlignClock),
           .clkGenStrobe());
 
-wire [31:0] BROrbitClockDiv4ClockStatus;
 wire BROrbitClockDiv4ClockSynced;
 wire BROrbitClockDiv4Clock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -924,7 +922,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgBROrbitClockDiv4Clock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(GPIO_OUT),
-          .csr(BROrbitClockDiv4ClockStatus),
+          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR]),
 
           .clk(evg1TxClk),
           .heartbeatMarker(evg1HeartbeatAlign),
@@ -934,7 +932,6 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .clkGen(BROrbitClockDiv4Clock),
           .clkGenStrobe());
 
-wire [31:0] BRARCoincClockStatus;
 wire BRARCoincClockSynced;
 wire BRARCoincClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -943,7 +940,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgBRARCoincClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(GPIO_OUT),
-          .csr(BRARCoincClockStatus),
+          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR]),
 
           .clk(evg1TxClk),
           .heartbeatMarker(evg1HeartbeatAlign),
@@ -955,7 +952,6 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
-wire [31:0] AROrbitClockStatus;
 wire AROrbitClockSynced;
 wire AROrbitClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -964,7 +960,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgAROrbitClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(GPIO_OUT),
-          .csr(AROrbitClockStatus),
+          .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_1_CSR]),
 
           .clk(evg2TxClk),
           .heartbeatMarker(evg2HeartbeatAlign),
@@ -974,7 +970,6 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .clkGen(AROrbitClock),
           .clkGenStrobe());
 
-wire [31:0] SROrbitClockStatus;
 wire SROrbitClockSynced;
 wire SROrbitClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -983,7 +978,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgSROrbitClock(.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(GPIO_OUT),
-          .csr(SROrbitClockStatus),
+          .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_2_CSR]),
 
           .clk(evg2TxClk),
           .heartbeatMarker(evg2HeartbeatAlign),
@@ -993,7 +988,6 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .clkGen(SROrbitClock),
           .clkGenStrobe());
 
-wire [31:0] ARSRCoincClockStatus;
 wire ARSRCoincClockSynced;
 wire ARSRCoincClock;
 clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -1002,7 +996,7 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
   evgARSRCoincClock (.sysClk(sysClk),
           .csrStrobe(1'b0),
           .GPIO_OUT(GPIO_OUT),
-          .csr(ARSRCoincClockStatus),
+          .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_3_CSR]),
 
           .clk(evg2TxClk),
           .heartbeatMarker(evg2HeartbeatAlign),

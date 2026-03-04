@@ -96,6 +96,12 @@
 #define GPIO_IDX_NTP_SERVER_F2_FRACTION  50 // NTP F2 fractional seconds (R)
 #define GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR 51 // EVG 1 sequencer status FIFO
 #define GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR 52 // EVG 2 sequencer status FIFO
+#define GPIO_IDX_EVG_1_CLK_GEN_1_CSR     53 // EVG 1 Clk Generation 1 status
+#define GPIO_IDX_EVG_1_CLK_GEN_2_CSR     54 // EVG 1 Clk Generation 2 status
+#define GPIO_IDX_EVG_1_CLK_GEN_3_CSR     55 // EVG 1 Clk Generation 3 status
+#define GPIO_IDX_EVG_2_CLK_GEN_1_CSR     56 // EVG 2 Clk Generation 1 status
+#define GPIO_IDX_EVG_2_CLK_GEN_2_CSR     57 // EVG 2 Clk Generation 2 status
+#define GPIO_IDX_EVG_2_CLK_GEN_3_CSR     58 // EVG 2 Clk Generation 3 status
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
