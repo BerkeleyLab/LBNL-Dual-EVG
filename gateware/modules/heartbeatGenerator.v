@@ -11,7 +11,6 @@ module heartbeatGenerator #(
     // synced with tx clock
     input     txClk,
     output    txCoincidenceMarker,
-    output    txCoincidenceStrobe,
     output    txHeartbeatStrobe);
 
 localparam TX_HB_COUNTER_RELOAD = TX_CLK_PER_HEARTBEAT - 2;
@@ -41,7 +40,7 @@ always @(posedge txClk) begin
 
     if (txRealignToggle != txRealignMatch) begin
         txHeartbeatCounter <= TX_HB_COUNTER_RELOAD;
-        if (txCoincidenceStrobe) begin
+        if (txCoincIntMarker && !txCoincIntMarker_d) begin
             txRealignMatch <= !txRealignMatch;
         end
     end
@@ -56,6 +55,5 @@ always @(posedge txClk) begin
 end
 
 assign txCoincidenceMarker = txCoincIntMarker;
-assign txCoincidenceStrobe = txCoincIntMarker && !txCoincIntMarker_d;
 
 endmodule
