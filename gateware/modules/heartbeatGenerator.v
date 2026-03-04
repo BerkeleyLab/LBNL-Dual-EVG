@@ -2,8 +2,6 @@
 module heartbeatGenerator #(
     parameter TX_CLK_PER_HEARTBEAT = -1
     ) (
-    input     txClk,
-
     // synced with sampling clock
     input     sampCoincidenceMarker,
 
@@ -11,6 +9,7 @@ module heartbeatGenerator #(
     input     sysRealignToggleIn,
 
     // synced with tx clock
+    input     txClk,
     output    txCoincidenceMarker,
     output    txCoincidenceMarker_d,
     output    txHeartbeatStrobe);
