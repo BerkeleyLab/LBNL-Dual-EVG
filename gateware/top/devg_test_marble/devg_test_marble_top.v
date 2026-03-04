@@ -174,7 +174,9 @@ mmcMailbox #(.DEBUG("false"))
 wire [CFG_EVG1_HEARTBEAT_COUNT-1:0] evg1HeartbeatRequest;
 wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
 wire sysRealignToggle;
+wire sampEvg1CoincidenceMarker, sampEvg2CoincidenceMarker;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
+wire evg1CoincidenceMarker_d, evg2CoincidenceMarker_d;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -194,8 +196,10 @@ coincidenceRecorder #(
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
     .refClk({evg1TxClk, evg1RefClk}),
-    .coincidenceMarker(evg1CoincidenceMarker),
+    .coincidenceMarker(sampEvg1CoincidenceMarker),
     .txClk(evg1TxClk),
+    .txCoincidenceMarker(evg1CoincidenceMarker),
+    .txCoincidenceMarker_d(evg1CoincidenceMarker_d),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
 coincidenceRecorder #(
@@ -213,8 +217,10 @@ coincidenceRecorder #(
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
     .refClk({evg2TxClk, evg2RefClk}),
-    .coincidenceMarker(evg2CoincidenceMarker),
+    .coincidenceMarker(sampEvg2CoincidenceMarker),
     .txClk(evg2TxClk),
+    .txCoincidenceMarker(evg2CoincidenceMarker),
+    .txCoincidenceMarker_d(evg2CoincidenceMarker_d),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
 //////////////////////////////////////////////////////////////////////////////
