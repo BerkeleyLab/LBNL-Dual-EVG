@@ -12,8 +12,8 @@ module clkGen #(
     output wire [31:0] csr,
 
     input                           clk,
-    (*mark_debug=DEBUG*) input      heartbeatMarker,
-    (*mark_debug=DEBUG*) input      pulsePerSecondMarker,
+    (*mark_debug=DEBUG*) input      heartbeatStrobe,
+    (*mark_debug=DEBUG*) input      pulsePerSecondStrobe,
     (*mark_debug=DEBUG*) output reg clkGenSynced = 0,
     (*mark_debug=DEBUG*) output reg clkGen = 0,
     (*mark_debug=DEBUG*) output reg clkGenStrobe = 0);
@@ -42,10 +42,8 @@ assign csr = {sysClkDivisor,
               {8-3{1'b0}}, pulsePerSecondValid, heartBeatValid, clkGenSynced};
 
 (*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] counter = 0;
-reg heartbeatMarker_d;
 always @(posedge clk) begin
-    heartbeatMarker_d <= heartbeatMarker;
-    if (heartbeatMarker && !heartbeatMarker_d) begin
+    if (heartbeatStrobe) begin
         clkGen <= 1;
         clkGenStrobe <= 1;
         counter <= reloadHi;
@@ -67,15 +65,24 @@ always @(posedge clk) begin
     end
 end
 
-markerWatchdog #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-                      .DEBUG(DEBUG))
-  hbWatchdog (.sysClk(sysClk),
-              .markerIn(heartbeatMarker),
-              .isValid(heartBeatValid));
+pulseWatchdog #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .PULSE_FREQUENCY(1),
+    .DEBUG(DEBUG))
+  hbWatchdog (
+    .clk(clk),
+    .pulseIn(heartbeatStrobe),
+    .sysClk(sysClk),
+    .isValid(heartBeatValid));
 
-markerWatchdog #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-                      .DEBUG(DEBUG))
-  ppsWatchdog (.sysClk(sysClk),
-               .markerIn(pulsePerSecondMarker),
-               .isValid(pulsePerSecondValid));
+pulseWatchdog #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .PULSE_FREQUENCY(1),
+    .DEBUG(DEBUG))
+  ppsWatchdog (
+    .clk(clk),
+    .pulseIn(pulsePerSecondStrobe),
+    .sysClk(sysClk),
+    .isValid(pulsePerSecondValid));
+
 endmodule
