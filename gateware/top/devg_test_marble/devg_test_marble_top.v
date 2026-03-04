@@ -312,6 +312,7 @@ wire [31:0] sysNtpSeconds_f1, sysNtpFraction_f1, sysPosixSeconds_f1, sysPosixSec
 wire [31:0] evgNtpSeconds_f1, evgNtpFraction_f1, evgPosixSeconds_f1, evgPosixSecondsNext_f1, evgNtpStatusReg_f1;
 wire evgPpsToggle_f1, evgPpsMarker_f1;
 wire sysPpsToggle_f1, sysPpsMarker_f1;
+wire evgPpsStrobe_f1;
 ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
            .DEBUG("false"))
   ntpClock_f1 (
@@ -329,6 +330,7 @@ ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
     .clk(evg1TxClk),
     .pps_a(bestPPS_a),
     .ppsToggle(evgPpsToggle_f1),
+    .ppsStrobe(evgPpsStrobe_f1),
     .ppsMarker(evgPpsMarker_f1),
     .seconds(evgNtpSeconds_f1),
     .fraction(evgNtpFraction_f1),
@@ -507,6 +509,7 @@ wire [31:0] sysNtpSeconds_f2, sysNtpFraction_f2, sysPosixSeconds_f2, sysPosixSec
 wire [31:0] evgNtpSeconds_f2, evgNtpFraction_f2, evgPosixSeconds_f2, evgPosixSecondsNext_f2, evgNtpStatusReg_f2;
 wire evgPpsToggle_f2, evgPpsMarker_f2;
 wire sysPpsToggle_f2, sysPpsMarker_f2;
+wire evgPpsStrobe_f2;
 ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
            .DEBUG("false"))
   ntpClock_f2 (
@@ -524,6 +527,7 @@ ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
     .clk(evg2TxClk),
     .pps_a(bestPPS_a),
     .ppsToggle(evgPpsToggle_f2),
+    .ppsStrobe(evgPpsStrobe_f2),
     .ppsMarker(evgPpsMarker_f2),
     .seconds(evgNtpSeconds_f2),
     .fraction(evgNtpFraction_f2),
@@ -907,8 +911,8 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]),
 
           .clk(evg1TxClk),
-          .heartbeatMarker(evg1HeartbeatAlign),
-          .pulsePerSecondMarker(evgPpsMarker_f1),
+          .heartbeatStrobe(evg1HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
           .clkGenSynced(BRARAlignClockSynced),
           .clkGen(BRARAlignClock),
@@ -925,8 +929,8 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR]),
 
           .clk(evg1TxClk),
-          .heartbeatMarker(evg1HeartbeatAlign),
-          .pulsePerSecondMarker(evgPpsMarker_f1),
+          .heartbeatStrobe(evg1HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
           .clkGenSynced(BROrbitClockDiv4ClockSynced),
           .clkGen(BROrbitClockDiv4Clock),
@@ -943,11 +947,29 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR]),
 
           .clk(evg1TxClk),
-          .heartbeatMarker(evg1HeartbeatAlign),
-          .pulsePerSecondMarker(evgPpsMarker_f1),
+          .heartbeatStrobe(evg1HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
           .clkGenSynced(BRARCoincClockSynced),
           .clkGen(BRARCoincClock),
+          .clkGenStrobe());
+
+wire RFf1CoincClockSynced;
+wire RFf1CoincClock;
+clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_TICKS_COINCIDENCE),
+          .DEBUG("false"))
+  evgRFf1CoincClock(.sysClk(sysClk),
+          .csrStrobe(1'b0),
+          .GPIO_OUT(GPIO_OUT),
+          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_4_CSR]),
+
+          .clk(evg1TxClk),
+          .heartbeatStrobe(evg1HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f1),
+
+          .clkGenSynced(RFf1CoincClockSynced),
+          .clkGen(RFf1CoincClock),
           .clkGenStrobe());
 
 //////////////////////////////////////////////////////////////////////////////
@@ -963,8 +985,8 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_1_CSR]),
 
           .clk(evg2TxClk),
-          .heartbeatMarker(evg2HeartbeatAlign),
-          .pulsePerSecondMarker(evgPpsMarker_f2),
+          .heartbeatStrobe(evg2HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
           .clkGenSynced(AROrbitClockSynced),
           .clkGen(AROrbitClock),
@@ -981,8 +1003,8 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_2_CSR]),
 
           .clk(evg2TxClk),
-          .heartbeatMarker(evg2HeartbeatAlign),
-          .pulsePerSecondMarker(evgPpsMarker_f2),
+          .heartbeatStrobe(evg2HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
           .clkGenSynced(SROrbitClockSynced),
           .clkGen(SROrbitClock),
@@ -999,8 +1021,8 @@ clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
           .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_3_CSR]),
 
           .clk(evg2TxClk),
-          .heartbeatMarker(evg2HeartbeatAlign),
-          .pulsePerSecondMarker(evgPpsMarker_f2),
+          .heartbeatStrobe(evg2HeartbeatAlign),
+          .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
           .clkGenSynced(ARSRCoincClockSynced),
           .clkGen(ARSRCoincClock),
