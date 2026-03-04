@@ -22,7 +22,7 @@ module coincidenceRecorder #(
     output                            coincidenceMarker,
     output [SAMPLE_COUNTER_WIDTH-1:0] sampleCounterDbg,
 
-    input  txClk,
+    input                             txClk,
     output                            txCoincidenceMarker,
     output                            txCoincidenceMarker_d,
     output  [HEARTBEAT_GEN_COUNT-1:0] txHeartbeatStrobe);
@@ -259,6 +259,8 @@ assign sysCsr = { busy, {8-1-MUXSEL_WIDTH{1'b0}}, sysRBMuxSel,
 // Transmiter (EVG) clock domain
 // Generate heartbeat strobe
 
+wire [HEARTBEAT_GEN_COUNT-1:0] txCoincidenceMarkerInt, txCoincidenceMarkerInt_d;
+
 generate
 for (i = 0; i < HEARTBEAT_GEN_COUNT; i = i + 1) begin
 
@@ -267,15 +269,18 @@ localparam TX_CLK_PER_HEARTBEAT_LOCAL = TX_CLK_PER_HEARTBEAT[i*32+:32];
 heartbeatGenerator # (
     .TX_CLK_PER_HEARTBEAT(TX_CLK_PER_HEARTBEAT_LOCAL))
   heartbeatGenerator (
-    .txClk(txClk),
-
     .sampCoincidenceMarker(coincidenceMarker),
     .sysRealignToggleIn(sysRealignToggleIn),
-    .txCoincidenceMarker(txCoincidenceMarker),
-    .txCoincidenceMarker_d(txCoincidenceMarker_d),
+
+    .txClk(txClk),
+    .txCoincidenceMarker(txCoincidenceMarkerInt[i]),
+    .txCoincidenceMarker_d(txCoincidenceMarkerInt_d[i]),
     .txHeartbeatStrobe(txHeartbeatStrobe[i]));
 
 end
 endgenerate
+
+assign txCoincidenceMarker = txCoincidenceMarkerInt[0];
+assign txCoincidenceMarker_d = txCoincidenceMarkerInt_d[0];
 
 endmodule
