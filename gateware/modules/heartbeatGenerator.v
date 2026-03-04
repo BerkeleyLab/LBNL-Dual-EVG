@@ -4,9 +4,15 @@ module heartbeatGenerator #(
     ) (
     input     txClk,
 
+    // synced with sampling clock
     input     sampCoincidenceMarker,
+
+    // synced with sys clock
     input     sysRealignToggleIn,
 
+    // synced with tx clock
+    output    txCoincidenceMarker,
+    output    txCoincidenceMarker_d,
     output    txHeartbeatStrobe);
 
 localparam TX_HB_COUNTER_RELOAD = TX_CLK_PER_HEARTBEAT - 2;
@@ -23,20 +29,20 @@ reg txRealignToggle = 0, txRealignMatch = 0;
 /*
  * Coincidence marker from acquisition domain
  */
-(*ASYNC_REG="true"*) reg txCoincidenceMarker_m = 0;
-reg txCoincidenceMarker = 0, txCoincidenceMarker_d = 0;
+(*ASYNC_REG="true"*) reg txCoincIntMarker_m = 0, txCoincIntMarker = 0;
+reg txCoincIntMarker_d = 0;
 
 always @(posedge txClk) begin
-    txCoincidenceMarker_m <= sampCoincidenceMarker;
-    txCoincidenceMarker   <= txCoincidenceMarker_m;
-    txCoincidenceMarker_d <= txCoincidenceMarker;
+    txCoincIntMarker_m <= sampCoincidenceMarker;
+    txCoincIntMarker   <= txCoincIntMarker_m;
+    txCoincIntMarker_d <= txCoincIntMarker;
 
     txRealignToggle_m <= sysRealignToggleIn;
     txRealignToggle   <= txRealignToggle_m;
 
     if (txRealignToggle != txRealignMatch) begin
         txHeartbeatCounter <= TX_HB_COUNTER_RELOAD;
-        if (txCoincidenceMarker && !txCoincidenceMarker_d) begin
+        if (txCoincIntMarker && !txCoincIntMarker_d) begin
             txRealignMatch <= !txRealignMatch;
         end
     end
@@ -49,5 +55,8 @@ always @(posedge txClk) begin
         end
     end
 end
+
+assign txCoincidenceMarker = txCoincIntMarker;
+assign txCoincidenceMarker_d = txCoincIntMarker_d;
 
 endmodule
