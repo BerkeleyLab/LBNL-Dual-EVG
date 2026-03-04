@@ -176,7 +176,6 @@ wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
 wire sysRealignToggle;
 wire sampEvg1CoincidenceMarker, sampEvg2CoincidenceMarker;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
-wire evg1CoincidenceStrobe, evg2CoincidenceStrobe;
 
 coincidenceRecorder #(
     .CHANNEL_COUNT(2),
@@ -199,7 +198,6 @@ coincidenceRecorder #(
     .coincidenceMarker(sampEvg1CoincidenceMarker),
     .txClk(evg1TxClk),
     .txCoincidenceMarker(evg1CoincidenceMarker),
-    .txCoincidenceStrobe(evg1CoincidenceStrobe),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
 coincidenceRecorder #(
@@ -220,7 +218,6 @@ coincidenceRecorder #(
     .coincidenceMarker(sampEvg2CoincidenceMarker),
     .txClk(evg2TxClk),
     .txCoincidenceMarker(evg2CoincidenceMarker),
-    .txCoincidenceStrobe(evg2CoincidenceStrobe),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
 //////////////////////////////////////////////////////////////////////////////
