@@ -23,6 +23,8 @@ module coincidenceRecorder #(
     output [SAMPLE_COUNTER_WIDTH-1:0] sampleCounterDbg,
 
     input  txClk,
+    output                            txCoincidenceMarker,
+    output                            txCoincidenceMarker_d,
     output  [HEARTBEAT_GEN_COUNT-1:0] txHeartbeatStrobe);
 
 /* Sanity check -- fake '$error()' */
@@ -269,6 +271,8 @@ heartbeatGenerator # (
 
     .sampCoincidenceMarker(coincidenceMarker),
     .sysRealignToggleIn(sysRealignToggleIn),
+    .txCoincidenceMarker(txCoincidenceMarker),
+    .txCoincidenceMarker_d(txCoincidenceMarker_d),
     .txHeartbeatStrobe(txHeartbeatStrobe[i]));
 
 end
