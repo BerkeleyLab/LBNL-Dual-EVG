@@ -12,6 +12,7 @@ module clkGen #(
     output wire [31:0] csr,
 
     input                           clk,
+    input                           en,
     (*mark_debug=DEBUG*) input      heartbeatStrobe,
     (*mark_debug=DEBUG*) input      pulsePerSecondStrobe,
     (*mark_debug=DEBUG*) output reg clkGenSynced = 0,
@@ -27,6 +28,10 @@ if ($clog2(DEFAULT_RATE_COUNT+1) > DIVISOR_WIDTH) begin
 end
 endgenerate
 
+//////////////////////////////////////////////////////////////////////////////
+// SYS CLK domain
+//////////////////////////////////////////////////////////////////////////////
+
 reg [DIVISOR_WIDTH-1:0] sysClkDivisor = DEFAULT_RATE_COUNT;
 (*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] reloadLo, reloadHi;
 always @(posedge sysClk) begin
@@ -41,27 +46,41 @@ wire heartBeatValid, pulsePerSecondValid;
 assign csr = {sysClkDivisor,
               {8-3{1'b0}}, pulsePerSecondValid, heartBeatValid, clkGenSynced};
 
+//////////////////////////////////////////////////////////////////////////////
+// CLK domain
+//////////////////////////////////////////////////////////////////////////////
+
 (*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] counter = 0;
 always @(posedge clk) begin
-    if (heartbeatStrobe) begin
-        clkGen <= 1;
-        clkGenStrobe <= 1;
-        counter <= reloadHi;
-        clkGenSynced <= (!clkGen && (counter == 0));
-    end
-    else if (counter == 0) begin
-        clkGen <= !clkGen;
-        if (clkGen) begin
-            clkGenStrobe <= 0;
-            counter <= reloadLo;
-        end
-        else begin
+    if (en) begin
+        if (heartbeatStrobe) begin
+            clkGen <= 1;
             clkGenStrobe <= 1;
             counter <= reloadHi;
+            clkGenSynced <= (!clkGen && (counter == 0));
         end
-    end else begin
-        clkGenStrobe <= 0;
-        counter <= counter - 1;
+        else begin
+            if (counter == 0) begin
+                clkGen <= !clkGen;
+                if (clkGen) begin
+                    clkGenStrobe <= 0;
+                    counter <= reloadLo;
+                end
+                else begin
+                    clkGenStrobe <= 1;
+                    counter <= reloadHi;
+                end
+            end
+            else begin
+                clkGenStrobe <= 0;
+                counter <= counter - 1;
+            end
+        end
+    end
+    else begin
+        if (heartbeatStrobe) begin
+            clkGenSynced <= 0;
+        end
     end
 end
 
