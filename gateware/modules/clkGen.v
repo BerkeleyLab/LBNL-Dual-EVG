@@ -4,8 +4,11 @@
 module clkGen #(
     parameter SYSCLK_FREQUENCY      = -1,
     parameter DEFAULT_RATE_COUNT    = -1,
-    parameter DEBUG                 = "false"
-    ) (
+    parameter DEBUG                 = "false",
+    // Don't change these
+    parameter DIVISOR_WIDTH        = 24,
+    parameter COUNTER_WIDTH        = DIVISOR_WIDTH - 1,
+    parameter FULL_COUNTER_WIDTH   = DIVISOR_WIDTH) (
     input              sysClk,
     input              csrStrobe,
     input       [31:0] GPIO_OUT,
@@ -17,10 +20,9 @@ module clkGen #(
     (*mark_debug=DEBUG*) input      pulsePerSecondStrobe,
     (*mark_debug=DEBUG*) output reg clkGenSynced = 0,
     (*mark_debug=DEBUG*) output reg clkGen = 0,
-    (*mark_debug=DEBUG*) output reg clkGenStrobe = 0);
-
-localparam DIVISOR_WIDTH = 24;
-localparam COUNTER_WIDTH = DIVISOR_WIDTH - 1;
+    (*mark_debug=DEBUG*) output reg clkGenStrobe = 0,
+    (*mark_debug=DEBUG*) output
+          [FULL_COUNTER_WIDTH-1:0]  clkGenCounter);
 
 generate
 if ($clog2(DEFAULT_RATE_COUNT+1) > DIVISOR_WIDTH) begin
@@ -50,6 +52,7 @@ assign csr = {sysClkDivisor,
 // CLK domain
 //////////////////////////////////////////////////////////////////////////////
 
+(*mark_debug=DEBUG*)reg [FULL_COUNTER_WIDTH-1:0] fullCounter = 0;
 (*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] counter = 0;
 always @(posedge clk) begin
     if (en) begin
@@ -57,11 +60,13 @@ always @(posedge clk) begin
             clkGen <= 1;
             clkGenStrobe <= 1;
             counter <= reloadHi;
+            fullCounter <= 0;
             clkGenSynced <= (!clkGen && (counter == 0));
         end
         else begin
             if (counter == 0) begin
                 clkGen <= !clkGen;
+
                 if (clkGen) begin
                     clkGenStrobe <= 0;
                     counter <= reloadLo;
@@ -69,11 +74,13 @@ always @(posedge clk) begin
                 else begin
                     clkGenStrobe <= 1;
                     counter <= reloadHi;
+                    fullCounter <= 0;
                 end
             end
             else begin
                 clkGenStrobe <= 0;
                 counter <= counter - 1;
+                fullCounter <= fullCounter + 1;
             end
         end
     end
@@ -83,6 +90,8 @@ always @(posedge clk) begin
         end
     end
 end
+
+assign clkGenCounter = fullCounter;
 
 pulseWatchdog #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
