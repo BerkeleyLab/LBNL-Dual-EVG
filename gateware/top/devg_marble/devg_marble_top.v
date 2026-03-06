@@ -1005,8 +1005,8 @@ ila_td256_s4096_cap ila_td256_s4096_cap_inst (
 );
 `endif
 
-assign probe[0] = bncPPS_a;
-assign probe[1] = bncPPSvalid;
+assign probe[0] = gpsPPS_a;
+assign probe[1] = gpsPPSvalid;
 assign probe[2] = bestPPS_a;
 assign probe[3] = sysPpsToggle_f1;
 assign probe[4] = sysPpsMarker_f1;
