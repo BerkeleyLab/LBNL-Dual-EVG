@@ -17,7 +17,7 @@ all: bit sw
 bit:
 	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_top.bit
 	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_top.mmi
-	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_top.rpt
+	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_coinc_rec.rpt
 
 sw:
 	make -C $(SW_TGT_DIR) TARGET=$(TARGET) BIT=$(BIT) all
