@@ -3,6 +3,7 @@
 module devg_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
+    parameter ILA_CHIPSCOPE_DBG       = "FALSE",
     parameter SYSCLK_FREQUENCY        = 100000000,
     parameter TXCLK_NOMINAL_FREQUENCY = 125000000
     ) (
@@ -690,22 +691,30 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
 
-localparam NUM_EVG1_COUNTERS = 4;
+localparam NUM_EVG1_COUNTERS = 6;
 
-wire RFf1CoincClock;
-wire BRARCoincClock;
-wire BROrbitClockDiv4Clock;
-wire BRARAlignClock;
-wire RFf1CoincClockSynced;
-wire BRARCoincClockSynced;
-wire BROrbitClockDiv4ClockSynced;
-wire BRARAlignClockSynced;
+wire RFf1CoincClockSynced, BRARCoincClockSynced, BROrbitClockDiv4ClockSynced;
+wire BRARAlignClockSynced, BRARCoincPerRFCoincClockSynced, BRARAlignPerBRARCoincClockSynced;
+
+wire RFf1CoincClock, BRARCoincClock, BROrbitClockDiv4Clock;
+wire BRARAlignClock, BRARCoincPerRFCoincClock, BRARAlignPerBRARCoincClock;
+
+wire RFf1CoincStrobe, BRARCoincStrobe, BROrbitStrobeDiv4Strobe;
+wire BRARAlignStrobe, BRARCoincPerRFCoincStrobe, BRARAlignPerBRARCoincStrobe;
+
+wire [23:0] RFf1CoincCounter, BRARCoincCounter, BROrbitCounterDiv4Counter;
+wire [23:0] BRARAlignCounter, BRARCoincPerRFCoincCounter, BRARAlignPerBRARCoincCounter;
+
+wire [NUM_EVG1_COUNTERS-1:0] evg1CountersEn = {RFf1CoincStrobe, BRARAlignStrobe,
+                                                {4{1'b1}}};
 
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
     .NUM_COUNTERS(NUM_EVG1_COUNTERS),
     .DEFAULT_RATE_COUNTS({
+        CFG_EVG1_BR_AR_COINC_PER_RF_COINC,
+        CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC,
         CFG_EVG1_CLK_PER_TICKS_COINCIDENCE,
         CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE,
         CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4,
@@ -716,27 +725,47 @@ evgCounters #(
 
     .csrStrobes(0),
     .csrs({
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_6_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_5_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_4_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]}),
 
     .clk(evg1TxClk),
-    .ens({NUM_EVG1_COUNTERS{1'b1}}),
+    .ens(evg1CountersEn),
     .heartbeatStrobe(evg1HeartbeatAlign),
     .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
     .clkGenSynceds({
+        BRARCoincPerRFCoincClockSynced,
+        BRARAlignPerBRARCoincClockSynced,
         RFf1CoincClockSynced,
         BRARCoincClockSynced,
         BROrbitClockDiv4ClockSynced,
         BRARAlignClockSynced}),
     .clkGens({
+        BRARCoincPerRFCoincClock,
+        BRARAlignPerBRARCoincClock,
         RFf1CoincClock,
         BRARCoincClock,
         BROrbitClockDiv4Clock,
         BRARAlignClock}),
-    .clkGenStrobes());
+    .clkGenStrobes({
+        BRARCoincPerRFCoincStrobe,
+        BRARAlignPerBRARCoincStrobe,
+        RFf1CoincStrobe,
+        BRARCoincStrobe,
+        BROrbitStrobeDiv4Strobe,
+        BRARAlignStrobe}),
+    .clkGenCounters({
+        BRARCoincPerRFCoincCounter,
+        BRARAlignPerBRARCoincCounter,
+        RFf1CoincCounter,
+        BRARCoincCounter,
+        BROrbitCounterDiv4Counter,
+        BRARAlignCounter})
+    );
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
@@ -938,5 +967,79 @@ bd bd_i (
     .console_rxd(FPGA_TxD),
     .console_txd(FPGA_RxD));
 `endif // `ifndef SIMULATE
+
+generate
+if (ILA_CHIPSCOPE_DBG != "TRUE" && ILA_CHIPSCOPE_DBG != "FALSE") begin
+    ILA_CHIPSCOPE_DBG_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (ILA_CHIPSCOPE_DBG == "TRUE") begin
+
+wire [255:0] probe;
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(sysClk),
+    .probe0(probe)
+);
+`endif
+
+assign probe[0] = bncPPS_a;
+assign probe[1] = bncPPSvalid;
+assign probe[2] = bestPPS_a;
+assign probe[3] = sysPpsToggle_f1;
+assign probe[4] = sysPpsMarker_f1;
+assign probe[5] = sysPpsToggle_f2;
+assign probe[6] = sysPpsMarker_f2;
+
+assign probe[7]  = BRARCoincPerRFCoincStrobe;
+assign probe[8]  = BRARAlignPerBRARCoincStrobe;
+assign probe[9] = RFf1CoincStrobe;
+assign probe[10] = BRARCoincStrobe;
+assign probe[11] = BROrbitStrobeDiv4Strobe;
+assign probe[12] = BRARAlignStrobe;
+
+assign probe[13] = BRARCoincPerRFCoincClockSynced;
+assign probe[14] = BRARAlignPerBRARCoincClockSynced;
+assign probe[15] = RFf1CoincClockSynced;
+assign probe[16] = BRARCoincClockSynced;
+assign probe[17] = BROrbitClockDiv4ClockSynced;
+assign probe[18] = BRARAlignClockSynced;
+
+assign probe[31:19] = 0;
+
+assign probe[32] = evg1GtTxReset;
+assign probe[33] = evg1GtRxReset;
+assign probe[34] = evg1CpllReset;
+assign probe[35] = evg1GtRxIsAligned;
+assign probe[36] = evg1GtTxFSMResetDone;
+assign probe[37] = evg1GtRxFSMResetDone;
+assign probe[38] = evg1TxResetDone;
+assign probe[39] = evg1RxResetDone;
+assign probe[40] = evg1CpllLock;
+
+assign probe[63:41] = 0;
+
+assign probe[64] = evg2GtTxReset;
+assign probe[65] = evg2GtRxReset;
+assign probe[66] = evg2CpllReset;
+assign probe[67] = evg2GtRxIsAligned;
+assign probe[68] = evg2GtTxFSMResetDone;
+assign probe[69] = evg2GtRxFSMResetDone;
+assign probe[70] = evg2TxResetDone;
+assign probe[71] = evg2RxResetDone;
+assign probe[72] = evg2CpllLock;
+
+assign probe[151:128] = BRARCoincPerRFCoincCounter;
+assign probe[175:152] = BRARAlignPerBRARCoincCounter;
+assign probe[199:176] = RFf1CoincCounter;
+assign probe[223:200] = BRARCoincCounter;
+assign probe[247:224] = BRARAlignCounter;
+
+assign probe[255:248] = 0;
+
+end // end if
+endgenerate
 
 endmodule

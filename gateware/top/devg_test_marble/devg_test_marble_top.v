@@ -901,22 +901,30 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
 
-localparam NUM_EVG1_COUNTERS = 4;
+localparam NUM_EVG1_COUNTERS = 6;
 
-wire RFf1CoincClock;
-wire BRARCoincClock;
-wire BROrbitClockDiv4Clock;
-wire BRARAlignClock;
-wire RFf1CoincClockSynced;
-wire BRARCoincClockSynced;
-wire BROrbitClockDiv4ClockSynced;
-wire BRARAlignClockSynced;
+wire RFf1CoincClockSynced, BRARCoincClockSynced, BROrbitClockDiv4ClockSynced;
+wire BRARAlignClockSynced, BRARCoincPerRFCoincClockSynced, BRARAlignPerBRARCoincClockSynced;
+
+wire RFf1CoincClock, BRARCoincClock, BROrbitClockDiv4Clock;
+wire BRARAlignClock, BRARCoincPerRFCoincClock, BRARAlignPerBRARCoincClock;
+
+wire RFf1CoincStrobe, BRARCoincStrobe, BROrbitStrobeDiv4Strobe;
+wire BRARAlignStrobe, BRARCoincPerRFCoincStrobe, BRARAlignPerBRARCoincStrobe;
+
+wire [23:0] RFf1CoincCounter, BRARCoincCounter, BROrbitCounterDiv4Counter;
+wire [23:0] BRARAlignCounter, BRARCoincPerRFCoincCounter, BRARAlignPerBRARCoincCounter;
+
+wire [NUM_EVG1_COUNTERS-1:0] evg1CountersEn = {RFf1CoincStrobe, BRARAlignStrobe,
+                                                {4{1'b1}}};
 
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
     .NUM_COUNTERS(NUM_EVG1_COUNTERS),
     .DEFAULT_RATE_COUNTS({
+        CFG_EVG1_BR_AR_COINC_PER_RF_COINC,
+        CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC,
         CFG_EVG1_CLK_PER_TICKS_COINCIDENCE,
         CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE,
         CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4,
@@ -927,27 +935,47 @@ evgCounters #(
 
     .csrStrobes(0),
     .csrs({
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_6_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_5_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_4_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR],
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]}),
 
     .clk(evg1TxClk),
-    .ens({NUM_EVG1_COUNTERS{1'b1}}),
+    .ens(evg1CountersEn),
     .heartbeatStrobe(evg1HeartbeatAlign),
     .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
     .clkGenSynceds({
+        BRARCoincPerRFCoincClockSynced,
+        BRARAlignPerBRARCoincClockSynced,
         RFf1CoincClockSynced,
         BRARCoincClockSynced,
         BROrbitClockDiv4ClockSynced,
         BRARAlignClockSynced}),
     .clkGens({
+        BRARCoincPerRFCoincClock,
+        BRARAlignPerBRARCoincClock,
         RFf1CoincClock,
         BRARCoincClock,
         BROrbitClockDiv4Clock,
         BRARAlignClock}),
-    .clkGenStrobes());
+    .clkGenStrobes({
+        BRARCoincPerRFCoincStrobe,
+        BRARAlignPerBRARCoincStrobe,
+        RFf1CoincStrobe,
+        BRARCoincStrobe,
+        BROrbitStrobeDiv4Strobe,
+        BRARAlignStrobe}),
+    .clkGenCounters({
+        BRARCoincPerRFCoincCounter,
+        BRARAlignPerBRARCoincCounter,
+        RFf1CoincCounter,
+        BRARCoincCounter,
+        BROrbitCounterDiv4Counter,
+        BRARAlignCounter})
+    );
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
@@ -1162,7 +1190,21 @@ assign probe[4] = sysPpsMarker_f1;
 assign probe[5] = sysPpsToggle_f2;
 assign probe[6] = sysPpsMarker_f2;
 
-assign probe[31:7] = 0;
+assign probe[7]  = BRARCoincPerRFCoincStrobe;
+assign probe[8]  = BRARAlignPerBRARCoincStrobe;
+assign probe[9] = RFf1CoincStrobe;
+assign probe[10] = BRARCoincStrobe;
+assign probe[11] = BROrbitStrobeDiv4Strobe;
+assign probe[12] = BRARAlignStrobe;
+
+assign probe[13] = BRARCoincPerRFCoincClockSynced;
+assign probe[14] = BRARAlignPerBRARCoincClockSynced;
+assign probe[15] = RFf1CoincClockSynced;
+assign probe[16] = BRARCoincClockSynced;
+assign probe[17] = BROrbitClockDiv4ClockSynced;
+assign probe[18] = BRARAlignClockSynced;
+
+assign probe[31:19] = 0;
 
 assign probe[32] = evg1GtTxReset;
 assign probe[33] = evg1GtRxReset;
@@ -1186,7 +1228,13 @@ assign probe[70] = evg2TxResetDone;
 assign probe[71] = evg2RxResetDone;
 assign probe[72] = evg2CpllLock;
 
-assign probe[255:73] = 0;
+assign probe[151:128] = BRARCoincPerRFCoincCounter;
+assign probe[175:152] = BRARAlignPerBRARCoincCounter;
+assign probe[199:176] = RFf1CoincCounter;
+assign probe[223:200] = BRARCoincCounter;
+assign probe[247:224] = BRARAlignCounter;
+
+assign probe[255:248] = 0;
 
 end // end if
 endgenerate
