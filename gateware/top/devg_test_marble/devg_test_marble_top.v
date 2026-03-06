@@ -901,6 +901,8 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
 
+localparam NUM_EVG1_COUNTERS = 4;
+
 wire RFf1CoincClock;
 wire BRARCoincClock;
 wire BROrbitClockDiv4Clock;
@@ -913,7 +915,7 @@ wire BRARAlignClockSynced;
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
-    .NUM_COUNTERS(4),
+    .NUM_COUNTERS(NUM_EVG1_COUNTERS),
     .DEFAULT_RATE_COUNTS({
         CFG_EVG1_CLK_PER_TICKS_COINCIDENCE,
         CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE,
@@ -931,6 +933,7 @@ evgCounters #(
         GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]}),
 
     .clk(evg1TxClk),
+    .ens({NUM_EVG1_COUNTERS{1'b1}}),
     .heartbeatStrobe(evg1HeartbeatAlign),
     .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
@@ -949,6 +952,8 @@ evgCounters #(
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
 
+localparam NUM_EVG2_COUNTERS = 3;
+
 wire ARSRCoincClock;
 wire SROrbitClock;
 wire AROrbitClock;
@@ -959,7 +964,7 @@ wire AROrbitClockSynced;
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
-    .NUM_COUNTERS(3),
+    .NUM_COUNTERS(NUM_EVG2_COUNTERS),
     .DEFAULT_RATE_COUNTS({
         CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE,
         CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK,
@@ -975,6 +980,7 @@ evgCounters #(
         GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_1_CSR]}),
 
     .clk(evg2TxClk),
+    .ens({NUM_EVG2_COUNTERS{1'b1}}),
     .heartbeatStrobe(evg2HeartbeatAlign),
     .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
