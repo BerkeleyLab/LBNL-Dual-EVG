@@ -900,133 +900,77 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
-wire BRARAlignClockSynced;
-wire BRARAlignClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT),
-          .DEBUG("false"))
-  evgBRARAlignClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]),
 
-          .clk(evg1TxClk),
-          .heartbeatStrobe(evg1HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f1),
+evgCounters #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .DEBUG("false"),
+    .NUM_COUNTERS(4),
+    .DEFAULT_RATE_COUNTS({
+        CFG_EVG1_CLK_PER_TICKS_COINCIDENCE,
+        CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE,
+        CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4,
+        CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
+  evg1Counters (
+    .sysClk(sysClk),
+    .GPIO_OUT(GPIO_OUT),
 
-          .clkGenSynced(BRARAlignClockSynced),
-          .clkGen(BRARAlignClock),
-          .clkGenStrobe());
+    .csrStrobes(0),
+    .csrs({
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_4_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]}),
 
-wire BROrbitClockDiv4ClockSynced;
-wire BROrbitClockDiv4Clock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4),
-          .DEBUG("false"))
-  evgBROrbitClockDiv4Clock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR]),
+    .clk(evg1TxClk),
+    .heartbeatStrobe(evg1HeartbeatAlign),
+    .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
-          .clk(evg1TxClk),
-          .heartbeatStrobe(evg1HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f1),
-
-          .clkGenSynced(BROrbitClockDiv4ClockSynced),
-          .clkGen(BROrbitClockDiv4Clock),
-          .clkGenStrobe());
-
-wire BRARCoincClockSynced;
-wire BRARCoincClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE),
-          .DEBUG("false"))
-  evgBRARCoincClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR]),
-
-          .clk(evg1TxClk),
-          .heartbeatStrobe(evg1HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f1),
-
-          .clkGenSynced(BRARCoincClockSynced),
-          .clkGen(BRARCoincClock),
-          .clkGenStrobe());
-
-wire RFf1CoincClockSynced;
-wire RFf1CoincClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_TICKS_COINCIDENCE),
-          .DEBUG("false"))
-  evgRFf1CoincClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_4_CSR]),
-
-          .clk(evg1TxClk),
-          .heartbeatStrobe(evg1HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f1),
-
-          .clkGenSynced(RFf1CoincClockSynced),
-          .clkGen(RFf1CoincClock),
-          .clkGenStrobe());
+    .clkGenSynceds({
+        RFf1CoincClockSynced,
+        BRARCoincClockSynced,
+        BROrbitClockDiv4ClockSynced,
+        BRARAlignClockSynced}),
+    .clkGens({
+        RFf1CoincClock,
+        BRARCoincClock,
+        BROrbitClockDiv4Clock,
+        BRARAlignClock}),
+    .clkGenStrobes());
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
-wire AROrbitClockSynced;
-wire AROrbitClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK),
-          .DEBUG("false"))
-  evgAROrbitClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_1_CSR]),
 
-          .clk(evg2TxClk),
-          .heartbeatStrobe(evg2HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f2),
+evgCounters #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .DEBUG("false"),
+    .NUM_COUNTERS(3),
+    .DEFAULT_RATE_COUNTS({
+        CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE,
+        CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK,
+        CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK}))
+  evg2Counters (
+    .sysClk(sysClk),
+    .GPIO_OUT(GPIO_OUT),
 
-          .clkGenSynced(AROrbitClockSynced),
-          .clkGen(AROrbitClock),
-          .clkGenStrobe());
+    .csrStrobes(0),
+    .csrs({
+        GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_3_CSR],
+        GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_2_CSR],
+        GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_1_CSR]}),
 
-wire SROrbitClockSynced;
-wire SROrbitClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK),
-          .DEBUG("false"))
-  evgSROrbitClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_2_CSR]),
+    .clk(evg2TxClk),
+    .heartbeatStrobe(evg2HeartbeatAlign),
+    .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
-          .clk(evg2TxClk),
-          .heartbeatStrobe(evg2HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f2),
-
-          .clkGenSynced(SROrbitClockSynced),
-          .clkGen(SROrbitClock),
-          .clkGenStrobe());
-
-wire ARSRCoincClockSynced;
-wire ARSRCoincClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE),
-          .DEBUG("false"))
-  evgARSRCoincClock (.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_3_CSR]),
-
-          .clk(evg2TxClk),
-          .heartbeatStrobe(evg2HeartbeatAlign),
-          .pulsePerSecondStrobe(evgPpsStrobe_f2),
-
-          .clkGenSynced(ARSRCoincClockSynced),
-          .clkGen(ARSRCoincClock),
-          .clkGenStrobe());
+    .clkGenSynceds({
+        ARSRCoincClockSynced,
+        SROrbitClockSynced,
+        AROrbitClockSynced}),
+    .clkGens({
+        ARSRCoincClock,
+        SROrbitClock,
+        AROrbitClock}),
+    .clkGenStrobes());
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
