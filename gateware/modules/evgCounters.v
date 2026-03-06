@@ -13,6 +13,7 @@ module evgCounters #(
     output wire [NUM_COUNTERS*32-1:0] csrs,
 
     input                           clk,
+    input        [NUM_COUNTERS-1:0] ens,
     (*mark_debug=DEBUG*) input      heartbeatStrobe,
     (*mark_debug=DEBUG*) input      pulsePerSecondStrobe,
 
@@ -38,7 +39,7 @@ clkGen #(
     .csr(csrs[i*32+:32]),
 
     .clk(clk),
-    .en(1'b1),
+    .en(ens[i]),
     .heartbeatStrobe(heartbeatStrobe),
     .pulsePerSecondStrobe(pulsePerSecondStrobe),
     .clkGenSynced(clkGenSynceds[i]),
