@@ -690,6 +690,15 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
 
+wire RFf1CoincClock;
+wire BRARCoincClock;
+wire BROrbitClockDiv4Clock;
+wire BRARAlignClock;
+wire RFf1CoincClockSynced;
+wire BRARCoincClockSynced;
+wire BROrbitClockDiv4ClockSynced;
+wire BRARAlignClockSynced;
+
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
@@ -728,6 +737,13 @@ evgCounters #(
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
+
+wire ARSRCoincClock;
+wire SROrbitClock;
+wire AROrbitClock;
+wire ARSRCoincClockSynced;
+wire SROrbitClockSynced;
+wire AROrbitClockSynced;
 
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
