@@ -26,13 +26,15 @@ gw_devg_marble:
   script: |
     make EVIO_TYPE=${EVIO_TYPE} clean && \
       PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.bit && \
-      PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.mmi
+      PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.mmi && \
+      PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.rpt
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 4 weeks
     paths:
       - gateware/syn/devg_${VARIANT_MOD}marble/devg_${VARIANT_MOD}marble_top.bit
       - gateware/syn/devg_${VARIANT_MOD}marble/devg_${VARIANT_MOD}marble_top.mmi
+      - gateware/syn/devg_${VARIANT_MOD}marble/devg_${VARIANT_MOD}marble_top.rpt
       - gateware/syn/devg_${VARIANT_MOD}marble/_xilinx/devg_${VARIANT_MOD}marble_top/*.runs/impl_1/*.rpt
       - gateware/syn/devg_${VARIANT_MOD}marble/bd.xsa
   rules:
