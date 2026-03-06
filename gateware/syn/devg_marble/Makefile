@@ -165,7 +165,7 @@ $(TARGET)_top.mmi: $(XPR) $(TARGET)_top.bit
 	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_mem_info.tcl -tclargs $< $@
 
 $(TARGET)_coinc_rec.rpt: $(XPR) $(TARGET)_top.bit
-	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_report_coinc_recorder_prop.tcl -tclargs $< $@
+	vivado -mode batch -nojou -log $@ -source $(GW_SCRIPTS_DIR)/gen_report_coinc_recorder_prop.tcl -tclargs $<
 
 # Generate bundled .xdc from other .xdc. Don't change the order of the
 # prerequisites as we need constraints in tGe order specified
