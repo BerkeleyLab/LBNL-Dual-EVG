@@ -421,6 +421,16 @@ mgtWrapper #(.EVG(1),
     .rx_p(MGT_RX_1_P),
     .rx_n(MGT_RX_1_N));
 
+wire evg1GtTxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][30];
+wire evg1GtRxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][29];
+wire evg1CpllReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][28];
+wire evg1GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][27];
+wire evg1GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][26];
+wire evg1GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][25];
+wire evg1TxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][24];
+wire evg1RxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][23];
+wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
+
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 clocks
 BUFG evg1RxBuf (.I(evg1RxClkOut), .O(evg1RxClk));
@@ -578,6 +588,16 @@ mgtWrapper #(.EVG(2),
     .evgRxClkOut(evg2RxClkOut),
     .rx_p(MGT_RX_2_P),
     .rx_n(MGT_RX_2_N));
+
+wire evg2GtTxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][30];
+wire evg2GtRxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][29];
+wire evg2CpllReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][28];
+wire evg2GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][27];
+wire evg2GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][26];
+wire evg2GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][25];
+wire evg2TxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][24];
+wire evg2RxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][23];
+wire evg2CpllLock = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][22];
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG2 clocks
