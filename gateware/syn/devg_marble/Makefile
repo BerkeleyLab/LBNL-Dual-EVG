@@ -21,7 +21,7 @@ GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 XPR             = $(GW_DEVG_TGT_DIR)/_xilinx/$(TARGET)_top/$(TARGET)_top.xpr
 
 # Top level bitstream name
-all: $(TARGET)_top.bit $(TARGET)_top.mmi $(TARGET)_top.rpt
+all: $(TARGET)_top.bit $(TARGET)_top.mmi $(TARGET)_coinc_rec.rpt
 
 # Search for .v files here
 vpath %.v $(MODULES_DIR)
@@ -164,8 +164,8 @@ $(TOP_LVL_DIR)/$(TARGET)_top.v: $(TOP_LVL_DIR)/gitHash.vh $(TOP_LVL_DIR)/firmwar
 $(TARGET)_top.mmi: $(XPR) $(TARGET)_top.bit
 	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_mem_info.tcl -tclargs $< $@
 
-$(TARGET)_top.rpt: $(XPR) $(TARGET)_top.bit
-	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_placement_report.tcl -tclargs $< $@
+$(TARGET)_coinc_rec.rpt: $(XPR) $(TARGET)_top.bit
+	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_report_coinc_recorder_prop.tcl -tclargs $< $@
 
 # Generate bundled .xdc from other .xdc. Don't change the order of the
 # prerequisites as we need constraints in tGe order specified
