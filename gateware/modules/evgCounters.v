@@ -13,7 +13,6 @@ module evgCounters #(
     output wire [NUM_COUNTERS*32-1:0] csrs,
 
     input                           clk,
-    input                           en,
     (*mark_debug=DEBUG*) input      heartbeatStrobe,
     (*mark_debug=DEBUG*) input      pulsePerSecondStrobe,
 
