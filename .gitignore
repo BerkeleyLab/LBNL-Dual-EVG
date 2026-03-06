@@ -69,6 +69,8 @@ work/
 /gateware/platform/xilinx/*/*/ila_td256_s4096_cap/
 !/gateware/platform/xilinx/*/*/ila_td256_s4096_cap/ila_td256_s4096_cap.xci
 
+/gateware/syn/*/*.rpt
+
 # NCO tables
 *csv
 
