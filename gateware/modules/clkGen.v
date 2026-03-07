@@ -70,6 +70,10 @@ always @(posedge clk) begin
                 if (clkGen) begin
                     clkGenStrobe <= 0;
                     counter <= reloadLo;
+                    // Weird, but counter counts only half
+                    // of the whole divisor, so th up counter
+                    // needs to increment here too
+                    fullCounter <= fullCounter + 1;
                 end
                 else begin
                     clkGenStrobe <= 1;
