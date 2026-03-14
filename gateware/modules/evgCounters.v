@@ -5,6 +5,8 @@ module evgCounters #(
     parameter DEBUG                 = "false",
     parameter NUM_COUNTERS          =  2,
     parameter [NUM_COUNTERS*32-1:0]
+        COUNTER_WIDTHS = {-32'd1, -32'd1},
+    parameter [NUM_COUNTERS*32-1:0]
         DEFAULT_RATE_COUNTS = {-32'd1, -32'd1}) (
     input              sysClk,
     input       [31:0] GPIO_OUT,
@@ -20,17 +22,19 @@ module evgCounters #(
     (*mark_debug=DEBUG*) output [NUM_COUNTERS-1:0]      clkGenSynceds,
     (*mark_debug=DEBUG*) output [NUM_COUNTERS-1:0]      clkGens,
     (*mark_debug=DEBUG*) output [NUM_COUNTERS-1:0]      clkGenStrobes,
-    (*mark_debug=DEBUG*) output [NUM_COUNTERS*24-1:0]   clkGenCounters);
+    (*mark_debug=DEBUG*) output [NUM_COUNTERS*32-1:0]   clkGenCounters);
 
 genvar i;
 generate
 for (i = 0; i < NUM_COUNTERS; i = i + 1) begin
 
 localparam DEFAULT_RATE_COUNT_LOCAL = DEFAULT_RATE_COUNTS[i*32+:32];
+localparam COUNTER_WIDTH_LOCAL = COUNTER_WIDTHS[i*32+:32];
 
 clkGen #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEFAULT_RATE_COUNT(DEFAULT_RATE_COUNT_LOCAL),
+    .COUNTER_WIDTH(COUNTER_WIDTH_LOCAL),
     .DEBUG(DEBUG))
   clkGen (
     .sysClk(sysClk),
@@ -46,8 +50,10 @@ clkGen #(
     .clkGen(clkGens[i]),
     .clkGenStrobe(clkGenStrobes[i]),
 
-    .clkGenCounter(clkGenCounters[i*24+:24])
+    .clkGenCounter(clkGenCounters[i*32+:COUNTER_WIDTH_LOCAL])
     );
+
+assign clkGenCounters[(i+1)*32-1-:32-COUNTER_WIDTH_LOCAL] = 0;
 
 end
 endgenerate
