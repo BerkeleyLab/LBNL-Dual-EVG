@@ -346,13 +346,38 @@ wire ppsMarker = sysPpsMarker_f1;
 
 /////////////////////////////////////////////////////////////////////////////
 // First generator (injector)
+
+localparam EVG1_ALIGNMENT_SYNC_COUNT = CFG_EVG1_HEARTBEAT_COUNT;
+
+localparam EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH      = $clog2(CFG_EVG1_BR_AR_COINC_PER_RF_COINC+1);
+localparam EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH   = $clog2(CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC+1);
+localparam EVG1_CLK_PER_TICKS_COINCIDENCE_WIDTH     = $clog2(CFG_EVG1_CLK_PER_TICKS_COINCIDENCE+1);
+localparam EVG1_CLK_PER_BR_AR_COINCIDENCE_WIDTH     = $clog2(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE+1);
+localparam EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4_WIDTH   = $clog2(CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4+1);
+localparam EVG1_CLK_PER_BR_AR_ALIGNMENT_WIDTH       = $clog2(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT+1);
+
+wire RFf1CoincClockSynced, BRARCoincClockSynced, BROrbitClockDiv4ClockSynced;
+wire BRARAlignClockSynced, BRARCoincPerRFCoincClockSynced, BRARAlignPerBRARCoincClockSynced;
+
+wire RFf1CoincClock, BRARCoincClock, BROrbitClockDiv4Clock;
+wire BRARAlignClock, BRARCoincPerRFCoincClock, BRARAlignPerBRARCoincClock;
+
+wire RFf1CoincStrobe, BRARCoincStrobe, BROrbitStrobeDiv4Strobe;
+wire BRARAlignStrobe, BRARCoincPerRFCoincStrobe, BRARAlignPerBRARCoincStrobe;
+
+wire [31:0] RFf1CoincCounter, BRARCoincCounter, BROrbitCounterDiv4Counter;
+wire [31:0] BRARAlignCounter, BRARCoincPerRFCoincCounter, BRARAlignPerBRARCoincCounter;
+
 wire injectorSequenceStart;
 wire evg1HeartbeatAlign, evg1HeartbeatCore;
 wire [15:0] evg1TxData;
 wire  [1:0] evg1TxCharIsK;
+wire [EVG1_ALIGNMENT_SYNC_COUNT-1:0] evg1AlignCounterDone;
+
 injectorSequenceControl #(
     .SYSCLK_RATE(SYSCLK_FREQUENCY),
-    .ALIGNMENT_SYNC_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
+    .ALIGNMENT_SYNC_COUNT(EVG1_ALIGNMENT_SYNC_COUNT),
+    .RF_COINC_IDX_WIDTH(EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH),
     .TX_CLK_PER_ALIGNMENT({
         CFG_EVG1_ALT_CLK_PER_BR_AR_ALIGNMENT,
         CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
@@ -365,6 +390,8 @@ injectorSequenceControl #(
     .sysAlignStatus(GPIO_IN[GPIO_IDX_INJECTION_ALIGN_CSR]),
     .powerline_a(powerlineMarker),
     .evgTxClk(evg1TxClk),
+    .evgRFCoincCount(BRARCoincPerRFCoincCounter[EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH-1:0]),
+    .evgAlignCounterDone(evg1AlignCounterDone),
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgHeartbeatAlign(evg1HeartbeatAlign),
     .evgHeartbeatCore(evg1HeartbeatCore),
@@ -541,12 +568,23 @@ assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
+
+localparam EVG2_ALIGNMENT_SYNC_COUNT = CFG_EVG2_HEARTBEAT_COUNT;
+
+localparam EVG2_CLOCK_PER_AR_SR_COINCIDENCE_WIDTH = $clog2(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE+1);
+localparam EVG2_CLOCK_PER_SR_ORBIT_CLOCK_WIDTH    = $clog2(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK+1);
+localparam EVG2_CLOCK_PER_AR_ORBIT_CLOCK_WIDTH    = $clog2(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK+1);
+
+wire ARSRCoincClock, SROrbitClock, AROrbitClock;
+wire ARSRCoincClockSynced, SROrbitClockSynced, AROrbitClockSynced;
+
 wire swapoutSequenceStart;
 wire evg2HeartbeatAlign, evg2HeartbeatCore;
 wire [15:0] evg2TxData;
 wire  [1:0] evg2TxCharIsK;
+
 swapoutSequenceControl #(
-    .ALIGNMENT_SYNC_COUNT(CFG_EVG2_HEARTBEAT_COUNT),
+    .ALIGNMENT_SYNC_COUNT(EVG2_ALIGNMENT_SYNC_COUNT),
     .TX_CLK_PER_ALIGNMENT(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE))
   swapoutSequenceControl (
     .sysClk(sysClk),
@@ -903,18 +941,6 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
 
 localparam NUM_EVG1_COUNTERS = 6;
 
-wire RFf1CoincClockSynced, BRARCoincClockSynced, BROrbitClockDiv4ClockSynced;
-wire BRARAlignClockSynced, BRARCoincPerRFCoincClockSynced, BRARAlignPerBRARCoincClockSynced;
-
-wire RFf1CoincClock, BRARCoincClock, BROrbitClockDiv4Clock;
-wire BRARAlignClock, BRARCoincPerRFCoincClock, BRARAlignPerBRARCoincClock;
-
-wire RFf1CoincStrobe, BRARCoincStrobe, BROrbitStrobeDiv4Strobe;
-wire BRARAlignStrobe, BRARCoincPerRFCoincStrobe, BRARAlignPerBRARCoincStrobe;
-
-wire [23:0] RFf1CoincCounter, BRARCoincCounter, BROrbitCounterDiv4Counter;
-wire [23:0] BRARAlignCounter, BRARCoincPerRFCoincCounter, BRARAlignPerBRARCoincCounter;
-
 wire [NUM_EVG1_COUNTERS-1:0] evg1CountersEn = {RFf1CoincStrobe, BRARAlignStrobe,
                                                 {4{1'b1}}};
 
@@ -922,6 +948,13 @@ evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
     .NUM_COUNTERS(NUM_EVG1_COUNTERS),
+    .COUNTER_WIDTHS({
+        EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH,
+        EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH,
+        EVG1_CLK_PER_TICKS_COINCIDENCE_WIDTH,
+        EVG1_CLK_PER_BR_AR_COINCIDENCE_WIDTH,
+        EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4_WIDTH,
+        EVG1_CLK_PER_BR_AR_ALIGNMENT_WIDTH}),
     .DEFAULT_RATE_COUNTS({
         CFG_EVG1_BR_AR_COINC_PER_RF_COINC,
         CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC,
@@ -980,19 +1013,16 @@ evgCounters #(
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
 
-localparam NUM_EVG2_COUNTERS = 3;
-
-wire ARSRCoincClock;
-wire SROrbitClock;
-wire AROrbitClock;
-wire ARSRCoincClockSynced;
-wire SROrbitClockSynced;
-wire AROrbitClockSynced;
+localparam NUM_EVG2_COUNTERS                      = 3;
 
 evgCounters #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .DEBUG("false"),
     .NUM_COUNTERS(NUM_EVG2_COUNTERS),
+    .COUNTER_WIDTHS({
+        EVG2_CLOCK_PER_AR_SR_COINCIDENCE_WIDTH,
+        EVG2_CLOCK_PER_SR_ORBIT_CLOCK_WIDTH,
+        EVG2_CLOCK_PER_AR_ORBIT_CLOCK_WIDTH}),
     .DEFAULT_RATE_COUNTS({
         CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE,
         CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK,
@@ -1192,7 +1222,7 @@ assign probe[6] = sysPpsMarker_f2;
 
 assign probe[7]  = BRARCoincPerRFCoincStrobe;
 assign probe[8]  = BRARAlignPerBRARCoincStrobe;
-assign probe[9] = RFf1CoincStrobe;
+assign probe[9]  = RFf1CoincStrobe;
 assign probe[10] = BRARCoincStrobe;
 assign probe[11] = BROrbitStrobeDiv4Strobe;
 assign probe[12] = BRARAlignStrobe;
@@ -1204,7 +1234,10 @@ assign probe[16] = BRARCoincClockSynced;
 assign probe[17] = BROrbitClockDiv4ClockSynced;
 assign probe[18] = BRARAlignClockSynced;
 
-assign probe[31:19] = 0;
+assign probe[19] = evg1AlignCounterDone[0];
+assign probe[20] = evg1AlignCounterDone[1];
+
+assign probe[31:21] = 0;
 
 assign probe[32] = evg1GtTxReset;
 assign probe[33] = evg1GtRxReset;
@@ -1228,11 +1261,11 @@ assign probe[70] = evg2TxResetDone;
 assign probe[71] = evg2RxResetDone;
 assign probe[72] = evg2CpllLock;
 
-assign probe[151:128] = BRARCoincPerRFCoincCounter;
-assign probe[175:152] = BRARAlignPerBRARCoincCounter;
-assign probe[199:176] = RFf1CoincCounter;
-assign probe[223:200] = BRARCoincCounter;
-assign probe[247:224] = BRARAlignCounter;
+assign probe[151:128] = BRARCoincPerRFCoincCounter[23:0];
+assign probe[175:152] = BRARAlignPerBRARCoincCounter[23:0];
+assign probe[199:176] = RFf1CoincCounter[23:0];
+assign probe[223:200] = BRARCoincCounter[23:0];
+assign probe[247:224] = BRARAlignCounter[23:0];
 
 assign probe[255:248] = 0;
 
