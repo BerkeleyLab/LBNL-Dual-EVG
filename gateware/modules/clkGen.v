@@ -63,7 +63,7 @@ assign csr = {{COUNTER_WIDTH_MAX-COUNTER_WIDTH{1'b0}}, sysClkDivisor,
 always @(posedge clk) begin
     if (heartbeatStrobe) begin
         clkGen <= 1;
-        clkGenStrobe <= 1;
+        clkGenStrobe <= 0;
         counter <= reloadHi;
         fullCounter <= 0;
         clkGenSynced <= (!clkGen && (counter == 0));
@@ -71,9 +71,9 @@ always @(posedge clk) begin
     else if (en) begin
         if (counter == 0) begin
             clkGen <= !clkGen;
+            clkGenStrobe <= 0;
 
             if (clkGen) begin
-                clkGenStrobe <= 0;
                 counter <= reloadLo;
                 // Weird, but counter counts only half
                 // of the whole divisor, so the up counter
@@ -81,7 +81,6 @@ always @(posedge clk) begin
                 fullCounter <= fullCounter + 1;
             end
             else begin
-                clkGenStrobe <= 1;
                 counter <= reloadHi;
                 fullCounter <= 0;
             end
@@ -90,6 +89,12 @@ always @(posedge clk) begin
             clkGenStrobe <= 0;
             counter <= counter - 1;
             fullCounter <= fullCounter + 1;
+
+            // assert strobe one clock before to match
+            // other counter behaviors
+            if (!clkGen && counter == 1) begin
+                clkGenStrobe <= 1;
+            end
         end
     end
     else begin
