@@ -395,6 +395,8 @@ injectorSequenceControl #(
     .SYSCLK_RATE(SYSCLK_FREQUENCY),
     .ALIGNMENT_SYNC_COUNT(EVG1_ALIGNMENT_SYNC_COUNT),
     .RF_COINC_IDX_WIDTH(EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH),
+    .RF_ALIGN_IDX_WIDTH(EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH),
+    .RF_COINC_TERM_WIDTH(EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH),
     .TX_CLK_PER_ALIGNMENT({
         CFG_EVG1_ALT_CLK_PER_BR_AR_ALIGNMENT,
         CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
@@ -405,9 +407,13 @@ injectorSequenceControl #(
     .sysStatus(GPIO_IN[GPIO_IDX_INJECTION_CYCLE_CSR]),
     .sysCsrAlignStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_ALIGN_CSR]),
     .sysAlignStatus(GPIO_IN[GPIO_IDX_INJECTION_ALIGN_CSR]),
+    .sysCsrTargetStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_TARGET_CSR]),
+    .sysTargetStatus(GPIO_IN[GPIO_IDX_INJECTION_TARGET_CSR]),
     .powerline_a(powerlineMarker),
+
     .evgTxClk(evg1TxClk),
     .evgRFCoincCount(BRARCoincPerRFCoincCounter[EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH-1:0]),
+    .evgRFAlignCount(BRARAlignPerBRARCoincCounter[EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH-1:0]),
     .evgAlignCounterDone(evg1AlignCounterDone),
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgHeartbeatAlign(evg1HeartbeatAlign),
@@ -1084,8 +1090,8 @@ assign probe[70] = evg2TxResetDone;
 assign probe[71] = evg2RxResetDone;
 assign probe[72] = evg2CpllLock;
 
-assign probe[151:128] = BRARCoincPerRFCoincCounter[23:0];
-assign probe[175:152] = BRARAlignPerBRARCoincCounter[23:0];
+assign probe[151:128] = BRARCoincPerRFCoincCounter[EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH-1:0];
+assign probe[175:152] = BRARAlignPerBRARCoincCounter[EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH-1:0];
 assign probe[199:176] = RFf1CoincCounter[23:0];
 assign probe[223:200] = BRARCoincCounter[23:0];
 assign probe[247:224] = BRARAlignCounter[23:0];
