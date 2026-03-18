@@ -61,43 +61,39 @@ assign csr = {{COUNTER_WIDTH_MAX-COUNTER_WIDTH{1'b0}}, sysClkDivisor,
 (*mark_debug=DEBUG*)reg [COUNTER_WIDTH-1:0] fullCounter = 0;
 (*mark_debug=DEBUG*)reg [COUNTER_HALF_WIDTH-1:0] counter = 0;
 always @(posedge clk) begin
-    if (en) begin
-        if (heartbeatStrobe) begin
-            clkGen <= 1;
-            clkGenStrobe <= 1;
-            counter <= reloadHi;
-            fullCounter <= 0;
-            clkGenSynced <= (!clkGen && (counter == 0));
-        end
-        else begin
-            if (counter == 0) begin
-                clkGen <= !clkGen;
+    if (heartbeatStrobe) begin
+        clkGen <= 1;
+        clkGenStrobe <= 1;
+        counter <= reloadHi;
+        fullCounter <= 0;
+        clkGenSynced <= (!clkGen && (counter == 0));
+    end
+    else if (en) begin
+        if (counter == 0) begin
+            clkGen <= !clkGen;
 
-                if (clkGen) begin
-                    clkGenStrobe <= 0;
-                    counter <= reloadLo;
-                    // Weird, but counter counts only half
-                    // of the whole divisor, so the up counter
-                    // needs to increment here too
-                    fullCounter <= fullCounter + 1;
-                end
-                else begin
-                    clkGenStrobe <= 1;
-                    counter <= reloadHi;
-                    fullCounter <= 0;
-                end
-            end
-            else begin
+            if (clkGen) begin
                 clkGenStrobe <= 0;
-                counter <= counter - 1;
+                counter <= reloadLo;
+                // Weird, but counter counts only half
+                // of the whole divisor, so the up counter
+                // needs to increment here too
                 fullCounter <= fullCounter + 1;
             end
+            else begin
+                clkGenStrobe <= 1;
+                counter <= reloadHi;
+                fullCounter <= 0;
+            end
+        end
+        else begin
+            clkGenStrobe <= 0;
+            counter <= counter - 1;
+            fullCounter <= fullCounter + 1;
         end
     end
     else begin
-        if (heartbeatStrobe) begin
-            clkGenSynced <= 0;
-        end
+        clkGenStrobe <= 0;
     end
 end
 
