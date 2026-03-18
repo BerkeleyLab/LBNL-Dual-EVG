@@ -153,3 +153,53 @@ injectionAlignFetchStatus(uint32_t *ap)
     ap[idx++] = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
     return idx;
 }
+
+/*
+ * Implementing the first part of:
+ * bBR =[(43*[(5*bAR) (mod 304)](mod125) + 72*iAR,BR(mod 125)] (mod 125) :
+ * bBR =[(43*[(5*bAR) (mod 304)](mod125)
+ */
+
+int
+injectionTargetSetRfCoincTerm(unsigned int arBucket)
+{
+    unsigned int rfCoincIdx = 0;
+    unsigned int rfCoincTerm = 0;
+
+    if (arBucket >= CFG_EVG1_BR_AR_COINC_PER_RF_COINC) {
+        return -1;
+    }
+
+    rfCoincIdx = (5 * arBucket) % CFG_EVG1_BR_AR_COINC_PER_RF_COINC;
+    rfCoincTerm = (43 * rfCoincIdx) % CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC;
+
+    GPIO_WRITE(GPIO_IDX_INJECTION_TARGET_CSR,
+            CSR_TGT_RF_COINC_IDX_W(rfCoincIdx) | CSR_TGT_RF_COINC_TERM_W(rfCoincTerm));
+
+    return 0;
+}
+
+int
+injectionTargetGetRfIdxTerm(void)
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET_CSR);
+
+    return CSR_TGT_RF_COINC_IDX_R(reg);
+}
+
+int
+injectionTargetGetRfCoincTerm(void)
+{
+    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET_CSR);
+
+    return CSR_TGT_RF_COINC_TERM_R(reg);
+}
+
+void injectionTargetDisplay(void)
+{
+    int rfCoincIdx = injectionTargetGetRfIdxTerm();
+    int rfCoincTerm = injectionTargetGetRfCoincTerm();
+
+    printf("Injection Target: rfCoincIdx: %d rfCoincTerm: %d\n",
+            rfCoincIdx, rfCoincTerm);
+}

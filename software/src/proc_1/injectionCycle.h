@@ -98,6 +98,27 @@
 #define CSR_INJ_ALIGN_R_HB_SEL_R(reg)               REG_GEN_READ(reg, CSR_INJ_ALIGN_R_HB_SEL_SHIFT, \
                                                             CSR_INJ_ALIGN_R_HB_SEL_SIZE)
 
+/*
+ * Definitions for Target CSR W
+ */
+#define CSR_TGT_RF_COINC_IDX_SIZE                   16
+#define CSR_TGT_RF_COINC_IDX_SHIFT                  0
+#define CSR_TGT_RF_COINC_IDX_MASK                   REG_GEN_MASK(CSR_TGT_RF_COINC_IDX_SHIFT, \
+                                                        CSR_TGT_RF_COINC_IDX_SIZE)
+#define CSR_TGT_RF_COINC_IDX_W(value)               REG_GEN_WRITE(value, CSR_TGT_RF_COINC_IDX_SHIFT, \
+                                                        CSR_TGT_RF_COINC_IDX_SIZE)
+#define CSR_TGT_RF_COINC_IDX_R(reg)                 REG_GEN_READ(reg, CSR_TGT_RF_COINC_IDX_SHIFT, \
+                                                        CSR_TGT_RF_COINC_IDX_SIZE)
+
+#define CSR_TGT_RF_COINC_TERM_SIZE                  16
+#define CSR_TGT_RF_COINC_TERM_SHIFT                 16
+#define CSR_TGT_RF_COINC_TERM_MASK                  REG_GEN_MASK(CSR_TGT_RF_COINC_TERM_SHIFT, \
+                                                       CSR_TGT_RF_COINC_TERM_SIZE)
+#define CSR_TGT_RF_COINC_TERM_W(value)              REG_GEN_WRITE(value, CSR_TGT_RF_COINC_TERM_SHIFT, \
+                                                       CSR_TGT_RF_COINC_TERM_SIZE)
+#define CSR_TGT_RF_COINC_TERM_R(reg)                REG_GEN_READ(reg, CSR_TGT_RF_COINC_TERM_SHIFT, \
+                                                       CSR_TGT_RF_COINC_TERM_SIZE)
+
 void injectionCycleEnable(int enable);
 void injectionCycleManualTrigger(void);
 void injectionCycleSetBaseInterval(int milliseconds);
@@ -109,5 +130,9 @@ int injectionAlignSetSel(unsigned int idx, int sel);
 int injectionAlignGetAlignSel(void);
 int injectionAlignGetHbSel(void);
 int injectionAlignFetchStatus(uint32_t *ap);
+int injectionTargetSetRfCoincTerm(unsigned int arBucket);
+int injectionTargetGetRfIdxTerm(void);
+int injectionTargetGetRfCoincTerm(void);
+void injectionTargetDisplay(void);
 
 #endif /* _INJECTION_CYCLE_H_ */
