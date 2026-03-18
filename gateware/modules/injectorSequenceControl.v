@@ -3,6 +3,8 @@ module injectorSequenceControl #(
     parameter SYSCLK_RATE               = -1,
     parameter ALIGNMENT_SYNC_COUNT      =  2,
     parameter RF_COINC_IDX_WIDTH        = -1,
+    parameter RF_ALIGN_IDX_WIDTH        = -1,
+    parameter RF_COINC_TERM_WIDTH       = -1,
     parameter [ALIGNMENT_SYNC_COUNT*32-1:0]
         TX_CLK_PER_ALIGNMENT             = {-32'd1, -32'd1}
     ) (
@@ -23,6 +25,7 @@ module injectorSequenceControl #(
     input                               evgTxClk,
 
     input      [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCount,
+    input      [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCount,
     output   [ALIGNMENT_SYNC_COUNT-1:0] evgAlignCounterDone,
 
     input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
@@ -30,11 +33,27 @@ module injectorSequenceControl #(
     output                              evgHeartbeatCore,
     output reg                          evgSequenceStart = 0);
 
-localparam RF_COINC_IDX_WIDTH_MAX = 10;
+localparam RF_COINC_IDX_WIDTH_MAX = 16;
 
 generate
 if (RF_COINC_IDX_WIDTH > RF_COINC_IDX_WIDTH_MAX) begin
     RF_COINC_IDX_WIDTH_bigger_than_RF_COINC_IDX_WIDTH_MAX();
+end
+endgenerate
+
+localparam RF_COINC_TERM_WIDTH_MAX = 16;
+
+generate
+if (RF_COINC_TERM_WIDTH > RF_COINC_TERM_WIDTH_MAX) begin
+    RF_COINC_TERM_WIDTH_bigger_than_RF_COINC_TERM_WIDTH_MAX();
+end
+endgenerate
+
+localparam RF_ALIGN_IDX_WIDTH_MAX = 8;
+
+generate
+if (RF_ALIGN_IDX_WIDTH > RF_ALIGN_IDX_WIDTH_MAX) begin
+    RF_ALIGN_IDX_WIDTH_bigger_than_RF_ALIGN_IDX_WIDTH_MAX();
 end
 endgenerate
 
@@ -122,17 +141,23 @@ always @(posedge sysClk) begin
 end
 
 // Target CSR
-// RF Coincidence = (5 * b_ar) (mod 304)
-// b_ar = AR target bucket
-reg [RF_COINC_IDX_WIDTH_MAX-1:0 ] sysRFCoincIdxSel = 0;
+//
+// bBR= (rfCOINCTERM + 72.iAR,BR(mod125))(mod 125)
+//
+// rfCOINCTERM = (43.rfCOINC)(mod 125)
+// rfCOINC = (5.bAR)(mod 304)
+//
+reg [RF_COINC_IDX_WIDTH-1:0 ] sysRFCoincIdxSel = 0;
+reg [RF_COINC_TERM_WIDTH-1:0 ] sysRFCoincTerm = 0;
 always @(posedge sysClk) begin
     if (sysCsrTargetStrobe) begin
-        sysRFCoincIdxSel <= sysGPIO_OUT[RF_COINC_IDX_WIDTH_MAX-1:0];
+        sysRFCoincIdxSel <= sysGPIO_OUT[0+:RF_COINC_IDX_WIDTH];
+        sysRFCoincTerm <= sysGPIO_OUT[RF_COINC_IDX_WIDTH_MAX+:RF_COINC_TERM_WIDTH];
     end
 end
 
-assign sysTargetStatus = {{16{1'b0}},
-                        {16-RF_COINC_IDX_WIDTH_MAX{1'b0}} , sysRFCoincIdxSel};
+assign sysTargetStatus = {{RF_COINC_TERM_WIDTH_MAX-RF_COINC_TERM_WIDTH{1'b0}}, sysRFCoincTerm,
+                        {RF_COINC_IDX_WIDTH_MAX-RF_COINC_IDX_WIDTH{1'b0}}, sysRFCoincIdxSel};
 
 // Power line trigger
 wire sysPowerline, sysPowerlineTimeout;
@@ -147,24 +172,26 @@ powerlineTrigger #(.CLK_RATE(SYSCLK_RATE))
 ///////////////////////////////////////////////////////////////////////////////
 // Event generator clock domain
 
-
 // Forward to TX clk
-
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] alignCounterSel;
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgHeartbeatSel;
-wire [RF_COINC_IDX_WIDTH_MAX-1:0] rfCoincIdxSel;
+wire [RF_COINC_IDX_WIDTH-1:0] rfCoincIdxSel;
+wire [RF_COINC_TERM_WIDTH-1:0] rfCoincTerm;
 
 forwardData #(
-    .DATA_WIDTH(RF_COINC_IDX_WIDTH_MAX+
+    .DATA_WIDTH(RF_COINC_TERM_WIDTH+
+                RF_COINC_IDX_WIDTH+
                 ALIGNMENT_SYNC_COUNT_MAX_WIDTH+
                 ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
   forwardData (
     .inClk(sysClk),
-    .inData({sysRFCoincIdxSel,
+    .inData({sysRFCoincTerm,
+            sysRFCoincIdxSel,
             sysAlignCounterSel,
             sysEvgHeartbeatSel}),
     .outClk(evgTxClk),
-    .outData({rfCoincIdxSel,
+    .outData({rfCoincTerm,
+              rfCoincIdxSel,
               alignCounterSel,
               evgHeartbeatSel}));
 
@@ -229,26 +256,37 @@ always @(posedge evgTxClk) begin
             alignCounterSelLatch <= alignCounterSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
         end
     end
+
     ST_AWAIT_POWER_LINE: begin
         if (powerlineTimeout || (powerline && !powerline_d)) begin
             injectorStartState <= ST_AWAIT_ALIGNMENT;
         end
     end
+
     ST_AWAIT_ALIGNMENT: begin
         if (alignmentCounterDone[alignCounterSelLatch]) begin
             injectorStartState <= ST_AWAIT_COINC_IDX_SEL;
+
+            if (rfCoincIdxSel == 0) begin
+                injectorStartState <= ST_TRIGGER;
+            end
         end
     end
+
     ST_AWAIT_COINC_IDX_SEL: begin
         if (rfCoincIdxSel == evgRFCoincCount) begin
             injectorStartState <= ST_TRIGGER;
         end
     end
+
     ST_TRIGGER: begin
         evgSequenceStart <= 1;
         injectorStartState <= ST_IDLE;
     end
-    default: ;
+
+    default: begin
+        injectorStartState <= ST_IDLE;
+    end
     endcase
 end
 
