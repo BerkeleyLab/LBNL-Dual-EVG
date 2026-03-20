@@ -195,13 +195,13 @@ begin
     end
     $display("DIFF 1: %g      DIFF 2: %g", diff[1], diff[2]);
 
-	if (!good) begin
-		$display("FAIL");
-		$stop(0);
-	end else begin
-		$display("PASS");
-		$finish(0);
-	end
+    if (!good) begin
+        $display("# FAIL");
+        $stop(0);
+    end else begin
+        $display("# PASS");
+        $finish(0);
+    end
 end
 
 task acquire;
