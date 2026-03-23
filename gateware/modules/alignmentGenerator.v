@@ -11,7 +11,7 @@ module alignmentGenerator #(
 // Produce alignment marker
 localparam ALIGNMENT_COUNTER_RELOAD = CLK_PER_ALIGNMENT - 2;
 localparam ALIGNMENT_COUNTER_WIDTH = $clog2(ALIGNMENT_COUNTER_RELOAD+1)+1;
-reg [ALIGNMENT_COUNTER_WIDTH-1:0] alignmentCounter;
+reg [ALIGNMENT_COUNTER_WIDTH-1:0] alignmentCounter = 0;
 
 always @(posedge clk) begin
     if (heartbeatStrobe) begin

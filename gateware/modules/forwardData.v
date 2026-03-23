@@ -8,14 +8,14 @@ module forwardData #(
     input                        inClk,
     input       [DATA_WIDTH-1:0] inData,
     input                        outClk,
-    output reg  [DATA_WIDTH-1:0] outData,
-    output reg                   outStrobe
+    output reg  [DATA_WIDTH-1:0] outData = 0,
+    output reg                   outStrobe = 0
 );
 
 //
 // Input clock domain
 //
-reg [DATA_WIDTH-1:0] inLatch;
+reg [DATA_WIDTH-1:0] inLatch = 0;
 reg inReq = 0;
 (* ASYNC_REG="TRUE" *) reg inAck_m = 0, inAck = 0;
 
