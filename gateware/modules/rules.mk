@@ -4,7 +4,8 @@ VFLAGS += -I. -y.
 TEST_BENCH = \
 	debounceFallingEdge_tb \
 	clkIntervalCounters_tb \
-	coincidenceRecorder_tb
+	coincidenceRecorder_tb \
+	injectorSequenceControl_tb
 
 TGT_ := $(TEST_BENCH)
 NO_CHECK =
@@ -14,7 +15,7 @@ CHK_ = $(filter-out $(NO_CHECK), $(TEST_BENCH:%_tb=%_check))
 targets: $(TGT_)
 checks: $(CHK_)
 
-CLEAN += $(TGT_) *_tb *.pyc *.bit *.in *.vcd *.lxt *~
+CLEAN += $(TGT_) *_tb *.pyc *.bit *.in *.vcd *.fst *~
 CLEAN_DIRS += _xilinx __pycache__
 
 ifneq (,$(findstring bit,$(MAKECMDGOALS)))
