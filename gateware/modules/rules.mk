@@ -18,6 +18,8 @@ CHK_ = $(filter-out $(NO_CHECK), $(TEST_BENCH:%_tb=%_check))
 targets: $(TGT_)
 checks: $(CHK_)
 
+mod125_reduction_tb: mod125_reduction_test_wrapper.sv
+
 CLEAN += $(TGT_) *_tb *.pyc *.bit *.in *.vcd *.fst *~
 CLEAN_DIRS += _xilinx __pycache__
 
