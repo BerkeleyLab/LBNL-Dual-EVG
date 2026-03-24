@@ -22,6 +22,8 @@ _xilinx/
 *.elf.size
 *.prm
 *.bin
+*.vcd
+*_tb
 
 # Bundled binary file with PL/PS config
 *BOOT.bin
