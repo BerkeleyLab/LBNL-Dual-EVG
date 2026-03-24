@@ -1,0 +1,70 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Tue Mar 24 17:38:56 2026
+[*]
+[dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/mod125_reduction.vcd"
+[dumpfile_mtime] "Tue Mar 24 17:37:54 2026"
+[dumpfile_size] 3427450
+[savefile] "/home/lrusso/repos/dual-evg/gateware/modules/mod125_reduction.gtkw"
+[timestart] 0
+[size] 1143 1340
+[pos] -3 24
+*-6.600000 76 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] mod125_reduction_tb.
+[sst_width] 249
+[signals_width] 275
+[sst_expanded] 1
+[sst_vpaned_height] 419
+@200
+-TB
+@420
+mod125_reduction_tb.NUM_TESTS
+mod125_reduction_tb.WIDTH
+@28
+mod125_reduction_tb.clk
+mod125_reduction_tb.next_valid_in
+mod125_reduction_tb.valid_in
+@24
+mod125_reduction_tb.next_data_in[31:0]
+mod125_reduction_tb.data_in[31:0]
+@28
+mod125_reduction_tb.valid_out
+@24
+mod125_reduction_tb.data_out[6:0]
+@420
+mod125_reduction_tb.errors
+@24
+mod125_reduction_tb.actual_val[6:0]
+mod125_reduction_tb.exp_val[6:0]
+mod125_reduction_tb.mod_val[6:0]
+@200
+-DUT
+@420
+mod125_reduction_tb.dut.NUM_STAGES
+mod125_reduction_tb.dut.WIDTH
+@28
+mod125_reduction_tb.dut.clk
+@25
+mod125_reduction_tb.dut.\data_r[0][31:0]
+mod125_reduction_tb.dut.\data_r[1][31:0]
+mod125_reduction_tb.dut.\data_r[2][31:0]
+mod125_reduction_tb.dut.\data_r[3][31:0]
+mod125_reduction_tb.dut.\data_r[4][31:0]
+mod125_reduction_tb.dut.\data_r[5][31:0]
+@28
+mod125_reduction_tb.dut.\valid_r[0]
+mod125_reduction_tb.dut.\valid_r[1]
+mod125_reduction_tb.dut.\valid_r[2]
+mod125_reduction_tb.dut.\valid_r[3]
+mod125_reduction_tb.dut.\valid_r[4]
+mod125_reduction_tb.dut.\valid_r[5]
+@25
+mod125_reduction_tb.dut.data_in[31:0]
+@24
+mod125_reduction_tb.dut.data_last[7:0]
+mod125_reduction_tb.dut.data_out[6:0]
+@28
+mod125_reduction_tb.dut.valid_in
+mod125_reduction_tb.dut.valid_out
+[pattern_trace] 1
+[pattern_trace] 0

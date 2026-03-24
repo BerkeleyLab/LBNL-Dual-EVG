@@ -1,11 +1,14 @@
 VFLAGS_DEP += -I. -y.
 VFLAGS += -I. -y.
 
+VERILOG += -g2012
+
 TEST_BENCH = \
 	debounceFallingEdge_tb \
 	clkIntervalCounters_tb \
 	coincidenceRecorder_tb \
-	injectorSequenceControl_tb
+	injectorSequenceControl_tb \
+	mod125_reduction_tb
 
 TGT_ := $(TEST_BENCH)
 NO_CHECK =
