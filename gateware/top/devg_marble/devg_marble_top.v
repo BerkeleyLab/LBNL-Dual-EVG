@@ -889,11 +889,11 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
 assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatCore, evg1TxClk } :
-     (diagnostic1Select == 3'h3) ? { BRARAlignClock, evg1CoincidenceMarker } :
+     (diagnostic1Select == 3'h3) ? { evg1HeartbeatAlign, evg1CoincidenceMarker } :
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatAlign, BROrbitClockDiv4Clock} :
      (diagnostic1Select == 3'h5) ? { evg1HeartbeatAlign, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatAlign, BRARCoincClock} :
-     (diagnostic1Select == 3'h7) ? { BRARAlignClock, BRARCoincClock} :
+     (diagnostic1Select == 3'h7) ? { evg1HeartbeatAlign, RFf1CoincClock } :
                                      diagnostic1ProgrammableOutputs;
 
 localparam DIAG2_SELECT_WIDTH = 3;

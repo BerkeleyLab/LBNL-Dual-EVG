@@ -1085,7 +1085,7 @@ wire evg1DiagnosticOut =
      (diagnostic1Select == 3'h4) ? evg1HeartbeatAlign :
      (diagnostic1Select == 3'h5) ? BRARAlignClock :
      (diagnostic1Select == 3'h6) ? BRARCoincClock :
-     (diagnostic1Select == 3'h7) ? BROrbitClockDiv4Clock :
+     (diagnostic1Select == 3'h7) ? RFf1CoincClock :
                                      diagnostic1ProgrammableOutputs;
 
 wire [CFG_EVIO_DIAG_OUT_COUNT-1:0] diagnostic2ProgrammableOutputs;
