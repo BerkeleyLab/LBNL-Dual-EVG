@@ -22,9 +22,12 @@ wire [31:0] sysCsr1, sysCsr2;
 wire        rf1heartbeat, rf2heartbeat;
 wire        sysRealignToggle;
 
-reg rf1clk_p=1, rf1clk=0, rf1clk_d=0, rf2clk_p=0, rf2clk=0, rf2clk_d=0;
+reg rf1clk_p=1, rf2clk_p=1;
 reg rf1clk_c1=0, rf2clk_c1=0;
 reg rf1clk_c2=0, rf2clk_c2=0;
+
+wire rf1clk, rf1clk_d;
+wire rf2clk, rf2clk_d;
 
 //
 // Instantiate devices under test
@@ -34,6 +37,7 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(CYCLES_PER_ACQUISITION),
     .SAMPLE_CLKS_PER_COINCIDENCE(RF2_CLK_PER_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(RF1_CLK_PER_COINCIDENCE),
+    .HEARTBEAT_GEN_COUNT(1),
     .TX_CLK_PER_HEARTBEAT(3*RF1_CLK_PER_COINCIDENCE))
   coincidenceRecorder1 (
     .sysClk(sysClk),
@@ -53,6 +57,7 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(CYCLES_PER_ACQUISITION),
     .SAMPLE_CLKS_PER_COINCIDENCE(RF1_CLK_PER_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(RF2_CLK_PER_COINCIDENCE),
+    .HEARTBEAT_GEN_COUNT(1),
     .TX_CLK_PER_HEARTBEAT(3*RF2_CLK_PER_COINCIDENCE))
   coincidenceRecorder2 (
     .sysClk(sysClk),
@@ -75,22 +80,14 @@ end
 always begin
     #4 rf1clk_p = !rf1clk_p;
 end
-always @(rf1clk_p) begin
-    #1.1 rf1clk = rf1clk_p;
-end
-always @(rf1clk) begin
-    #1.7 rf1clk_d = rf1clk;
-end
+assign #(1.1) rf1clk = rf1clk_p;
+assign #1.7 rf1clk_d = rf1clk;
 
 always begin
     #3.99 rf2clk_p = !rf2clk_p;
 end
-always @(rf2clk_p) begin
-    #2.302 rf2clk = rf2clk_p;
-end
-always @(rf2clk) begin
-    #1.6 rf2clk_d = rf2clk;
-end
+assign #(2.302) rf2clk = rf2clk_p;
+assign #1.6 rf2clk_d = rf2clk;
 
 always @(rf1clk) begin
     #RF1_CLK_TO_C1_DELAY rf1clk_c1 = rf1clk;
