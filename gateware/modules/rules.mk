@@ -7,17 +7,19 @@ TEST_BENCH = \
 	debounceFallingEdge_tb \
 	clkIntervalCounters_tb \
 	coincidenceRecorder_tb \
+	coincidenceRecorder2_tb \
 	injectorSequenceControl_tb \
 	mod125_reduction_tb
 
 TGT_ := $(TEST_BENCH)
-NO_CHECK =
+NO_CHECK = coincidenceRecorder2_check
 CHK_ = $(filter-out $(NO_CHECK), $(TEST_BENCH:%_tb=%_check))
 
 .PHONY: targets checks
 targets: $(TGT_)
 checks: $(CHK_)
 
+coincidenceRecorder2_tb: coincidenceRecorder.v
 mod125_reduction_tb: mod125_reduction_test_wrapper.sv
 
 CLEAN += $(TGT_) *_tb *.pyc *.bit *.in *.vcd *.fst *~
