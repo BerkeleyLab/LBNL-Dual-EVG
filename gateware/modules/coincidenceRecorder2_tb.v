@@ -5,10 +5,19 @@ module coincidenceRecorder2_tb();
 parameter CHANNEL_COUNT           = 2;
 parameter RF1_CLK_PER_COINCIDENCE = 10;
 parameter RF2_CLK_PER_COINCIDENCE = 11;
+//parameter RF1_CLK_PER_COINCIDENCE = 668;
+//parameter RF2_CLK_PER_COINCIDENCE = 669;
 parameter CYCLES_PER_ACQUISITION  = 7;
 
-parameter real RF1_CLK_PERIOD      = 2.200;
+//parameter real RF1_CLK_LOW_PERIOD  = 1.003;
+//parameter real RF1_CLK_HIGH_PERIOD = 1.004;
+parameter real RF1_CLK_LOW_PERIOD  = 1.1;
+parameter real RF1_CLK_HIGH_PERIOD = 1.1;
+parameter real RF1_CLK_PERIOD      = RF1_CLK_LOW_PERIOD + RF1_CLK_HIGH_PERIOD;
+
 parameter real RF2_CLK_PERIOD      = (RF1_CLK_PERIOD * RF1_CLK_PER_COINCIDENCE) / RF2_CLK_PER_COINCIDENCE;
+parameter real RF2_CLK_LOW_PERIOD  = RF2_CLK_PERIOD / 2;
+parameter real RF2_CLK_HIGH_PERIOD = RF2_CLK_PERIOD / 2;
 
 parameter real RF1_CLK_TO_C1_DELAY = 0.000;
 parameter real RF2_CLK_TO_C1_DELAY = 0.000;
@@ -25,15 +34,16 @@ wire [31:0] sysCsr1, sysCsr2;
 wire        rf1heartbeat, rf2heartbeat;
 wire        sysRealignToggle;
 
-reg rf1clk_p=1;
-reg rf2clk_p=1;
+reg rf1clk_p=1, rf2clk_p=1;
 reg rf1div4clk_p=1, rf2div4clk_p=1;
-reg rf1div4clk_c1=0, rf2div4clk_c1=0;
-reg rf1div4clk_c2=0, rf2div4clk_c2=0;
+reg rf1div4clk=1, rf2div4clk=1;
+
+wire rf1div4clk_c1, rf2div4clk_c1;
+wire rf1div4clk_c2, rf2div4clk_c2;
 
 wire rf1CoincidenceMarker, rf2CoincidenceMarker;
-wire rf1div4clk, rf1div4clk_d;
-wire rf2div4clk, rf2div4clk_d;
+wire rf1div4clk_d;
+wire rf2div4clk_d;
 
 //
 // Instantiate devices under test
@@ -90,15 +100,24 @@ end
 //
 
 always begin
-    #(RF1_CLK_PERIOD/2) rf1clk_p = !rf1clk_p;
+    #(RF1_CLK_LOW_PERIOD) rf1clk_p = 1'b0;
+    #(RF1_CLK_HIGH_PERIOD) rf1clk_p = 1'b1;
 end
 
 always begin
-    #(4*RF1_CLK_PERIOD/2) rf1div4clk_p = !rf1div4clk_p;
+    #(4*RF1_CLK_LOW_PERIOD) rf1div4clk_p = 1'b0;
+    #(4*RF1_CLK_HIGH_PERIOD) rf1div4clk_p = 1'b1;
 end
 
-assign #(2*RF1_CLK_PERIOD) rf1div4clk = rf1div4clk_p;
-//assign #(0.0) rf1div4clk = rf1div4clk_p;
+initial begin
+    #(0*RF1_CLK_PERIOD);
+
+    forever begin
+        #(4*RF1_CLK_LOW_PERIOD) rf1div4clk = 1'b0;
+        #(4*RF1_CLK_HIGH_PERIOD) rf1div4clk = 1'b1;
+    end
+
+end
 
 assign #0.5 rf1div4clk_d = rf1div4clk;
 
@@ -107,15 +126,24 @@ assign #0.5 rf1div4clk_d = rf1div4clk;
 //
 
 always begin
-    #(RF2_CLK_PERIOD/2) rf2clk_p = !rf2clk_p;
+    #(RF2_CLK_LOW_PERIOD) rf2clk_p = 1'b0;
+    #(RF2_CLK_HIGH_PERIOD) rf2clk_p = 1'b1;
 end
 
 always begin
-    #(4*RF2_CLK_PERIOD/2) rf2div4clk_p = !rf2div4clk_p;
+    #(4*RF2_CLK_LOW_PERIOD) rf2div4clk_p = 1'b0;
+    #(4*RF2_CLK_HIGH_PERIOD) rf2div4clk_p = 1'b1;
 end
 
-assign #(2*RF2_CLK_PERIOD) rf2div4clk = rf2div4clk_p;
-//assign #(0.0) rf2div4clk = rf2div4clk_p;
+initial begin
+    #(0*RF2_CLK_PERIOD);
+
+    forever begin
+        #(4*RF2_CLK_LOW_PERIOD) rf2div4clk = 1'b0;
+        #(4*RF2_CLK_HIGH_PERIOD) rf2div4clk = 1'b1;
+    end
+
+end
 
 assign #0.5 rf2div4clk_d = rf2div4clk;
 
@@ -123,18 +151,10 @@ assign #0.5 rf2div4clk_d = rf2div4clk;
 // clock delays
 //
 
-always @(rf1div4clk) begin
-    #RF1_CLK_TO_C1_DELAY rf1div4clk_c1 = rf1div4clk;
-end
-always @(rf2div4clk) begin
-    #RF2_CLK_TO_C1_DELAY rf2div4clk_c1 = rf2div4clk;
-end
-always @(rf1div4clk) begin
-    #RF2_CLK_TO_C2_DELAY rf1div4clk_c2 = rf1div4clk;
-end
-always @(rf2div4clk) begin
-    #RF2_CLK_TO_C2_DELAY rf2div4clk_c2 = rf2div4clk;
-end
+assign #RF1_CLK_TO_C1_DELAY rf1div4clk_c1 = rf1div4clk;
+assign #RF2_CLK_TO_C1_DELAY rf2div4clk_c1 = rf2div4clk;
+assign #RF2_CLK_TO_C2_DELAY rf1div4clk_c2 = rf1div4clk;
+assign #RF2_CLK_TO_C2_DELAY rf2div4clk_c2 = rf2div4clk;
 
 //
 // Measure alignment
