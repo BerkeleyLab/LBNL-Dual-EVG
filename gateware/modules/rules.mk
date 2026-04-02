@@ -1,7 +1,7 @@
 VFLAGS_DEP += -I. -y.
 VFLAGS += -I. -y.
 
-VERILOG += -g2012
+VERILOG += -g2012 -Y .sv
 
 TEST_BENCH = \
 	debounceFallingEdge_tb \
