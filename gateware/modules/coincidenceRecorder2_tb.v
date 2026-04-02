@@ -3,21 +3,24 @@
 module coincidenceRecorder2_tb();
 
 parameter CHANNEL_COUNT           = 2;
-parameter RF1_CLK_PER_COINCIDENCE = 10;
-parameter RF2_CLK_PER_COINCIDENCE = 11;
+parameter RF1_CLK_PER_COINCIDENCE = 23;
+parameter RF2_CLK_PER_COINCIDENCE = 24;
 //parameter RF1_CLK_PER_COINCIDENCE = 668;
 //parameter RF2_CLK_PER_COINCIDENCE = 669;
 parameter CYCLES_PER_ACQUISITION  = 7;
 
 //parameter real RF1_CLK_LOW_PERIOD  = 1.003;
 //parameter real RF1_CLK_HIGH_PERIOD = 1.004;
-parameter real RF1_CLK_LOW_PERIOD  = 1.1;
-parameter real RF1_CLK_HIGH_PERIOD = 1.1;
+parameter real RF1_CLK_LOW_PERIOD  = 7.992;
+parameter real RF1_CLK_HIGH_PERIOD = 7.992;
 parameter real RF1_CLK_PERIOD      = RF1_CLK_LOW_PERIOD + RF1_CLK_HIGH_PERIOD;
 
 parameter real RF2_CLK_PERIOD      = (RF1_CLK_PERIOD * RF1_CLK_PER_COINCIDENCE) / RF2_CLK_PER_COINCIDENCE;
 parameter real RF2_CLK_LOW_PERIOD  = RF2_CLK_PERIOD / 2;
 parameter real RF2_CLK_HIGH_PERIOD = RF2_CLK_PERIOD / 2;
+
+parameter RF1_CLK_T1_DELAY = 0;
+parameter RF2_CLK_T2_DELAY = 0;
 
 parameter real RF1_CLK_TO_C1_DELAY = 0.000;
 parameter real RF2_CLK_TO_C1_DELAY = 0.000;
@@ -38,10 +41,13 @@ reg rf1clk_p=1, rf2clk_p=1;
 reg rf1div4clk_p=1, rf2div4clk_p=1;
 reg rf1div4clk=1, rf2div4clk=1;
 
+reg rf1clk_coinc=0, rf2clk_coinc=0;
+
 wire rf1div4clk_c1, rf2div4clk_c1;
 wire rf1div4clk_c2, rf2div4clk_c2;
 
 wire rf1CoincidenceMarker, rf2CoincidenceMarker;
+wire rf1TxCoincidenceMarker, rf2TxCoincidenceMarker;
 wire rf1div4clk_d;
 wire rf2div4clk_d;
 
@@ -60,12 +66,12 @@ coincidenceRecorder #(
     .sysCsrStrobe(sysCsr1strobe),
     .sysGPIO_OUT(sysGPIO_OUT),
     .sysCsr(sysCsr1),
-    .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(rf2div4clk_c1),
     .refClk({rf1div4clk_d, rf1div4clk_c1}),
+    .coincidenceMarker(rf1CoincidenceMarker),
     .txClk(rf1div4clk_c1),
-    .txCoincidenceMarker(rf1CoincidenceMarker),
+    .txCoincidenceMarker(rf1TxCoincidenceMarker),
     .txHeartbeatStrobe(rf1heartbeat));
 
 
@@ -81,11 +87,13 @@ coincidenceRecorder #(
     .sysCsrStrobe(sysCsr2strobe),
     .sysGPIO_OUT(sysGPIO_OUT),
     .sysCsr(sysCsr2),
+    .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(rf1div4clk_c2),
     .refClk({rf2div4clk_d, rf2div4clk_c2}),
+    .coincidenceMarker(rf2CoincidenceMarker),
     .txClk(rf2div4clk_c2),
-    .txCoincidenceMarker(rf2CoincidenceMarker),
+    .txCoincidenceMarker(rf2TxCoincidenceMarker),
     .txHeartbeatStrobe(rf2heartbeat));
 
 //
@@ -105,12 +113,17 @@ always begin
 end
 
 always begin
+    #(RF1_CLK_PER_COINCIDENCE*RF1_CLK_PERIOD/2) rf1clk_coinc = 1'b0;
+    #(RF1_CLK_PER_COINCIDENCE*RF1_CLK_PERIOD/2) rf1clk_coinc = 1'b1;
+end
+
+always begin
     #(4*RF1_CLK_LOW_PERIOD) rf1div4clk_p = 1'b0;
     #(4*RF1_CLK_HIGH_PERIOD) rf1div4clk_p = 1'b1;
 end
 
 initial begin
-    #(0*RF1_CLK_PERIOD);
+    #(RF1_CLK_T1_DELAY*RF1_CLK_PERIOD);
 
     forever begin
         #(4*RF1_CLK_LOW_PERIOD) rf1div4clk = 1'b0;
@@ -131,12 +144,17 @@ always begin
 end
 
 always begin
+    #(RF2_CLK_PER_COINCIDENCE*RF2_CLK_PERIOD/2) rf2clk_coinc = 1'b0;
+    #(RF2_CLK_PER_COINCIDENCE*RF2_CLK_PERIOD/2) rf2clk_coinc = 1'b1;
+end
+
+always begin
     #(4*RF2_CLK_LOW_PERIOD) rf2div4clk_p = 1'b0;
     #(4*RF2_CLK_HIGH_PERIOD) rf2div4clk_p = 1'b1;
 end
 
 initial begin
-    #(0*RF2_CLK_PERIOD);
+    #(RF2_CLK_T2_DELAY*RF2_CLK_PERIOD);
 
     forever begin
         #(4*RF2_CLK_LOW_PERIOD) rf2div4clk = 1'b0;
@@ -257,10 +275,14 @@ end
 
 task acquire;
     begin
-    # 50;
+    repeat(128) begin
+        @(posedge sysClk);
+    end
     writeCsr1({1'b1, {31{1'b0}}});
     writeCsr2({1'b1, {31{1'b0}}});
-    # 50;
+    repeat(128) begin
+        @(posedge sysClk);
+    end
     while (sysCsr1[31]) #10;
     while (sysCsr2[31]) #10;
     end
@@ -289,7 +311,9 @@ task plotData1;
         $write("%d ", a);
         for (c = 0 ; c < CHANNEL_COUNT ; c = c + 1) begin
             writeCsr1({c, a});
-            #160;
+            repeat(32) begin
+                @(posedge sysClk);
+            end
             $write("%d ", sysCsr1[DATA_WIDTH-1:0]);
         end
         $display("");
@@ -305,7 +329,9 @@ task align1;
     risingEdge = 0;
     for (a = 0 ; a < RF2_CLK_PER_COINCIDENCE ; a = a + 1) begin
         writeCsr1({8'h0, a});
-        #160;
+        repeat(32) begin
+            @(posedge sysClk);
+        end
         newValue = (sysCsr1[DATA_WIDTH-1:0] != 0);
         if (newValue && !oldValue) begin
             risingEdge = a;
@@ -313,7 +339,7 @@ task align1;
         oldValue = newValue;
     end
     $display("EVG 1 Rising edge at %d", risingEdge);
-    risingEdge = (risingEdge - 3 + RF2_CLK_PER_COINCIDENCE) % RF2_CLK_PER_COINCIDENCE;
+    risingEdge = (risingEdge - 4 + RF2_CLK_PER_COINCIDENCE) % RF2_CLK_PER_COINCIDENCE;
     writeCsr1({1'b0, 1'b1, 1'b0, 5'h0, risingEdge});
     end
 endtask
@@ -341,7 +367,9 @@ task plotData2;
         $write("%d ", a);
         for (c = 0 ; c < CHANNEL_COUNT ; c = c + 1) begin
             writeCsr2({c, a});
-            #160;
+            repeat(32) begin
+                @(posedge sysClk);
+            end
             $write("%d ", sysCsr2[DATA_WIDTH-1:0]);
         end
         $display("");
@@ -357,7 +385,9 @@ task align2;
     risingEdge = 0;
     for (a = 0 ; a < RF1_CLK_PER_COINCIDENCE ; a = a + 1) begin
         writeCsr2({8'h0, a});
-        #160;
+        repeat(32) begin
+            @(posedge sysClk);
+        end
         newValue = (sysCsr2[DATA_WIDTH-1:0] != 0);
         if (newValue && !oldValue) begin
             risingEdge = a;
@@ -365,7 +395,7 @@ task align2;
         oldValue = newValue;
     end
     $display("EVG 2 Rising edge at %d", risingEdge);
-    risingEdge = (risingEdge - 3 + RF1_CLK_PER_COINCIDENCE) % RF1_CLK_PER_COINCIDENCE;
+    risingEdge = (risingEdge - 4 + RF1_CLK_PER_COINCIDENCE) % RF1_CLK_PER_COINCIDENCE;
     writeCsr2({1'b0, 1'b1, 1'b0, 5'h0, risingEdge});
     end
 endtask
