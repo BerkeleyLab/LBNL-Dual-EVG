@@ -231,28 +231,76 @@ injectorSequenceControl #(
 integer errors = 0;
 reg clkSynced = 0;
 
-initial begin
-    // Wait for two heartbeat alignments to establish initial sync
-    @(posedge evgHeartbeatAlign);
-    $display("Heartbeat #1 detected");
-    @(posedge evgHeartbeatAlign);
-    $display("Heartbeat #2 detected");
+localparam  ST_SYNC_WAIT_HB_1       = 3'd0,
+            ST_SYNC_WAIT_HB_2       = 3'd1,
+            ST_SYNC_WAIT_CLK_SYNC   = 3'd2,
+            ST_SYNC_CHECK_SYNC      = 3'd3;
+reg [2:0] syncState = ST_SYNC_WAIT_HB_1;
 
-    @(posedge evgTxClk);
-
-    wait(clkGenSynceds == {NUM_EVG_COUNTERS{1'b1}});
-    $display("Clk generation is synced");
-    clkSynced = 1;
-    @(posedge evgTxClk);
-
-    // Continuously check that the clkGenSynceds are properly aligned
-    forever begin
-        @(posedge evgTxClk);
-        if (clkGenSynceds != {NUM_EVG_COUNTERS{1'b1}}) begin
-            $display("@%0t: Error: Counters lost synchronization! clkGenSynceds = %b", $time, clkGenSynceds);
-            errors = errors + 1;
+always @(posedge evgTxClk) begin
+    case (syncState)
+        ST_SYNC_WAIT_HB_1: begin
+            if (evgHeartbeatAlign) begin
+                syncState <= ST_SYNC_WAIT_HB_2;
+                $display("Heartbeat #1 detected");
+            end
         end
-    end
+
+        ST_SYNC_WAIT_HB_2: begin
+            if (evgHeartbeatAlign) begin
+                syncState <= ST_SYNC_WAIT_CLK_SYNC;
+                $display("Heartbeat #2 detected");
+            end
+        end
+
+        ST_SYNC_WAIT_CLK_SYNC: begin
+            if (clkGenSynceds == {NUM_EVG_COUNTERS{1'b1}}) begin
+                syncState <= ST_SYNC_CHECK_SYNC;
+                clkSynced <= 1;
+                $display("Clk generation is synced");
+            end
+        end
+
+        ST_SYNC_CHECK_SYNC: begin
+            if (clkGenSynceds != {NUM_EVG_COUNTERS{1'b1}}) begin
+                errors <= errors + 1;
+                $display("@%0t: Error: Counters lost synchronization! clkGenSynceds = %b", $time, clkGenSynceds);
+            end
+        end
+
+    endcase
+end
+
+///////////////////////////////////////////////////////////////////////////////
+// Readiness Check
+
+localparam  ST_READINESS_WAIT_CSR       = 2'd0,
+            ST_READINESS_WAIT_CLK_SYNC  = 2'd1,
+            ST_READINESS_CHECK          = 2'd2;
+reg [1:0] readinessState = ST_READINESS_WAIT_CSR;
+reg stimStart = 0;
+
+always @(posedge evgTxClk) begin
+    case (readinessState)
+        ST_READINESS_WAIT_CSR: begin
+            if (CSR0.ready) begin
+                readinessState <= ST_READINESS_WAIT_CLK_SYNC;
+                $display("CSR0.ready detected");
+            end
+        end
+
+        ST_READINESS_WAIT_CLK_SYNC: begin
+            if (clkSynced) begin
+                stimStart <= 1;
+                readinessState <= ST_READINESS_CHECK;
+                $display("clkSynced detected");
+            end
+        end
+
+        ST_READINESS_CHECK: begin
+        end
+
+    endcase
 end
 
 initial begin
@@ -262,13 +310,9 @@ initial begin
     end
 
     // Wait for CSR module to assert its readiness
-    $display("Waiting for CSR0.ready ...");
-    wait(CSR0.ready);
-    @(posedge sysClk);
+    @(posedge stimStart);
+    $display("Stimulus starting");
 
-    // Wait for Clockes to be synced
-    $display("Waiting for clkSynced ...");
-    wait(clkSynced);
     @(posedge evgTxClk);
 
     // 1. Program the Target CSR
@@ -277,7 +321,7 @@ initial begin
     // rfCOINCTERM = (43.rfCOINC)(mod hBR)
     // rfCOINC = (5.bAR)(mod hAR)
     //
-    // For this simualation, hAR = 125, hBR = 5
+    // For this simulation, hAR = 125, hBR = 5
     //
     // rfCOINCTERM = (43.rfCOINC)(mod 5)
     // rfCOINC = (5.bAR)(mod 125)

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Mon Mar 23 18:47:24 2026
+[*] Tue Mar 31 22:23:22 2026
 [*]
 [dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/injectorSequenceControl.vcd"
-[dumpfile_mtime] "Mon Mar 23 18:46:13 2026"
-[dumpfile_size] 186020565
+[dumpfile_mtime] "Tue Mar 31 22:20:56 2026"
+[dumpfile_size] 186023805
 [savefile] "/home/lrusso/repos/dual-evg/gateware/modules/injectorSequenceControl.gtkw"
-[timestart] 1883464400
-[size] 1983 1290
-[pos] -3 34
-*-15.710216 1670140000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 1883081700
+[size] 2188 1340
+[pos] -3 39
+*-16.610216 1670140000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] injectorSequenceControl_tb.
 [treeopen] injectorSequenceControl_tb.dut.
 [treeopen] injectorSequenceControl_tb.dut.genblk5[0].
@@ -22,7 +22,7 @@
 [sst_width] 249
 [signals_width] 505
 [sst_expanded] 1
-[sst_vpaned_height] 402
+[sst_vpaned_height] 419
 @200
 -TB
 @420
@@ -191,10 +191,15 @@ injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.heartbeatStrobe
 injectorSequenceControl_tb.dut.ALIGNMENT_SYNC_COUNT
 injectorSequenceControl_tb.dut.ALIGNMENT_SYNC_COUNT_MAX_WIDTH
 injectorSequenceControl_tb.dut.ALIGNMENT_SYNC_COUNT_WIDTH
+injectorSequenceControl_tb.dut.BR_BUCKET_SUM_WIDTH
 injectorSequenceControl_tb.dut.CYCLE_COUNTER_RELOAD_WIDTH
 injectorSequenceControl_tb.dut.CYCLE_COUNTER_WIDTH
+injectorSequenceControl_tb.dut.MOD_125_WIDTH
+injectorSequenceControl_tb.dut.RF_ALIGN_COEFF
+injectorSequenceControl_tb.dut.RF_ALIGN_COEFF_WIDTH
 injectorSequenceControl_tb.dut.RF_ALIGN_IDX_WIDTH
 injectorSequenceControl_tb.dut.RF_ALIGN_IDX_WIDTH_MAX
+injectorSequenceControl_tb.dut.RF_ALIGN_TERM_WIDTH
 injectorSequenceControl_tb.dut.RF_COINC_IDX_WIDTH
 injectorSequenceControl_tb.dut.RF_COINC_IDX_WIDTH_MAX
 injectorSequenceControl_tb.dut.RF_COINC_TERM_WIDTH
@@ -207,126 +212,21 @@ injectorSequenceControl_tb.dut.ST_TRIGGER
 injectorSequenceControl_tb.dut.SYSCLK_DIVIDER_RELOAD
 injectorSequenceControl_tb.dut.SYSCLK_DIVIDER_WIDTH
 injectorSequenceControl_tb.dut.SYSCLK_PER_MILLISECOND
-@c00420
 injectorSequenceControl_tb.dut.SYSCLK_RATE
-@28
-(0)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(1)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(2)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(3)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(4)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(5)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(6)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(7)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(8)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(9)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(10)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(11)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(12)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(13)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(14)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(15)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(16)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(17)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(18)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(19)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(20)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(21)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(22)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(23)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(24)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(25)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(26)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(27)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(28)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(29)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(30)injectorSequenceControl_tb.dut.SYSCLK_RATE
-(31)injectorSequenceControl_tb.dut.SYSCLK_RATE
-@1401200
--group_end
-@c00420
 injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
 @28
-(0)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(1)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(2)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(3)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(4)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(5)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(6)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(7)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(8)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(9)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(10)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(11)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(12)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(13)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(14)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(15)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(16)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(17)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(18)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(19)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(20)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(21)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(22)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(23)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(24)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(25)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(26)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(27)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(28)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(29)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(30)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(31)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(32)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(33)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(34)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(35)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(36)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(37)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(38)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(39)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(40)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(41)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(42)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(43)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(44)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(45)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(46)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(47)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(48)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(49)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(50)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(51)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(52)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(53)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(54)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(55)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(56)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(57)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(58)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(59)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(60)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(61)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(62)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-(63)injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
-@1401200
--group_end
-@28
-injectorSequenceControl_tb.dut.alignCounterSelLatch
-injectorSequenceControl_tb.dut.alignCounterSel[2:0]
 injectorSequenceControl_tb.dut.alignmentCounterDone[1:0]
 injectorSequenceControl_tb.dut.alignmentCounterSyncedAll
 injectorSequenceControl_tb.dut.alignmentCounterSynced[1:0]
-@800028
 injectorSequenceControl_tb.dut.evgAlignCounterDone[1:0]
+injectorSequenceControl_tb.dut.evgAlignCounterSelLatch
+injectorSequenceControl_tb.dut.evgAlignCounterSel[2:0]
+@22
+injectorSequenceControl_tb.dut.evgBRBucketSumLatched[7:0]
+injectorSequenceControl_tb.dut.evgBRBucketSum[7:0]
+injectorSequenceControl_tb.dut.evgBRBucket[6:0]
 @28
-(0)injectorSequenceControl_tb.dut.evgAlignCounterDone[1:0]
-(1)injectorSequenceControl_tb.dut.evgAlignCounterDone[1:0]
-@1001200
--group_end
-@28
+injectorSequenceControl_tb.dut.evgBRBucket_valid
 injectorSequenceControl_tb.dut.evgHeartbeatAlign
 injectorSequenceControl_tb.dut.evgHeartbeatAlignSel
 injectorSequenceControl_tb.dut.evgHeartbeatCore
@@ -335,15 +235,22 @@ injectorSequenceControl_tb.dut.evgHeartbeatSel[2:0]
 injectorSequenceControl_tb.dut.evgHeartbeat[1:0]
 @24
 injectorSequenceControl_tb.dut.evgRFAlignCount[2:0]
+injectorSequenceControl_tb.dut.evgRFAlignCount_r[2:0]
+injectorSequenceControl_tb.dut.evgRFAlignMult[9:0]
+injectorSequenceControl_tb.dut.evgRFAlignMult_r[9:0]
+injectorSequenceControl_tb.dut.evgRFAlignTerm[6:0]
+injectorSequenceControl_tb.dut.evgRFAlignTerm_valid
+@25
 injectorSequenceControl_tb.dut.evgRFCoincCount[6:0]
+injectorSequenceControl_tb.dut.evgRFCoincIdxSel[6:0]
+injectorSequenceControl_tb.dut.evgRFCoincTerm[2:0]
 @28
 injectorSequenceControl_tb.dut.evgSequenceStart
 injectorSequenceControl_tb.dut.evgTxClk
 @24
 injectorSequenceControl_tb.dut.injectorStartState[2:0]
-@29
-injectorSequenceControl_tb.dut.injectorStartToggle
 @28
+injectorSequenceControl_tb.dut.injectorStartToggle
 injectorSequenceControl_tb.dut.injectorStartToggle_d
 injectorSequenceControl_tb.dut.injectorStartToggle_m
 injectorSequenceControl_tb.dut.powerline
@@ -352,10 +259,6 @@ injectorSequenceControl_tb.dut.powerlineTimeout_m
 injectorSequenceControl_tb.dut.powerline_a
 injectorSequenceControl_tb.dut.powerline_d
 injectorSequenceControl_tb.dut.powerline_m
-@24
-injectorSequenceControl_tb.dut.rfCoincIdxSel[6:0]
-injectorSequenceControl_tb.dut.rfCoincTerm[2:0]
-@28
 injectorSequenceControl_tb.dut.sysAlignCounterSel[2:0]
 @22
 injectorSequenceControl_tb.dut.sysAlignStatus[31:0]
@@ -369,7 +272,7 @@ injectorSequenceControl_tb.dut.sysCsrAlignStrobe
 injectorSequenceControl_tb.dut.sysCsrStrobe
 injectorSequenceControl_tb.dut.sysCsrTargetStrobe
 injectorSequenceControl_tb.dut.sysCycleCounterDone
-@24
+@22
 injectorSequenceControl_tb.dut.sysCycleCounterReload[15:0]
 injectorSequenceControl_tb.dut.sysCycleCounter[16:0]
 @28
@@ -381,6 +284,10 @@ injectorSequenceControl_tb.dut.sysGPIO_OUT[31:0]
 injectorSequenceControl_tb.dut.sysInjectorStartToggle
 injectorSequenceControl_tb.dut.sysPowerline
 injectorSequenceControl_tb.dut.sysPowerlineTimeout
+@22
+injectorSequenceControl_tb.dut.sysRFCoincIdxSel[6:0]
+@28
+injectorSequenceControl_tb.dut.sysRFCoincTerm[2:0]
 @22
 injectorSequenceControl_tb.dut.sysStatus[31:0]
 injectorSequenceControl_tb.dut.sysTargetStatus[31:0]
