@@ -26,13 +26,13 @@ localparam COUNTER_HALF_WIDTH   = COUNTER_WIDTH - 1;
 
 generate
 if ($clog2(DEFAULT_RATE_COUNT+1) > COUNTER_WIDTH) begin
-    DEFAULT_RATE_COUNT_bigger_than_COUNTER_WIDTH();
+    DEFAULT_RATE_COUNT_bigger_than_COUNTER_WIDTH err();
 end
 endgenerate
 
 generate
 if (COUNTER_WIDTH > COUNTER_WIDTH_MAX) begin
-    COUNTER_WIDTH_bigger_than_COUNTER_WIDTH_MAX();
+    COUNTER_WIDTH_bigger_than_COUNTER_WIDTH_MAX err2();
 end
 endgenerate
 
