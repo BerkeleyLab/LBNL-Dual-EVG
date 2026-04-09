@@ -2,7 +2,7 @@
 
 module clkIntervalCounters #(
     parameter CLK_RATE = 100000000,
-    parameter WITH_POWERLINE_GEN = "false"
+    parameter WITH_POWERLINE_GEN = "FALSE"
     ) (
     input             clk,
     output reg [31:0] microsecondsSinceBoot,
