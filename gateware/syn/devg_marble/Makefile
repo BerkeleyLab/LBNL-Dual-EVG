@@ -140,7 +140,7 @@ VFLAGS_COMMAND_FILE += \
 
 VFLAGS_DEP += $(addprefix -c, $(VFLAGS_COMMAND_FILE))
 
-VFLAGS_DEP += -DSIMULATE
+VFLAGS_DEP += -DSIMULATE -g2012 -Y .sv
 
 # Badger build
 RTEFI_CLIENT_LIST = hello.v
