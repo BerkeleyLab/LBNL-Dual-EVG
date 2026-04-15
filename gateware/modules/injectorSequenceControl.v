@@ -19,6 +19,7 @@ module injectorSequenceControl #(
 
     input              sysCsrTargetStrobe,
     output wire [31:0] sysTargetStatus,
+    output wire [31:0] sysTargetStatus2,
 
     input              powerline_a,
 
@@ -27,6 +28,9 @@ module injectorSequenceControl #(
     input      [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCount,
     input      [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCount,
     output   [ALIGNMENT_SYNC_COUNT-1:0] evgAlignCounterDone,
+
+    output      [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCountMon,
+    output      [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCountMon,
 
     input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
     output                              evgHeartbeatAlign,
@@ -140,6 +144,22 @@ always @(posedge sysClk) begin
     end
 end
 
+localparam MOD_125_WIDTH = 7;
+localparam BR_BUCKET_SUM_WIDTH = (RF_COINC_TERM_WIDTH > MOD_125_WIDTH)?
+    RF_COINC_TERM_WIDTH+1 : MOD_125_WIDTH+1;
+
+// Forward to Sys clk
+reg  [BR_BUCKET_SUM_WIDTH-1:0] evgBRBucketLatched = 0;
+wire [BR_BUCKET_SUM_WIDTH-1:0] sysBRBucketLatched;
+
+forwardData #(
+    .DATA_WIDTH(BR_BUCKET_SUM_WIDTH))
+  forwardDataToSys (
+    .inClk(evgTxClk),
+    .inData(evgBRBucketLatched),
+    .outClk(sysClk),
+    .outData(sysBRBucketLatched));
+
 // Target CSR
 //
 // bBR= (rfCOINCTERM + rfALIGNTERM)(mod 125)
@@ -161,6 +181,7 @@ end
 
 assign sysTargetStatus = {{RF_COINC_TERM_WIDTH_MAX-RF_COINC_TERM_WIDTH{1'b0}}, sysRFCoincTerm,
                         {RF_COINC_IDX_WIDTH_MAX-RF_COINC_IDX_WIDTH{1'b0}}, sysRFCoincIdxSel};
+assign sysTargetStatus2 = {{32-BR_BUCKET_SUM_WIDTH{1'b0}}, sysBRBucketLatched};
 
 // Power line trigger
 wire sysPowerline, sysPowerlineTimeout;
@@ -175,6 +196,10 @@ powerlineTrigger #(.CLK_RATE(SYSCLK_RATE))
 ///////////////////////////////////////////////////////////////////////////////
 // Event generator clock domain
 
+// Monitor outputs
+assign evgRFCoincCountMon = evgRFCoincCount;
+assign evgRFAlignCountMon = evgRFAlignCount;
+
 // Forward to TX clk
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgAlignCounterSel;
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgHeartbeatSel;
@@ -186,7 +211,7 @@ forwardData #(
                 RF_COINC_IDX_WIDTH+
                 ALIGNMENT_SYNC_COUNT_MAX_WIDTH+
                 ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
-  forwardData (
+  forwardDataToEVG (
     .inClk(sysClk),
     .inData({sysRFCoincTerm,
             sysRFCoincIdxSel,
@@ -243,7 +268,6 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 // Modulo calculation
-localparam MOD_125_WIDTH = 7;
 wire [MOD_125_WIDTH-1:0] evgRFAlignTerm;
 wire evgRFAlignTerm_valid;
 
@@ -257,10 +281,7 @@ mod125_reduction #(
     .valid_out(evgRFAlignTerm_valid)
 );
 
-localparam BR_BUCKET_SUM_WIDTH = (RF_COINC_TERM_WIDTH > MOD_125_WIDTH)?
-    RF_COINC_TERM_WIDTH+1 : MOD_125_WIDTH+1;
 reg [BR_BUCKET_SUM_WIDTH-1:0] evgBRBucketSum = 0;
-reg [BR_BUCKET_SUM_WIDTH-1:0] evgBRBucketSumLatched = 0;
 wire evgBRBucket_valid;
 wire [MOD_125_WIDTH-1:0] evgBRBucket;
 
@@ -340,7 +361,7 @@ always @(posedge evgTxClk) begin
             injectorStartState <= ST_TRIGGER;
             // BR bucket that needs to be selected to inject into
             // the specified AR bucket
-            evgBRBucketSumLatched <= evgBRBucketSum;
+            evgBRBucketLatched <= evgBRBucket;
         end
     end
 
