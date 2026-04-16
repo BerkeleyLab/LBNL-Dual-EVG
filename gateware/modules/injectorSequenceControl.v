@@ -347,12 +347,11 @@ always @(posedge evgTxClk) begin
     end
 
     ST_AWAIT_ALIGNMENT: begin
+        // State changes always happen on the transition of evgRFCoincCount
+        // "Max" -> 0. So, it's always guaranteed that the
+        // evgRFCoincIdxSel == evgRFCoincCount will happen in the next alignment cycle.
         if (alignmentCounterDone[evgAlignCounterSelLatch]) begin
             injectorStartState <= ST_AWAIT_COINC_IDX_SEL;
-
-            if (evgRFCoincIdxSel == 0) begin
-                injectorStartState <= ST_TRIGGER;
-            end
         end
     end
 
