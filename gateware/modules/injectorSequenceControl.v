@@ -31,6 +31,7 @@ module injectorSequenceControl #(
 
     output      [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCountMon,
     output      [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCountMon,
+    output reg                           evgSeqBusy = 0,
 
     input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
     output                              evgHeartbeatAlign,
@@ -151,14 +152,20 @@ localparam BR_BUCKET_SUM_WIDTH = (RF_COINC_TERM_WIDTH > MOD_125_WIDTH)?
 // Forward to Sys clk
 reg  [BR_BUCKET_SUM_WIDTH-1:0] evgBRBucketLatched = 0;
 wire [BR_BUCKET_SUM_WIDTH-1:0] sysBRBucketLatched;
+reg  [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCountLatched = 0;
+reg evgRFAlignCountLatched_valid = 0;
+wire [RF_ALIGN_IDX_WIDTH-1:0] sysRFAlignCountLatched;
 
 forwardData #(
-    .DATA_WIDTH(BR_BUCKET_SUM_WIDTH))
+    .DATA_WIDTH(RF_ALIGN_IDX_WIDTH+
+                BR_BUCKET_SUM_WIDTH))
   forwardDataToSys (
     .inClk(evgTxClk),
-    .inData(evgBRBucketLatched),
+    .inData({evgRFAlignCountLatched,
+            evgBRBucketLatched}),
     .outClk(sysClk),
-    .outData(sysBRBucketLatched));
+    .outData({sysRFAlignCountLatched,
+            sysBRBucketLatched}));
 
 // Target CSR
 //
@@ -181,7 +188,8 @@ end
 
 assign sysTargetStatus = {{RF_COINC_TERM_WIDTH_MAX-RF_COINC_TERM_WIDTH{1'b0}}, sysRFCoincTerm,
                         {RF_COINC_IDX_WIDTH_MAX-RF_COINC_IDX_WIDTH{1'b0}}, sysRFCoincIdxSel};
-assign sysTargetStatus2 = {{32-BR_BUCKET_SUM_WIDTH{1'b0}}, sysBRBucketLatched};
+assign sysTargetStatus2 = {{16-RF_ALIGN_IDX_WIDTH{1'b0}}, sysRFAlignCountLatched,
+                        {16-BR_BUCKET_SUM_WIDTH{1'b0}}, sysBRBucketLatched};
 
 // Power line trigger
 wire sysPowerline, sysPowerlineTimeout;
@@ -248,58 +256,6 @@ endgenerate
 assign evgAlignCounterDone = alignmentCounterDone;
 
 ///////////////////////////////////////////////////////////////////////////////
-// Second term multiplication
-//
-// rfALIGNTERM = (72.iAR,BR) (mod125)
-
-localparam RF_ALIGN_COEFF = 72;
-localparam RF_ALIGN_COEFF_WIDTH = $clog2(RF_ALIGN_COEFF+1);
-
-localparam RF_ALIGN_TERM_WIDTH = RF_ALIGN_COEFF_WIDTH + RF_ALIGN_IDX_WIDTH;
-
-reg [RF_ALIGN_TERM_WIDTH-1:0] evgRFAlignMult = 0, evgRFAlignMult_r = 0;
-reg [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCount_r = 0;
-
-always @(posedge evgTxClk) begin
-    evgRFAlignCount_r <= evgRFAlignCount;
-    evgRFAlignMult_r <= RF_ALIGN_COEFF * evgRFAlignCount_r;
-    evgRFAlignMult  <= evgRFAlignMult_r;
-end
-
-///////////////////////////////////////////////////////////////////////////////
-// Modulo calculation
-wire [MOD_125_WIDTH-1:0] evgRFAlignTerm;
-wire evgRFAlignTerm_valid;
-
-mod125_reduction #(
-    .WIDTH(RF_ALIGN_TERM_WIDTH))
-  mod125RFAlign (
-    .clk(evgTxClk),
-    .data_in(evgRFAlignMult),
-    .valid_in(1'b1),
-    .data_out(evgRFAlignTerm),
-    .valid_out(evgRFAlignTerm_valid)
-);
-
-reg [BR_BUCKET_SUM_WIDTH-1:0] evgBRBucketSum = 0;
-wire evgBRBucket_valid;
-wire [MOD_125_WIDTH-1:0] evgBRBucket;
-
-always @(posedge evgTxClk) begin
-    evgBRBucketSum <= evgRFCoincTerm + evgRFAlignTerm;
-end
-
-mod125_reduction #(
-    .WIDTH(BR_BUCKET_SUM_WIDTH))
-  mod125BRBucket (
-    .clk(evgTxClk),
-    .data_in(evgBRBucketSum),
-    .valid_in(1'b1),
-    .data_out(evgBRBucket),
-    .valid_out(evgBRBucket_valid)
-);
-
-///////////////////////////////////////////////////////////////////////////////
 // Main trigger FSM
 
 // Detect cycle start requests
@@ -316,7 +272,8 @@ localparam ST_IDLE                = 3'd0,
            ST_AWAIT_POWER_LINE    = 3'd1,
            ST_AWAIT_ALIGNMENT     = 3'd2,
            ST_AWAIT_COINC_IDX_SEL = 3'd3,
-           ST_TRIGGER             = 3'd4;
+           ST_AWAIT_BUCKET_CALC   = 3'd4,
+           ST_TRIGGER             = 3'd5;
 reg [2:0] injectorStartState = ST_IDLE;
 // Latch only the part that will be used
 reg [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] evgAlignCounterSelLatch = 0;
@@ -331,10 +288,15 @@ always @(posedge evgTxClk) begin
     powerlineTimeout_m <= sysPowerlineTimeout;
     powerlineTimeout   <= powerlineTimeout_m;
 
+    // Default values
+    evgRFAlignCountLatched_valid <= 0;
+
     case (injectorStartState)
     ST_IDLE: begin
         evgSequenceStart <= 0;
+        evgSeqBusy <= 0;
         if (injectorStartToggle != injectorStartToggle_d) begin
+            evgSeqBusy <= 1;
             injectorStartState <= ST_AWAIT_POWER_LINE;
             evgAlignCounterSelLatch <= evgAlignCounterSel[ALIGNMENT_SYNC_COUNT_WIDTH-1:0];
         end
@@ -357,6 +319,14 @@ always @(posedge evgTxClk) begin
 
     ST_AWAIT_COINC_IDX_SEL: begin
         if (evgRFCoincIdxSel == evgRFCoincCount) begin
+            evgRFAlignCountLatched <= evgRFAlignCount;
+            evgRFAlignCountLatched_valid <= 1;
+            injectorStartState <= ST_AWAIT_BUCKET_CALC;
+        end
+    end
+
+    ST_AWAIT_BUCKET_CALC: begin
+        if (evgBRBucket_valid) begin
             injectorStartState <= ST_TRIGGER;
             // BR bucket that needs to be selected to inject into
             // the specified AR bucket
@@ -374,6 +344,71 @@ always @(posedge evgTxClk) begin
     end
     endcase
 end
+
+///////////////////////////////////////////////////////////////////////////////
+// Bucket/Delay calculation
+//
+// rfALIGNTERM = (72.iAR,BR) (mod125)
+
+localparam RF_ALIGN_COEFF = 72;
+localparam RF_ALIGN_COEFF_WIDTH = $clog2(RF_ALIGN_COEFF+1);
+
+localparam RF_ALIGN_TERM_WIDTH = RF_ALIGN_COEFF_WIDTH + RF_ALIGN_IDX_WIDTH;
+
+reg [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCount_r = 0;
+reg evgRFAlignCount_r_valid = 0;
+
+reg [RF_ALIGN_TERM_WIDTH-1:0] evgRFAlignMult_r = 0;
+reg evgRFAlignMult_r_valid = 0;
+
+reg [RF_ALIGN_TERM_WIDTH-1:0] evgRFAlignMult = 0;
+reg evgRFAlignMult_valid = 0;
+
+always @(posedge evgTxClk) begin
+    evgRFAlignCount_r <= evgRFAlignCountLatched;
+    evgRFAlignCount_r_valid <= evgRFAlignCountLatched_valid;
+
+    evgRFAlignMult_r <= RF_ALIGN_COEFF * evgRFAlignCount_r;
+    evgRFAlignMult_r_valid <= evgRFAlignCount_r_valid;
+
+    evgRFAlignMult  <= evgRFAlignMult_r;
+    evgRFAlignMult_valid <= evgRFAlignMult_r_valid;
+end
+
+///////////////////////////////////////////////////////////////////////////////
+// Modulo calculation
+wire [MOD_125_WIDTH-1:0] evgRFAlignTerm;
+wire evgRFAlignTerm_valid;
+
+mod125_reduction #(
+    .WIDTH(RF_ALIGN_TERM_WIDTH))
+  mod125RFAlign (
+    .clk(evgTxClk),
+    .data_in(evgRFAlignMult),
+    .valid_in(evgRFAlignMult_valid),
+    .data_out(evgRFAlignTerm),
+    .valid_out(evgRFAlignTerm_valid)
+);
+
+reg [BR_BUCKET_SUM_WIDTH-1:0] evgBRBucketSum = 0;
+reg evgBRBucketSum_valid = 0;
+wire [MOD_125_WIDTH-1:0] evgBRBucket;
+wire evgBRBucket_valid;
+
+always @(posedge evgTxClk) begin
+    evgBRBucketSum <= evgRFCoincTerm + evgRFAlignTerm;
+    evgBRBucketSum_valid <= evgRFAlignTerm_valid;
+end
+
+mod125_reduction #(
+    .WIDTH(BR_BUCKET_SUM_WIDTH))
+  mod125BRBucket (
+    .clk(evgTxClk),
+    .data_in(evgBRBucketSum),
+    .valid_in(evgBRBucketSum_valid),
+    .data_out(evgBRBucket),
+    .valid_out(evgBRBucket_valid)
+);
 
 // Alignement heartbeat
 wire [ALIGNMENT_SYNC_COUNT_WIDTH-1:0] evgHeartbeatAlignSel =
