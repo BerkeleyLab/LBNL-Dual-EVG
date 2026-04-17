@@ -1,6 +1,6 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, ClockCycles, with_timeout
+from cocotb.triggers import RisingEdge, ClockCycles, with_timeout, Combine, SimTimeoutError
 from cocotb.handle import Immediate
 import random
 import logging
@@ -25,6 +25,7 @@ class Timing:
     def terms_2_br_bucket(coinc_term, align_term):
         return (coinc_term + align_term) % 125
 
+
 class TB:
     def __init__(self, dut):
         dut._log.setLevel(logging.INFO)
@@ -45,8 +46,10 @@ class TB:
         width = len(self.dut.clkGenSynceds)
         expected_val = (1 << width) - 1
 
-        if (self.dut.clkGenSynceds.value.is_resolvable and
-            self.dut.clkGenSynceds.value.to_unsigned() == expected_val):
+        if (
+            self.dut.clkGenSynceds.value.is_resolvable
+            and self.dut.clkGenSynceds.value.to_unsigned() == expected_val
+        ):
             return True
         else:
             return False
@@ -57,18 +60,38 @@ class TB:
         await RisingEdge(self.dut.evgTxClk)
         await RisingEdge(self.dut.evgTxClk)
 
-        assert self.is_clk_gen_synched(), \
-                f"Clock generation is not synchronized"
+        assert self.is_clk_gen_synched(), f"Clock generation is not synchronized"
 
     async def monitor_sync(self):
         while True:
             await RisingEdge(self.dut.evgTxClk)
 
-            assert self.is_clk_gen_synched(), \
-                    f"Clock generation is not synchronized"
+            assert self.is_clk_gen_synched(), f"Clock generation is not synchronized"
+
+    async def wait_for_powerline(self):
+        await RisingEdge(self.dut.powerlineMarker)
+
+    async def wait_for_alignment(self, idx=0):
+        sig = self.dut.evgAlignCounterDone
+        prev_val = sig.value[idx]
+
+        while True:
+            await sig.value_change
+            curr_val = sig.value[idx]
+
+            if prev_val == 0 and curr_val == 1:
+                break
+
+            prev_val = curr_val
+
+    async def wait_for_coinc_idx(self, coinc_idx):
+        current_coinc_idx, _ = await self.read_current_counters()
+
+        while current_coinc_idx != coinc_idx:
+            current_coinc_idx, _ = await self.read_current_counters()
 
     async def _write_csr(self, strobe_name, value):
-        stb = getattr(self.dut, strobe_name);
+        stb = getattr(self.dut, strobe_name)
 
         await RisingEdge(self.dut.sysClk)
         self.dut.sysGPIO_OUT.value = value
@@ -87,7 +110,7 @@ class TB:
         await self._write_csr("sysCsrStrobe", value)
 
     def _read_csr(self, reg_name):
-        reg = getattr(self.dut, reg_name);
+        reg = getattr(self.dut, reg_name)
 
         return reg.value.to_unsigned()
 
@@ -107,13 +130,12 @@ class TB:
         await RisingEdge(self.dut.sysClk)
         return self._read_csr("sysTargetStatus2")
 
-    async def read_rf_coinc_count(self):
+    async def read_current_counters(self):
         await RisingEdge(self.dut.evgTxClk)
-        return self.dut.evgRFCoincCountMon.value.to_unsigned()
-
-    async def read_rf_align_count(self):
-        await RisingEdge(self.dut.evgTxClk)
-        return self.dut.evgRFAlignCountMon.value.to_unsigned()
+        return (
+            self.dut.evgRFCoincCountMon.value.to_unsigned(),
+            self.dut.evgRFAlignCountMon.value.to_unsigned(),
+        )
 
     def gen_random_ar_bucket(self):
         ar_bucket = random.randint(0, 303)
@@ -123,6 +145,42 @@ class TB:
         num_cycles = random.randint(0, 1000)
         await ClockCycles(self.dut.sysClk, num_cycles)
         return num_cycles
+
+    async def injection_check_fsm(self, coinc_idx):
+        # Mimic internal FSM
+        assert (
+            self.dut.evgSeqBusy.value == 0
+        ), f"FAIL: Injection FSM is busy"
+
+        # Wait for it to start
+        await RisingEdge(self.dut.evgSeqBusy)
+
+        # Wait for powerline trigger
+        await self.wait_for_powerline()
+
+        # Wait for alignment clock
+        await self.wait_for_alignment()
+
+        # Wait for coincidence index to match
+        await self.wait_for_coinc_idx(coinc_idx)
+
+        # Get current counters
+        coinc_count, align_count = await self.read_current_counters()
+
+        assert (
+            coinc_idx == coinc_count
+        ), f"FAIL: Current coincidence count ({coinc_count}) "
+        f"differs from requested index ({coinc_idx})"
+
+        # Calculate expected BR bucket
+        expected_align_term = Timing.align_idx_2_align_term(align_count)
+        expected_br_bucket = Timing.terms_2_br_bucket(coinc_term, expected_align_term)
+
+        self.dut._log.info(f"Expected alignment count: {align_count}")
+        self.dut._log.info(f"Expected alignment term: {expected_align_term}")
+        self.dut._log.info(f"Expected BR bucket: {expected_br_bucket}")
+
+        return (align_count, expected_br_bucket)
 
     async def injection_request(self, ar_bucket):
         self.dut._log.info(f"AR bucket selection: {ar_bucket}")
@@ -144,42 +202,80 @@ class TB:
         await self.write_csr(0x80)
 
         self.dut._log.info("Waiting for sequence start flag...")
-        try:
-            await with_timeout(RisingEdge(self.dut.evgSequenceStart), 2.5, 'ms')
-        except SimTimeoutError:
-            assert False, "FAIL: Timeout waiting for evgSequenceStart assertion"
+        await RisingEdge(self.dut.evgSequenceStart)
 
-        align_count = await self.read_rf_align_count()
-        coinc_count = await self.read_rf_coinc_count()
-
-        self.dut._log.info(f"Alignment count: {align_count}")
-        self.dut._log.info(f"Coincidence count: {coinc_count}")
-
-        align_term = Timing.align_idx_2_align_term(align_count)
-        expected_br_bucket = Timing.terms_2_br_bucket(coinc_term, align_term)
-
-        self.dut._log.info(f"Alignment term: {align_term}")
-        self.dut._log.info(f"Expected BR bucket: {expected_br_bucket}")
-
+        # Read back calculated/latched values
         await ClockCycles(self.dut.sysClk, 8)
-        actual_br_bucket = await self.read_target_status2()
-        self.dut._log.info(f"Actual BR bucket value: {actual_br_bucket}")
+        target_sta = await self.read_target_status()
+        target_sta2 = await self.read_target_status2()
 
-        assert expected_br_bucket == actual_br_bucket, \
-                f"FAIL: Expected BR bucket ({expected_br_bucket}) != " \
-                f"Acutal BR bucket ({actual_br_bucket})"
+        align_count = (target_sta2 & 0xFFFF0000) >> 16
+        br_bucket = target_sta2 & 0xFFFF
+
+        return (align_count, br_bucket)
+
+    async def injection_request_check(self, ar_bucket):
+        coinc_idx = Timing.arb_2_coinc_idx(ar_bucket)
+
+        # Start the request and the check task
+        inj_check = cocotb.start_soon(
+            with_timeout(self.injection_check_fsm(coinc_idx), 20, "ms")
+        )
+        inj_request = cocotb.start_soon(
+            with_timeout(self.injection_request(coinc_idx), 19, "ms")
+        )
+
+        try:
+            excepted_align_count, excepted_br_bucket = await inj_check
+        except SimTimeoutError:
+            assert False, "FAIL: Wait for injection_check timeout"
+
+        try:
+            actual_align_count, actual_br_bucket = await inj_request
+        except SimTimeoutError:
+            assert False, "FAIL: Wait for injection_request timeout"
+
+        assert expected_br_bucket == actual_br_bucket, (
+            f"FAIL: Expected BR bucket ({expected_br_bucket}) != "
+            f"Acutal BR bucket ({actual_br_bucket})"
+        )
+
+        assert expected_align_count == actual_align_count, (
+            f"FAIL: Expected alignment count ({expected_align_count}) != "
+            f"Acutal alignment count ({actual_align_count})"
+        )
 
 
-@cocotb.test(timeout_time=10, timeout_unit='sec')
-async def test(dut, length=1):
+async def do_randomized_tests(tb, num_tests=20):
+    tb.dut._log.info(f"--- Starting {num_tests} Randomized Tests ---")
+
+    for i in range(num_tests):
+        tb.dut._log.info(f"Test #{i+1}...")
+        num_cycles = await tb.wait_random()
+        tb.dut._log.info(f"Random wait of {num_cycles} sysClk cycles")
+        ar_bucket = tb.gen_random_ar_bucket()
+        await tb.injection_request_check(ar_bucket=ar_bucket)
+
+    tb.dut._log.info("--- Randomized Tests Complete ---\n")
+
+
+async def do_coincidence_index_0_test(tb):
+    tb.dut._log.info("--- Starting Coincidence Index 0 Test ---")
+
+    num_cycles = await tb.wait_random()
+    ar_bucket = 0
+    await tb.injection_request_check(ar_bucket=ar_bucket)
+
+    tb.dut._log.info("--- Coincidence Index 0 Test Complete ---\n")
+
+
+@cocotb.test(timeout_time=10, timeout_unit="sec")
+async def execute_all_tests(dut):
     tb = TB(dut)
 
     await tb.wait_sync()
     cocotb.start_soon(tb.monitor_sync())
 
-    for i in range(20):
-        tb.dut._log.info(f"Test #{i+1}...")
-        num_cycles = await tb.wait_random()
-        tb.dut._log.info(f"Random wait of {num_cycles} sysClk cycles")
-        ar_bucket = tb.gen_random_ar_bucket()
-        await tb.injection_request(ar_bucket = ar_bucket)
+    # Tests themselves
+    await do_coincidence_index_0_test(tb)
+    await do_randomized_tests(tb, num_tests=20)
