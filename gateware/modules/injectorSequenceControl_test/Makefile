@@ -16,6 +16,7 @@ VERILOG_SOURCES += \
 	$(MODULES_DIR)/pulseWatchdog.v \
 	$(MODULES_DIR)/pulseSync.v \
 	$(MODULES_DIR)/heartbeatGenerator.v \
-	$(MODULES_DIR)/clkIntervalCounters.v
+	$(MODULES_DIR)/clkIntervalCounters.v \
+	$(MODULES_DIR)/debounceFallingEdge.v
 
 include ../rules_cocotb.mk

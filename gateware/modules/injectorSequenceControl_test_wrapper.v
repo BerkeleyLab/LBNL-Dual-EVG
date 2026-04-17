@@ -43,6 +43,8 @@ module injectorSequenceControl_test_wrapper #(
 
     output wire    [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCountMon,
     output wire    [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCountMon,
+    output wire                             evgSeqBusy,
+
     output wire  [ALIGNMENT_SYNC_COUNT-1:0] evgAlignCounterDone,
 
     output wire        evgHeartbeatAlign,
@@ -84,14 +86,12 @@ clkIntervalCounters #(
     .PPS(sysPPSmarker),
     .powerline(sysPowerline));
 
-wire sysPowerlineTrigger;
+wire powerlineMarker;
 
-powerlineTrigger #(
-    .CLK_RATE(SYSCLK_RATE))
-  powerlineTrigger (
+debounceFallingEdge debouncePowerline (
     .clk(sysClk),
-    .powerline_a(sysPowerline),
-    .trigger(sysPowerlineTrigger));
+    .inputActiveLow(sysPowerline),
+    .debouncedActiveHigh(powerlineMarker));
 
 ///////////////////////////////////////////////////////////////////////////////
 // evgCounters
@@ -171,7 +171,7 @@ injectorSequenceControl #(
     .sysAlignStatus(sysAlignStatus),
     .sysTargetStatus(sysTargetStatus),
     .sysTargetStatus2(sysTargetStatus2),
-    .powerline_a(sysPowerlineTrigger),
+    .powerline_a(powerlineMarker),
     .evgTxClk(evgTxClk),
 
     .evgRFCoincCount(rfCoincPerArBrAlignCounter[RF_COINC_IDX_WIDTH-1:0]),
@@ -179,6 +179,7 @@ injectorSequenceControl #(
 
     .evgRFCoincCountMon(evgRFCoincCountMon),
     .evgRFAlignCountMon(evgRFAlignCountMon),
+    .evgSeqBusy(evgSeqBusy),
 
     .evgAlignCounterDone(evgAlignCounterDone),
     .evgHeartbeat(evgHeartbeat),
