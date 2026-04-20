@@ -96,8 +96,8 @@ always_ff @(posedge clk) begin
             input_val <= queue_out[WIDTH+6:7];
             actual_val <= data_out;
 
-            $display("%m: time %0t: input_val: %0d, exp_val: %0d , actual_val: %0d",
-                $time, input_val, exp_val, actual_val);
+            // $display("%m: time %0t: input_val: %0d, exp_val: %0d , actual_val: %0d",
+            //     $time, input_val, exp_val, actual_val);
 
             if (actual_val !== exp_val) begin
                 $display("%m: time %0t: MISMATCH! input_val: %0d, expected: %0d, got: %0d",
