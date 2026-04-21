@@ -17,6 +17,8 @@ variables:
 
 tests:
   before_script: |
+    apt-get update && \
+    apt-get install -y autoconf && \
     python3 -m pip install -r requirements.txt && \
     git clone --branch=v5.046 https://github.com/verilator/verilator && \
     cd verilator && \
