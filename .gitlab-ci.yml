@@ -5,15 +5,21 @@ stages:
 
 default:
   tags:
-    - xilinx
+    - xilinx-bookworm
 
 variables:
   XILINX_VIVADO: /non-free/Xilinx/Vivado_and_Vitis/2020.2.2/Vivado/2020.2
   XILINX_VITIS: /non-free/Xilinx/Vivado_and_Vitis/2020.2.2/Vitis/2020.2
+  CI_REGISTRY: mohs2.dhcp.lbl.gov
+  IMAGE_BASE: xilinx_env_bookworm
+  DEFAULT_IMAGE: ${CI_REGISTRY}/${IMAGE_BASE}
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
   GIT_SUBMODULE_STRATEGY: normal
   FF_SCRIPT_SECTIONS: "true"
+
+# default image if no other specified
+image: $DEFAULT_IMAGE
 
 tests:
   before_script: |
