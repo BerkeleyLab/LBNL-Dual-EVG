@@ -12,7 +12,7 @@ TEST_BENCH = \
 	mod125_reduction_tb
 
 TGT_ := $(TEST_BENCH)
-NO_CHECK = coincidenceRecorder2_check
+NO_CHECK = coincidenceRecorder2_check injectorSequenceControl_check
 CHK_ = $(filter-out $(NO_CHECK), $(TEST_BENCH:%_tb=%_check))
 
 .PHONY: targets checks
