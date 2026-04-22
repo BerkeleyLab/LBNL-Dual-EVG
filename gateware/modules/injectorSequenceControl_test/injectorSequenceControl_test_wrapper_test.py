@@ -1,6 +1,12 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, ClockCycles, with_timeout, Combine, SimTimeoutError
+from cocotb.triggers import (
+    RisingEdge,
+    ClockCycles,
+    with_timeout,
+    Combine,
+    SimTimeoutError,
+)
 from cocotb.handle import Immediate
 import random
 import logging
@@ -13,13 +19,17 @@ class Timing:
         return (5 * ar_bucket) % 304
 
     @staticmethod
-    def arb_2_coinc_term(ar_bucket):
-        coinc_idx = Timing.arb_2_coinc_idx(ar_bucket)
+    def coinc_idx_2_coinc_term(coinc_idx):
         return (43 * coinc_idx) % 125
 
     @staticmethod
     def align_idx_2_align_term(br_ar_align):
         return (72 * br_ar_align) % 125
+
+    @staticmethod
+    def arb_2_coinc_term(ar_bucket):
+        coinc_idx = Timing.arb_2_coinc_idx(ar_bucket)
+        return Timing.coinc_idx_2_coinc_term(coinc_idx)
 
     @staticmethod
     def terms_2_br_bucket(coinc_term, align_term):
@@ -148,9 +158,7 @@ class TB:
 
     async def injection_check_fsm(self, coinc_idx):
         # Mimic internal FSM
-        assert (
-            self.dut.evgSeqBusy.value == 0
-        ), f"FAIL: Injection FSM is busy"
+        assert self.dut.evgSeqBusy.value == 0, f"FAIL: Injection FSM is busy"
 
         # Wait for it to start
         await RisingEdge(self.dut.evgSeqBusy)
@@ -174,10 +182,14 @@ class TB:
 
         # Calculate expected BR bucket
         expected_align_term = Timing.align_idx_2_align_term(align_count)
-        expected_br_bucket = Timing.terms_2_br_bucket(coinc_term, expected_align_term)
+        expected_coinc_term = Timing.coinc_idx_2_coinc_term(coinc_idx)
+        expected_br_bucket = Timing.terms_2_br_bucket(
+            expected_coinc_term, expected_align_term
+        )
 
         self.dut._log.info(f"Expected alignment count: {align_count}")
         self.dut._log.info(f"Expected alignment term: {expected_align_term}")
+        self.dut._log.info(f"Expected coincidence term: {expected_coinc_term}")
         self.dut._log.info(f"Expected BR bucket: {expected_br_bucket}")
 
         return (align_count, expected_br_bucket)
