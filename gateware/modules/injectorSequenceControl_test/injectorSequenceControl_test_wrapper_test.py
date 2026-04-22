@@ -156,7 +156,15 @@ class TB:
         await ClockCycles(self.dut.sysClk, num_cycles)
         return num_cycles
 
-    async def injection_check_fsm(self, coinc_idx):
+    async def injection_check_fsm(self, ar_bucket):
+        self.dut._log.info(f"inj_check: AR bucket selection: {ar_bucket}")
+
+        coinc_idx = Timing.arb_2_coinc_idx(ar_bucket)
+        coinc_term = Timing.arb_2_coinc_term(ar_bucket)
+
+        self.dut._log.info(f"inj_check: Coincidence index: {coinc_idx}")
+        self.dut._log.info(f"inj_check: Coincidence term: {coinc_term}")
+
         # Mimic internal FSM
         assert self.dut.evgSeqBusy.value == 0, f"FAIL: inj_check: Injection FSM is busy"
 
@@ -186,15 +194,14 @@ class TB:
 
         # Calculate expected BR bucket
         expected_align_term = Timing.align_idx_2_align_term(align_count)
-        expected_coinc_term = Timing.coinc_idx_2_coinc_term(coinc_idx)
         expected_br_bucket = Timing.terms_2_br_bucket(
-            expected_coinc_term, expected_align_term
+            coinc_term, expected_align_term
         )
 
         self.dut._log.info(f"inj_check: Expected alignment count: {align_count}")
         self.dut._log.info(f"inj_check: Expected alignment term: {expected_align_term}")
         self.dut._log.info(
-            f"inj_check: Expected coincidence term: {expected_coinc_term}"
+            f"inj_check: Expected coincidence term: {coinc_term}"
         )
         self.dut._log.info(f"inj_check: Expected BR bucket: {expected_br_bucket}")
 
@@ -240,14 +247,12 @@ class TB:
         return (align_count, br_bucket)
 
     async def injection_request_check(self, ar_bucket):
-        coinc_idx = Timing.arb_2_coinc_idx(ar_bucket)
-
         # Start the request and the check task
         inj_check = cocotb.start_soon(
-            with_timeout(self.injection_check_fsm(coinc_idx), 20, "ms")
+            with_timeout(self.injection_check_fsm(ar_bucket), 20, "ms")
         )
         inj_request = cocotb.start_soon(
-            with_timeout(self.injection_request(coinc_idx), 20, "ms")
+            with_timeout(self.injection_request(ar_bucket), 20, "ms")
         )
 
         try:
