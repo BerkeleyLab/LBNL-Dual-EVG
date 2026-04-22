@@ -24,13 +24,16 @@ image: $DEFAULT_IMAGE
 tests:
   before_script: |
     apt-get update && \
-    apt-get install -y autoconf && \
+    apt-get install -y \
+      autoconf \
+      help2man && \
+    rm -rf /var/lib/apt/lists/* && \
     python3 -m pip install -r requirements.txt && \
     git clone --branch=v5.046 https://github.com/verilator/verilator && \
     cd verilator && \
     autoconf && \
     ./configure && \
-    make && \
+    make -j4 && \
     make install &&
     verilator --version
   stage: tests
