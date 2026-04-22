@@ -158,18 +158,22 @@ class TB:
 
     async def injection_check_fsm(self, coinc_idx):
         # Mimic internal FSM
-        assert self.dut.evgSeqBusy.value == 0, f"FAIL: Injection FSM is busy"
+        assert self.dut.evgSeqBusy.value == 0, f"FAIL: inj_check: Injection FSM is busy"
 
         # Wait for it to start
+        self.dut._log.info(f"inj_check: Waiting for sequence request...")
         await RisingEdge(self.dut.evgSeqBusy)
 
         # Wait for powerline trigger
+        self.dut._log.info(f"inj_check: Waiting for powerline...")
         await self.wait_for_powerline()
 
         # Wait for alignment clock
+        self.dut._log.info(f"inj_check: Waiting for alignment...")
         await self.wait_for_alignment()
 
         # Wait for coincidence index to match
+        self.dut._log.info(f"inj_check: Waiting for coincidence index: {coinc_idx}...")
         await self.wait_for_coinc_idx(coinc_idx)
 
         # Get current counters
@@ -177,7 +181,7 @@ class TB:
 
         assert (
             coinc_idx == coinc_count
-        ), f"FAIL: Current coincidence count ({coinc_count}) "
+        ), f"FAIL: inj_check: Current coincidence count ({coinc_count}) "
         f"differs from requested index ({coinc_idx})"
 
         # Calculate expected BR bucket
@@ -187,33 +191,35 @@ class TB:
             expected_coinc_term, expected_align_term
         )
 
-        self.dut._log.info(f"Expected alignment count: {align_count}")
-        self.dut._log.info(f"Expected alignment term: {expected_align_term}")
-        self.dut._log.info(f"Expected coincidence term: {expected_coinc_term}")
-        self.dut._log.info(f"Expected BR bucket: {expected_br_bucket}")
+        self.dut._log.info(f"inj_check: Expected alignment count: {align_count}")
+        self.dut._log.info(f"inj_check: Expected alignment term: {expected_align_term}")
+        self.dut._log.info(
+            f"inj_check: Expected coincidence term: {expected_coinc_term}"
+        )
+        self.dut._log.info(f"inj_check: Expected BR bucket: {expected_br_bucket}")
 
         return (align_count, expected_br_bucket)
 
     async def injection_request(self, ar_bucket):
-        self.dut._log.info(f"AR bucket selection: {ar_bucket}")
+        self.dut._log.info(f"inj_req: AR bucket selection: {ar_bucket}")
 
         coinc_idx = Timing.arb_2_coinc_idx(ar_bucket)
         coinc_term = Timing.arb_2_coinc_term(ar_bucket)
 
-        self.dut._log.info(f"Coincidence index: {coinc_idx}")
-        self.dut._log.info(f"Coincidence term: {coinc_term}")
+        self.dut._log.info(f"inj_req: Coincidence index: {coinc_idx}")
+        self.dut._log.info(f"inj_req: Coincidence term: {coinc_term}")
 
         target_val = ((coinc_term & 0xFFFF) << 16) | (coinc_idx & 0xFFFF)
         await self.write_target_csr(target_val)
 
-        self.dut._log.info("Programming Alignment CSR...")
+        self.dut._log.info("inj_req: Programming Alignment CSR...")
         await self.write_align_csr((1 << 31))  # MSB=1 routes to alignCounterSel = 0
         await self.write_align_csr((1 << 30))  # Bit 30=1 routes to evgHeartbeatSel = 0
 
-        self.dut._log.info("Triggering Injection Cycle...")
+        self.dut._log.info("inj_req: Triggering Injection Cycle...")
         await self.write_csr(0x80)
 
-        self.dut._log.info("Waiting for sequence start flag...")
+        self.dut._log.info("inj_req: Waiting for sequence start flag...")
         await RisingEdge(self.dut.evgSequenceStart)
 
         # Read back calculated/latched values
@@ -223,6 +229,13 @@ class TB:
 
         align_count = (target_sta2 & 0xFFFF0000) >> 16
         br_bucket = target_sta2 & 0xFFFF
+
+        align_term = Timing.align_idx_2_align_term(align_count)
+
+        self.dut._log.info(f"inj_req: Actual alignment count: {align_count}")
+        self.dut._log.info(f"inj_req: Actual alignment term: {align_term}")
+        self.dut._log.info(f"inj_req: Actual coincidence term: {coinc_term}")
+        self.dut._log.info(f"inj_req: Actual BR bucket: {br_bucket}")
 
         return (align_count, br_bucket)
 
@@ -234,7 +247,7 @@ class TB:
             with_timeout(self.injection_check_fsm(coinc_idx), 20, "ms")
         )
         inj_request = cocotb.start_soon(
-            with_timeout(self.injection_request(coinc_idx), 19, "ms")
+            with_timeout(self.injection_request(coinc_idx), 20, "ms")
         )
 
         try:
@@ -242,10 +255,14 @@ class TB:
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_check timeout"
 
+        print(f"expected: {expected_align_count}, {expected_br_bucket}")
+
         try:
             actual_align_count, actual_br_bucket = await inj_request
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_request timeout"
+
+        print(f"actual: {actual_align_count}, {actual_br_bucket}")
 
         assert expected_br_bucket == actual_br_bucket, (
             f"FAIL: Expected BR bucket ({expected_br_bucket}) != "
