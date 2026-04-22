@@ -238,7 +238,7 @@ class TB:
         )
 
         try:
-            excepted_align_count, excepted_br_bucket = await inj_check
+            expected_align_count, expected_br_bucket = await inj_check
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_check timeout"
 
