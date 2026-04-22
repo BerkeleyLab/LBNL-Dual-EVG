@@ -255,14 +255,10 @@ class TB:
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_check timeout"
 
-        print(f"expected: {expected_align_count}, {expected_br_bucket}")
-
         try:
             actual_align_count, actual_br_bucket = await inj_request
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_request timeout"
-
-        print(f"actual: {actual_align_count}, {actual_br_bucket}")
 
         assert expected_br_bucket == actual_br_bucket, (
             f"FAIL: Expected BR bucket ({expected_br_bucket}) != "
