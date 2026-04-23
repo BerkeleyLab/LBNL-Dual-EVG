@@ -2,7 +2,10 @@
 
 module clkIntervalCounters #(
     parameter CLK_RATE = 100000000,
-    parameter WITH_POWERLINE_GEN = "FALSE"
+    parameter WITH_POWERLINE_GEN = "FALSE",
+    // microseconds between powerline ticks.
+    // 60Hz is 1/60*1e6 ~= 16667us
+    parameter POWERLINE_US = 16667
     ) (
     input             clk,
     output reg [31:0] microsecondsSinceBoot,
@@ -48,15 +51,14 @@ endgenerate
 generate
 if (WITH_POWERLINE_GEN == "TRUE") begin
 
-// 60Hz is 1/60*1e6 ~= 16667us
-localparam POWERLINE_DIVIDER_WIDTH = $clog2(16667 - 1);
-reg [POWERLINE_DIVIDER_WIDTH:0] powerlineDivider = 16667 - 2;
+localparam POWERLINE_DIVIDER_WIDTH = $clog2(POWERLINE_US - 1);
+reg [POWERLINE_DIVIDER_WIDTH:0] powerlineDivider = POWERLINE_US - 2;
 wire powerlineTick = powerlineDivider[POWERLINE_DIVIDER_WIDTH];
 
 always @(posedge clk) begin
     if(usecTick) begin
         if (powerlineTick) begin
-            powerlineDivider <= 16667 - 2;
+            powerlineDivider <= POWERLINE_US - 2;
             powerline <= 1;
         end
         else begin
