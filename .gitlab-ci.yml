@@ -51,6 +51,8 @@ gw_devg_marble:
   before_script:
     - cd gateware/syn/devg_${VARIANT_MOD}marble && ls /non-free
   stage: gateware
+  # Don't wait for the tests stage
+  needs: []
   script: |
     make EVIO_TYPE=${EVIO_TYPE} clean && \
       PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.bit && \
