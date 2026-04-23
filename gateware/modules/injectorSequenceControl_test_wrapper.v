@@ -78,7 +78,8 @@ wire sysPowerline;
 
 clkIntervalCounters #(
     .CLK_RATE(SYSCLK_RATE),
-    .WITH_POWERLINE_GEN("TRUE"))
+    .WITH_POWERLINE_GEN("TRUE"),
+    .POWERLINE_US(1000))
   clkIntervalCounters (
     .clk(sysClk),
     .microsecondsSinceBoot(),
