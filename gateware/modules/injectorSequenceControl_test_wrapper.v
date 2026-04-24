@@ -43,6 +43,7 @@ module injectorSequenceControl_test_wrapper #(
 
     output wire    [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCountMon,
     output wire    [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCountMon,
+    output                                  evgPowerlineMon,
     output wire                             evgSeqBusy,
 
     output wire  [ALIGNMENT_SYNC_COUNT-1:0] evgAlignCounterDone,
@@ -180,6 +181,7 @@ injectorSequenceControl #(
 
     .evgRFCoincCountMon(evgRFCoincCountMon),
     .evgRFAlignCountMon(evgRFAlignCountMon),
+    .evgPowerlineMon(evgPowerlineMon),
     .evgSeqBusy(evgSeqBusy),
 
     .evgAlignCounterDone(evgAlignCounterDone),

@@ -22,6 +22,7 @@ module injectorSequenceControl #(
     output wire [31:0] sysTargetStatus2,
 
     input              powerline_a,
+    output             sysPowerlineMon,
 
     input                               evgTxClk,
 
@@ -31,6 +32,7 @@ module injectorSequenceControl #(
 
     output      [RF_COINC_IDX_WIDTH-1:0] evgRFCoincCountMon,
     output      [RF_ALIGN_IDX_WIDTH-1:0] evgRFAlignCountMon,
+    output                               evgPowerlineMon,
     output reg                           evgSeqBusy = 0,
 
     input    [ALIGNMENT_SYNC_COUNT-1:0] evgHeartbeat,
@@ -200,6 +202,7 @@ powerlineTrigger #(.CLK_RATE(SYSCLK_RATE))
     .trigger(sysPowerline),
     .powerlineTimeout(sysPowerlineTimeout));
 
+assign sysPowerlineMon = sysPowerline;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Event generator clock domain
@@ -266,6 +269,7 @@ reg injectorStartToggle = 0, injectorStartToggle_d = 0;
 (*ASYNC_REG="true"*) reg powerline_m = 0;
 (*ASYNC_REG="true"*) reg powerlineTimeout_m = 0;
 reg powerline = 0, powerline_d = 0, powerlineTimeout = 0;
+assign evgPowerlineMon = powerline;
 
 // Synchronization state machine
 localparam ST_IDLE                = 3'd0,
