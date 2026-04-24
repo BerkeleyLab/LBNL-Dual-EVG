@@ -79,7 +79,7 @@ class TB:
             assert self.is_clk_gen_synched(), f"Clock generation is not synchronized"
 
     async def wait_for_powerline(self):
-        await RisingEdge(self.dut.powerlineMarker)
+        await RisingEdge(self.dut.evgPowerlineMon)
 
     async def wait_for_alignment(self, idx=0):
         sig = self.dut.evgAlignCounterDone
