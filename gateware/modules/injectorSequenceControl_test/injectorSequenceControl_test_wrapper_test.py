@@ -8,6 +8,7 @@ from cocotb.triggers import (
     SimTimeoutError,
 )
 from cocotb.handle import Immediate
+from dataclasses import dataclass
 import random
 import logging
 import numpy as np
@@ -34,6 +35,22 @@ class Timing:
     @staticmethod
     def terms_2_br_bucket(coinc_term, align_term):
         return (coinc_term + align_term) % 125
+
+    @staticmethod
+    def br_bucket_2_inj_delay(br_bucket):
+        return (94 * br_bucket) % 125
+
+    @staticmethod
+    def rf_coinc_2_extr_delay(rf_coinc):
+        return 152 * rf_coinc
+
+@dataclass
+class InjectionParameters:
+    inj_delay : int
+    extr_delay : int
+    align_idx : int
+    coinc_idx : int
+    br_bucket : int
 
 
 class TB:
@@ -140,6 +157,13 @@ class TB:
         await RisingEdge(self.dut.sysClk)
         return self._read_csr("sysTargetStatus2")
 
+    async def read_inj_delays(self):
+        await RisingEdge(self.dut.evgTxClk)
+        return (
+            self.dut.evgInjDelay.value.to_unsigned(),
+            self.dut.evgExtrDelay.value.to_unsigned(),
+        )
+
     async def read_current_counters(self):
         await RisingEdge(self.dut.evgTxClk)
         return (
@@ -197,15 +221,25 @@ class TB:
         expected_br_bucket = Timing.terms_2_br_bucket(
             coinc_term, expected_align_term
         )
+        expected_inj_delay = Timing.br_bucket_2_inj_delay(expected_br_bucket)
+        expected_extr_delay = Timing.rf_coinc_2_extr_delay(coinc_idx)
 
         self.dut._log.info(f"inj_check: Expected alignment count: {align_count}")
         self.dut._log.info(f"inj_check: Expected alignment term: {expected_align_term}")
         self.dut._log.info(
             f"inj_check: Expected coincidence term: {coinc_term}"
         )
+        self.dut._log.info(f"inj_check: Expected injection delay: {expected_inj_delay}")
+        self.dut._log.info(f"inj_check: Expected extraction delay: {expected_extr_delay}")
         self.dut._log.info(f"inj_check: Expected BR bucket: {expected_br_bucket}")
 
-        return (align_count, expected_br_bucket)
+        return InjectionParameters(
+            inj_delay = expected_inj_delay,
+            extr_delay = expected_extr_delay,
+            align_idx = align_count,
+            coinc_idx = coinc_idx,
+            br_bucket = expected_br_bucket,
+        )
 
     async def injection_request(self, ar_bucket):
         self.dut._log.info(f"inj_req: AR bucket selection: {ar_bucket}")
@@ -233,6 +267,7 @@ class TB:
         await ClockCycles(self.dut.sysClk, 8)
         target_sta = await self.read_target_status()
         target_sta2 = await self.read_target_status2()
+        inj_delay, extr_delay = await self.read_inj_delays()
 
         align_count = (target_sta2 & 0xFFFF0000) >> 16
         br_bucket = target_sta2 & 0xFFFF
@@ -242,9 +277,17 @@ class TB:
         self.dut._log.info(f"inj_req: Actual alignment count: {align_count}")
         self.dut._log.info(f"inj_req: Actual alignment term: {align_term}")
         self.dut._log.info(f"inj_req: Actual coincidence term: {coinc_term}")
+        self.dut._log.info(f"inj_req: Actual injection delay: {inj_delay}")
+        self.dut._log.info(f"inj_req: Actual extraction delay: {extr_delay}")
         self.dut._log.info(f"inj_req: Actual BR bucket: {br_bucket}")
 
-        return (align_count, br_bucket)
+        return InjectionParameters(
+            inj_delay = inj_delay,
+            extr_delay = extr_delay,
+            align_idx = align_count,
+            coinc_idx = coinc_idx,
+            br_bucket = br_bucket,
+        )
 
     async def injection_request_check(self, ar_bucket):
         # Start the request and the check task
@@ -256,24 +299,35 @@ class TB:
         )
 
         try:
-            expected_align_count, expected_br_bucket = await inj_check
+            expected_params = await inj_check
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_check timeout"
 
         try:
-            actual_align_count, actual_br_bucket = await inj_request
+            actual_params = await inj_request
         except SimTimeoutError:
             assert False, "FAIL: Wait for injection_request timeout"
 
-        assert expected_br_bucket == actual_br_bucket, (
-            f"FAIL: Expected BR bucket ({expected_br_bucket}) != "
-            f"Acutal BR bucket ({actual_br_bucket})"
+        assert expected_params.align_idx == actual_params.align_idx, (
+            f"FAIL: Expected alignment count ({expected_params.align_idx}) != "
+            f"Actual alignment count ({actual_params.align_idx})"
         )
 
-        assert expected_align_count == actual_align_count, (
-            f"FAIL: Expected alignment count ({expected_align_count}) != "
-            f"Acutal alignment count ({actual_align_count})"
+        assert expected_params.inj_delay == actual_params.inj_delay, (
+            f"FAIL: Expected injection delay ({expected_params.inj_delay}) != "
+            f"Actual injection delay ({actual_params.inj_delay})"
         )
+
+        assert expected_params.extr_delay == actual_params.extr_delay, (
+            f"FAIL: Expected extraction delay ({expected_params.extr_delay}) != "
+            f"Actual extraction delay ({actual_params.extr_delay})"
+        )
+
+        assert expected_params.br_bucket == actual_params.br_bucket, (
+            f"FAIL: Expected BR bucket ({expected_params.br_bucket}) != "
+            f"Actual BR bucket ({actual_params.br_bucket})"
+        )
+
 
 
 async def do_randomized_tests(tb, num_tests=20):

@@ -1,20 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Wed Apr 15 23:16:33 2026
+[*] Thu May 14 18:27:36 2026
 [*]
 [dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/injectorSequenceControl_test/dump.fst"
-[dumpfile_mtime] "Wed Apr 15 23:16:32 2026"
-[dumpfile_size] 89811347
+[dumpfile_mtime] "Thu May 14 17:34:25 2026"
+[dumpfile_size] 326549587
 [savefile] "/home/lrusso/repos/dual-evg/gateware/modules/injectorSequenceControl_test/injectorSequenceControl_test.gtkw"
-[timestart] 51578336000
-[size] 1688 1340
-[pos] -3 24
-*-17.100000 51578976000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 51173575200
+[size] 3436 1340
+[pos] -3 44
+*-15.900002 51174304000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] injectorSequenceControl_test_wrapper.
-[sst_width] 324
-[signals_width] 354
+[treeopen] injectorSequenceControl_test_wrapper.injectorSequenceControl.
+[sst_width] 295
+[signals_width] 343
 [sst_expanded] 1
-[sst_vpaned_height] 410
+[sst_vpaned_height] 409
 @200
 -DUT
 @420
@@ -26,15 +27,6 @@ injectorSequenceControl_test_wrapper.CLK_PER_TICKS_COINC_WIDTH
 injectorSequenceControl_test_wrapper.NUM_EVG_COUNTERS
 injectorSequenceControl_test_wrapper.RF_ALIGN_IDX_WIDTH
 injectorSequenceControl_test_wrapper.RF_COINC_IDX_WIDTH
-injectorSequenceControl_test_wrapper.SIM_ALT_CLK_PER_BR_AR_ALIGNMENT
-injectorSequenceControl_test_wrapper.SIM_ALT_CLK_PER_HEARTBEAT
-injectorSequenceControl_test_wrapper.SIM_BR_AR_ALIGN_PER_BR_AR_COINC
-injectorSequenceControl_test_wrapper.SIM_CLK_PER_BR_AR_ALIGNMENT
-injectorSequenceControl_test_wrapper.SIM_CLK_PER_BR_AR_COINCIDENCE
-injectorSequenceControl_test_wrapper.SIM_CLK_PER_BR_ORBIT_CLOCK_DIV4
-injectorSequenceControl_test_wrapper.SIM_CLK_PER_HEARTBEAT
-injectorSequenceControl_test_wrapper.SIM_CLK_PER_TICKS_COINCIDENCE
-injectorSequenceControl_test_wrapper.SIM_RF_COINC_PER_BR_AR_COINC
 injectorSequenceControl_test_wrapper.SYSCLK_RATE
 @22
 injectorSequenceControl_test_wrapper.brArAlignPerBrArCoincCounter[31:0]
@@ -71,19 +63,26 @@ injectorSequenceControl_test_wrapper.sysGPIO_OUT[31:0]
 @28
 injectorSequenceControl_test_wrapper.sysPPSmarker
 injectorSequenceControl_test_wrapper.sysPowerline
-injectorSequenceControl_test_wrapper.sysPowerlineTrigger
 @22
 injectorSequenceControl_test_wrapper.sysStatus[31:0]
 injectorSequenceControl_test_wrapper.sysTargetStatus[31:0]
 @200
 -injectorSequenceControl
-@24
+@420
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ALIGNMENT_SYNC_COUNT
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ALIGNMENT_SYNC_COUNT_MAX_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ALIGNMENT_SYNC_COUNT_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.BR_BUCKET_SUM_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.CYCLE_COUNTER_RELOAD_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.CYCLE_COUNTER_WIDTH
+injectorSequenceControl_test_wrapper.injectorSequenceControl.EXTR_DELAY_COEFF
+injectorSequenceControl_test_wrapper.injectorSequenceControl.EXTR_DELAY_COEFF_WIDTH
+injectorSequenceControl_test_wrapper.injectorSequenceControl.EXTR_DELAY_TERM_WIDTH
+injectorSequenceControl_test_wrapper.injectorSequenceControl.EXTR_DELAY_WIDTH
+injectorSequenceControl_test_wrapper.injectorSequenceControl.INJ_DELAY_COEFF
+injectorSequenceControl_test_wrapper.injectorSequenceControl.INJ_DELAY_COEFF_WIDTH
+injectorSequenceControl_test_wrapper.injectorSequenceControl.INJ_DELAY_TERM_WIDTH
+injectorSequenceControl_test_wrapper.injectorSequenceControl.INJ_DELAY_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.MOD_125_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.RF_ALIGN_COEFF
 injectorSequenceControl_test_wrapper.injectorSequenceControl.RF_ALIGN_COEFF_WIDTH
@@ -95,7 +94,9 @@ injectorSequenceControl_test_wrapper.injectorSequenceControl.RF_COINC_IDX_WIDTH_
 injectorSequenceControl_test_wrapper.injectorSequenceControl.RF_COINC_TERM_WIDTH
 injectorSequenceControl_test_wrapper.injectorSequenceControl.RF_COINC_TERM_WIDTH_MAX
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_AWAIT_ALIGNMENT
+injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_AWAIT_BUCKET_CALC
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_AWAIT_COINC_IDX_SEL
+injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_AWAIT_DELAYS_CALC
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_AWAIT_POWER_LINE
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_IDLE
 injectorSequenceControl_test_wrapper.injectorSequenceControl.ST_TRIGGER
@@ -111,12 +112,53 @@ injectorSequenceControl_test_wrapper.injectorSequenceControl.alignmentCounterSyn
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgAlignCounterDone[1:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgAlignCounterSelLatch[0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgAlignCounterSel[2:0]
+@25
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketExtrMult[16:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketExtrMult_r[16:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketExtrMult_r_valid
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketExtrMult_valid
 @24
-injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketLatched[7:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketExtr[6:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketExtr_valid
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketInjMult[13:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketInjMult_r[13:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketInjMult_r_valid
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketInjMult_valid
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketInj[6:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketInj_valid
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketLatched[6:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketLatched_valid
+@24
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketSum[7:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucketSum_valid
+@22
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucket[6:0]
 @28
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRBucket_valid
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRExtrDelayLatched[16:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRExtrDelay[16:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRExtrDelay_valid
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRInjDelayLatched[6:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRInjDelay[6:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgBRInjDelay_valid
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgDelaysLatched_valid
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgDelays_valid
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgExtrDelay[27:0]
+@28
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgHeartbeatAlign
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgHeartbeatAlignSel[0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgHeartbeatCore
@@ -124,11 +166,22 @@ injectorSequenceControl_test_wrapper.injectorSequenceControl.evgHeartbeatCoreSel
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgHeartbeatSel[2:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgHeartbeat[1:0]
 @24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgInjDelay[27:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgPowerlineMon
+@24
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignCountLatched[6:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignCountLatched_valid
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignCountMon[6:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignCount[6:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignCount_r[6:0]
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignCount_r_valid
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignMult[13:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignMult_r[13:0]
+@28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignMult_r_valid
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignMult_valid
+@24
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignTerm[6:0]
 @28
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFAlignTerm_valid
@@ -138,9 +191,12 @@ injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFCoincCount[8:0
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFCoincIdxSel[8:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgRFCoincTerm[6:0]
 @28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.evgSeqBusy
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgSequenceStart
 injectorSequenceControl_test_wrapper.injectorSequenceControl.evgTxClk
+@24
 injectorSequenceControl_test_wrapper.injectorSequenceControl.injectorStartState[2:0]
+@28
 injectorSequenceControl_test_wrapper.injectorSequenceControl.injectorStartToggle
 injectorSequenceControl_test_wrapper.injectorSequenceControl.injectorStartToggle_d
 injectorSequenceControl_test_wrapper.injectorSequenceControl.injectorStartToggle_m
@@ -154,12 +210,11 @@ injectorSequenceControl_test_wrapper.injectorSequenceControl.sysAlignCounterSel[
 @22
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysAlignStatus[31:0]
 @24
-injectorSequenceControl_test_wrapper.injectorSequenceControl.sysBRBucketLatched[7:0]
-@29
-injectorSequenceControl_test_wrapper.injectorSequenceControl.sysClk
+injectorSequenceControl_test_wrapper.injectorSequenceControl.sysBRBucketLatched[6:0]
 @28
+injectorSequenceControl_test_wrapper.injectorSequenceControl.sysClk
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysClkDividerDone
-@24
+@22
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysClkDivider[17:0]
 @28
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysCsrAlignStrobe
@@ -177,11 +232,12 @@ injectorSequenceControl_test_wrapper.injectorSequenceControl.sysGPIO_OUT[31:0]
 @28
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysInjectorStartToggle
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysPowerline
+injectorSequenceControl_test_wrapper.injectorSequenceControl.sysPowerlineMon
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysPowerlineTimeout
-@24
+@22
+injectorSequenceControl_test_wrapper.injectorSequenceControl.sysRFAlignCountLatched[6:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysRFCoincIdxSel[8:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysRFCoincTerm[6:0]
-@22
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysStatus[31:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysTargetStatus2[31:0]
 injectorSequenceControl_test_wrapper.injectorSequenceControl.sysTargetStatus[31:0]

@@ -18,6 +18,9 @@ module injectorSequenceControl_test_wrapper #(
     parameter CLK_PER_HEARTBEAT             = 167 * 304 * 125,
     parameter ALT_CLK_PER_HEARTBEAT         = 125 * 82 * 1216,
 
+    parameter INJ_DELAY_WIDTH               = 28,
+    parameter EXTR_DELAY_WIDTH              = 28,
+
     // DON'T CHANGE THESE
     parameter RF_COINC_IDX_WIDTH            = $clog2(RF_COINC_PER_BR_AR_COINC + 1),
     parameter RF_ALIGN_IDX_WIDTH            = $clog2(BR_AR_ALIGN_PER_BR_AR_COINC + 1),
@@ -50,7 +53,10 @@ module injectorSequenceControl_test_wrapper #(
 
     output wire        evgHeartbeatAlign,
     output wire        evgHeartbeatCore,
-    output wire        evgSequenceStart
+    output wire        evgSequenceStart,
+
+    output wire       [INJ_DELAY_WIDTH-1:0] evgInjDelay,
+    output wire      [EXTR_DELAY_WIDTH-1:0] evgExtrDelay
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,6 +164,8 @@ injectorSequenceControl #(
     .RF_COINC_IDX_WIDTH(RF_COINC_IDX_WIDTH),
     .RF_ALIGN_IDX_WIDTH(RF_ALIGN_IDX_WIDTH),
     .RF_COINC_TERM_WIDTH(RF_ALIGN_IDX_WIDTH),
+    .INJ_DELAY_WIDTH(INJ_DELAY_WIDTH),
+    .EXTR_DELAY_WIDTH(EXTR_DELAY_WIDTH),
     .TX_CLK_PER_ALIGNMENT({
         ALT_CLK_PER_BR_AR_ALIGNMENT[31:0],
         CLK_PER_BR_AR_ALIGNMENT[31:0]
@@ -188,7 +196,9 @@ injectorSequenceControl #(
     .evgHeartbeat(evgHeartbeat),
     .evgHeartbeatAlign(evgHeartbeatAlign),
     .evgHeartbeatCore(evgHeartbeatCore),
-    .evgSequenceStart(evgSequenceStart)
+    .evgSequenceStart(evgSequenceStart),
+    .evgInjDelay(evgInjDelay),
+    .evgExtrDelay(evgExtrDelay)
 );
 
 endmodule
