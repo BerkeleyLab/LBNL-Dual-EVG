@@ -36,7 +36,7 @@
 #define _SWAPOUT_CYCLE_H_
 
 #include <stdint.h>
-#include "util.h"
+#include "reg_macros.h"
 
 /*
  * Definitions for CSR

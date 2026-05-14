@@ -36,7 +36,7 @@
 #define _EVG_H_
 
 #include <stdint.h>
-#include "util.h"
+#include "reg_macros.h"
 
 #define EVG_COUNT               2
 #define EVG_COINCIDENCE_COUNT   2
