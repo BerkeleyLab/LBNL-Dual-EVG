@@ -363,6 +363,24 @@ wire ppsMarker = sysPpsMarker_f1;
 
 /////////////////////////////////////////////////////////////////////////////
 // First generator (injector)
+//
+localparam EVG1_EVENTCODE_WIDTH              = 8;
+localparam EVG1_EVENTCAT_WIDTH               = 8;
+localparam EVG1_EVENTCAT_NUM                 = 8;
+localparam EVG1_DEBUG                        = "false";
+localparam EVG1_SEQUENCE_GAP_CAT_WIDTH       = 28;
+
+localparam EVG1_INJ_DELAY_WIDTH = EVG1_SEQUENCE_GAP_CAT_WIDTH;
+localparam EVG1_EXTR_DELAY_WIDTH = EVG1_SEQUENCE_GAP_CAT_WIDTH;
+
+wire [EVG1_EVENTCAT_NUM*EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelayFlatten;
+wire [EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelay [0:EVG1_EVENTCAT_NUM-1];
+
+generate
+for (i = 0 ; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay_flatten
+    assign evg1CatDelayFlatten[i*EVG1_SEQUENCE_GAP_CAT_WIDTH+:EVG1_SEQUENCE_GAP_CAT_WIDTH] = evg1CatDelay[i];
+end
+endgenerate
 
 localparam EVG1_ALIGNMENT_SYNC_COUNT = CFG_EVG1_HEARTBEAT_COUNT;
 
@@ -391,12 +409,17 @@ wire [15:0] evg1TxData;
 wire  [1:0] evg1TxCharIsK;
 wire [EVG1_ALIGNMENT_SYNC_COUNT-1:0] evg1AlignCounterDone;
 
+wire [EVG1_INJ_DELAY_WIDTH-1:0] evg1InjDelay;
+wire [EVG1_EXTR_DELAY_WIDTH-1:0] evg1ExtrDelay;
+
 injectorSequenceControl #(
     .SYSCLK_RATE(SYSCLK_FREQUENCY),
     .ALIGNMENT_SYNC_COUNT(EVG1_ALIGNMENT_SYNC_COUNT),
     .RF_COINC_IDX_WIDTH(EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH),
     .RF_ALIGN_IDX_WIDTH(EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH),
     .RF_COINC_TERM_WIDTH(EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH),
+    .INJ_DELAY_WIDTH(EVG1_INJ_DELAY_WIDTH),
+    .EXTR_DELAY_WIDTH(EVG1_EXTR_DELAY_WIDTH),
     .TX_CLK_PER_ALIGNMENT({
         CFG_EVG1_ALT_CLK_PER_BR_AR_ALIGNMENT,
         CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
@@ -418,7 +441,19 @@ injectorSequenceControl #(
     .evgHeartbeat(evg1HeartbeatRequest),
     .evgHeartbeatAlign(evg1HeartbeatAlign),
     .evgHeartbeatCore(evg1HeartbeatCore),
-    .evgSequenceStart(injectorSequenceStart));
+    .evgSequenceStart(injectorSequenceStart),
+    .evgInjDelay(evg1InjDelay),
+    .evgExtrDelay(evg1ExtrDelay));
+
+assign evg1CatDelay[0] = 0;
+assign evg1CatDelay[1] = evg1InjDelay;
+assign evg1CatDelay[2] = evg1ExtrDelay;
+
+generate
+for (i = 3; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay
+    assign evg1CatDelay[i] = 0;
+end
+endgenerate
 
 wire evg1RxClkOut;
 wire evg1TxClkOut;
@@ -484,7 +519,11 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("false"))
+    .EVENTCODE_WIDTH(EVG1_EVENTCODE_WIDTH),
+    .EVENTCAT_WIDTH(EVG1_EVENTCAT_WIDTH),
+    .EVENTCAT_NUM(EVG1_EVENTCAT_NUM),
+    .DEBUG(EVG1_DEBUG),
+    .SEQUENCE_GAP_CAT_WIDTH(EVG1_SEQUENCE_GAP_CAT_WIDTH))
   evg1 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
@@ -505,6 +544,7 @@ evg #(
     .evgTxCharIsK(evg1TxCharIsK),
     .evgHeartbeatRequest(evg1HeartbeatCore),
     .evgSequenceStart(injectorSequenceStart),
+    .evgCatDelay(evg1CatDelayFlatten),
     .evgPPStoggle(evgPpsToggle_f1),
     .evgSeconds(evgPosixSeconds_f1),
     .evgSecondsNext(evgPosixSecondsNext_f1),
@@ -569,7 +609,25 @@ assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
-//
+
+localparam EVG2_EVENTCODE_WIDTH              = 8;
+localparam EVG2_EVENTCAT_WIDTH               = 8;
+localparam EVG2_EVENTCAT_NUM                 = 8;
+localparam EVG2_DEBUG                        = "false";
+localparam EVG2_SEQUENCE_GAP_CAT_WIDTH       = 28;
+
+localparam EVG2_INJ_DELAY_WIDTH = EVG2_SEQUENCE_GAP_CAT_WIDTH;
+localparam EVG2_EXTR_DELAY_WIDTH = EVG2_SEQUENCE_GAP_CAT_WIDTH;
+
+wire [EVG2_EVENTCAT_NUM*EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelayFlatten;
+wire [EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelay [0:EVG2_EVENTCAT_NUM-1];
+
+generate
+for (i = 0 ; i < EVG2_EVENTCAT_NUM ; i = i + 1) begin : evg2_cat_delay_flatten
+    assign evg2CatDelayFlatten[i*EVG2_SEQUENCE_GAP_CAT_WIDTH+:EVG2_SEQUENCE_GAP_CAT_WIDTH] = evg2CatDelay[i];
+end
+endgenerate
+
 localparam EVG2_ALIGNMENT_SYNC_COUNT = CFG_EVG2_HEARTBEAT_COUNT;
 
 localparam EVG2_CLOCK_PER_AR_SR_COINCIDENCE_WIDTH = $clog2(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE+1);
@@ -583,6 +641,9 @@ wire swapoutSequenceStart;
 wire evg2HeartbeatAlign, evg2HeartbeatCore;
 wire [15:0] evg2TxData;
 wire  [1:0] evg2TxCharIsK;
+
+wire [EVG2_INJ_DELAY_WIDTH-1:0] evg2InjDelay;
+wire [EVG2_EXTR_DELAY_WIDTH-1:0] evg2ExtrDelay;
 
 swapoutSequenceControl #(
     .ALIGNMENT_SYNC_COUNT(EVG2_ALIGNMENT_SYNC_COUNT),
@@ -599,6 +660,12 @@ swapoutSequenceControl #(
     .evgHeartbeatAlign(evg2HeartbeatAlign),
     .evgHeartbeatCore(evg2HeartbeatCore),
     .evgSequenceStart(swapoutSequenceStart));
+
+generate
+for (i = 0; i < EVG2_EVENTCAT_NUM ; i = i + 1) begin : evg2_cat_delay
+    assign evg2CatDelay[i] = 0;
+end
+endgenerate
 
 wire evg2RxClkOut;
 wire evg2TxClkOut;
@@ -663,7 +730,11 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("false"))
+    .EVENTCODE_WIDTH(EVG2_EVENTCODE_WIDTH),
+    .EVENTCAT_WIDTH(EVG2_EVENTCAT_WIDTH),
+    .EVENTCAT_NUM(EVG2_EVENTCAT_NUM),
+    .DEBUG(EVG2_DEBUG),
+    .SEQUENCE_GAP_CAT_WIDTH(EVG2_SEQUENCE_GAP_CAT_WIDTH))
   evg2 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
@@ -684,6 +755,7 @@ evg #(
     .evgTxCharIsK(evg2TxCharIsK),
     .evgHeartbeatRequest(evg2HeartbeatCore),
     .evgSequenceStart(swapoutSequenceStart),
+    .evgCatDelay(evg2CatDelayFlatten),
     .evgPPStoggle(evgPpsToggle_f2),
     .evgSeconds(evgPosixSeconds_f2),
     .evgSecondsNext(evgPosixSecondsNext_f2),
