@@ -10,7 +10,12 @@ module evg #(
     parameter GPIO_WIDTH                   = 32,
     parameter SEQUENCE_RAM_CAPACITY        = -1,
     parameter HARDWARE_TRIGGER_COUNT       = 4,
-    parameter DEBUG                        = "false"
+    parameter EVENTCODE_WIDTH              = 8,
+    parameter EVENTCAT_WIDTH               = 8,
+    parameter EVENTCAT_NUM                 = 8,
+    parameter DEBUG                        = "false",
+    // Don't change these
+    parameter SEQUENCE_GAP_CAT_WIDTH       = 28
     ) (
     input                  sysClk,
     input [GPIO_WIDTH-1:0] sysGPIO_OUT,
@@ -35,6 +40,8 @@ module evg #(
     (*mark_debug=DEBUG*) output wire  [1:0] evgTxCharIsK,
     (*mark_debug=DEBUG*) input              evgHeartbeatRequest,
     (*mark_debug=DEBUG*) input              evgSequenceStart,
+    (*mark_debug=DEBUG*) input  [EVENTCAT_NUM*SEQUENCE_GAP_CAT_WIDTH-1:0]
+                                            evgCatDelay,
 
     input                                   evgPPStoggle,
     input                            [31:0] evgSeconds,
@@ -89,7 +96,11 @@ evgSource #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(HARDWARE_TRIGGER_COUNT),
-    .DEBUG(DEBUG))
+    .EVENTCODE_WIDTH(EVENTCODE_WIDTH),
+    .EVENTCAT_WIDTH(EVENTCAT_WIDTH),
+    .EVENTCAT_NUM(EVENTCAT_NUM),
+    .DEBUG(DEBUG),
+    .SEQUENCE_GAP_CAT_WIDTH(SEQUENCE_GAP_CAT_WIDTH))
   evgs (
     .sysClk(sysClk),
     .sysGPIO_OUT(sysGPIO_OUT),
@@ -108,6 +119,7 @@ evgSource #(
     .hwTriggers_a(hwTriggers_a),
     .evgHeartbeatRequest(evgHeartbeatRequest),
     .evgSequenceStart(evgSequenceStart),
+    .evgCatDelay(evgCatDelay),
     .evgDistributedBus(dBus),
     .evgTxClk(evgTxClk),
     .evgTxData(evgTxData),

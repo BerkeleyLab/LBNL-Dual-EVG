@@ -4,9 +4,13 @@
 // All other nets are in transmitter clock domain.
 
 module evgSequencer # (
-    parameter SEQUENCE_RAM_CAPACITY = 2048,
-    parameter EVENTCODE_WIDTH       = 8,
-    parameter DEBUG                 = "false"
+    parameter SEQUENCE_RAM_CAPACITY  = 2048,
+    parameter EVENTCODE_WIDTH        = 8,
+    parameter EVENTCAT_WIDTH         = 8,
+    parameter EVENTCAT_NUM           = 8,
+    parameter DEBUG                  = "false",
+    // Don't change these
+    parameter SEQUENCE_GAP_CAT_WIDTH = 28
     ) (
     // Processor block connections
     // Some readback values are not in the system clock domain.  The
@@ -26,6 +30,8 @@ module evgSequencer # (
     // Synchronization
     input      evgTxClk,
     input      evgSequenceStart,
+    input      [EVENTCAT_NUM*SEQUENCE_GAP_CAT_WIDTH-1:0]
+               evgCatDelay,
 
     // NTP timestamp synchronous to evgTxClk
     input       [31:0] evgNtpSeconds,
@@ -35,6 +41,18 @@ module evgSequencer # (
     output reg [EVENTCODE_WIDTH-1:0] evgSequenceEventTDATA,
     output reg                       evgSequenceEventTVALID);
 
+generate
+if (2**EVENTCODE_WIDTH < EVENTCAT_NUM) begin
+    pow2_EVENTCODE_WIDTH_smaller_than_EVENTCAT_NUM err();
+end
+endgenerate
+
+generate
+if (SEQUENCE_GAP_CAT_WIDTH != 28) begin
+    SEQUENCE_GAP_CAT_WIDTH_diff_than_28 err2();
+end
+endgenerate
+
 localparam END_OF_TABLE_EVENT_CODE  = 8'h7F;
 
 localparam SEQ_CSR_CMD_SET_ADDRESS = 2'h1;
@@ -43,12 +61,16 @@ localparam SEQ_CSR_CMD_WRITE_ENTRY = 2'h3;
 wire [1:0] csrCmdCode = sysGPIO_OUT[31:30];
 
 localparam SEQUENCE_ADDRESS_WIDTH = $clog2(SEQUENCE_RAM_CAPACITY);
-localparam SEQUENCE_RAM_DATA_WIDTH = SEQUENCE_GAP_WIDTH + EVENTCODE_WIDTH;
+localparam SEQUENCE_RAM_DATA_WIDTH = SEQUENCE_GAP_WIDTH + EVENTCODE_WIDTH + EVENTCAT_WIDTH;
 
 localparam SEQUENCE_GAP_WIDTH = 28;
 localparam GAP_COUNTER_WIDTH = SEQUENCE_GAP_WIDTH + 1;
 reg [GAP_COUNTER_WIDTH-1:0] gapCounter;
 wire gapCounterDone = gapCounter[GAP_COUNTER_WIDTH-1];
+
+localparam GAP_CAT_COUNTER_WIDTH = SEQUENCE_GAP_CAT_WIDTH + 1;
+reg [GAP_CAT_COUNTER_WIDTH-1:0] gapCatCounter;
+wire gapCatCounterDone = gapCatCounter[GAP_CAT_COUNTER_WIDTH-1];
 
 localparam READ_COUNTER_WIDTH = SEQUENCE_ADDRESS_WIDTH + 1;
 reg [READ_COUNTER_WIDTH-1:0] readCounter;
@@ -62,9 +84,13 @@ reg seqSelect = 0;
 wire [DPRAM_ADDRESS_WIDTH-1:0] readAddress = { seqSelect,
                            readCounter[0+:SEQUENCE_ADDRESS_WIDTH] +
                            {{SEQUENCE_ADDRESS_WIDTH-1{1'b0}}, gapCounterDone} };
+
 always @(posedge evgTxClk) begin
     sequenceRAMQ <= sequenceRAM[readAddress];
 end
+
+wire [EVENTCAT_WIDTH-1:0] sequenceRAMcat =
+                              sequenceRAMQ[EVENTCODE_WIDTH+SEQUENCE_GAP_WIDTH+:EVENTCAT_WIDTH];
 wire [SEQUENCE_GAP_WIDTH-1:0] sequenceRAMgap =
                               sequenceRAMQ[EVENTCODE_WIDTH+:SEQUENCE_GAP_WIDTH];
 wire [EVENTCODE_WIDTH-1:0] sequenceRAMevent = sequenceRAMQ[0+:EVENTCODE_WIDTH];
@@ -88,6 +114,7 @@ reg statusForceWEToggle = 0, statusForceWEMatch = 0;
 
 // State machine
 reg [EVENTCODE_WIDTH-1:0] pendingEvent;
+reg [EVENTCAT_WIDTH-1:0] pendingEventCat;
 reg sequenceActive = 0, sequenceBusy = 0;
 reg [1:0] startDelay = 0;
 
@@ -95,6 +122,30 @@ reg [1:0] startDelay = 0;
 localparam START_REQUEST_COUNTER_WIDTH = 8;
 reg [START_REQUEST_COUNTER_WIDTH-1:0] startRequestsIgnored = 0,
                                       startRequestsAccepted = 0;
+
+// Unblundle category delays
+wire [SEQUENCE_GAP_CAT_WIDTH-1:0] evgDelay [0:EVENTCAT_NUM-1];
+reg  [SEQUENCE_GAP_CAT_WIDTH-1:0] evgDelayLatch [0:EVENTCAT_NUM-1];
+
+// For simulation
+integer idx;
+initial begin
+    for(idx = 0; idx < EVENTCAT_NUM; idx = idx+1) begin
+        evgDelayLatch[idx] = 0;
+    end
+end
+
+genvar i;
+generate
+for(i = 0; i < EVENTCAT_NUM; i = i+1) begin
+
+assign evgDelay[i] = evgCatDelay[i*SEQUENCE_GAP_CAT_WIDTH+:SEQUENCE_GAP_CAT_WIDTH];
+
+end
+endgenerate
+
+localparam EVENTCAT_SEL_WIDTH = EVENTCAT_NUM <= 1 ? 1: $clog2(EVENTCAT_NUM);
+wire [EVENTCAT_SEL_WIDTH-1:0] evgDelaySel = sequenceRAMcat[EVENTCAT_SEL_WIDTH-1:0];
 
 // Status logic
 reg [31:0] evgNtpSecondsLatch = 0;
@@ -150,6 +201,7 @@ always @(posedge evgTxClk) begin
         if (evgSequenceStart) begin
             startRequestsIgnored <= startRequestsIgnored + 1;
         end
+
         if (startDelay[0]) begin
             // Sequence read address valid at this point
             startDelay[0] <= 0;
@@ -157,7 +209,7 @@ always @(posedge evgTxClk) begin
         else if (startDelay[1]) begin
             // Sequence read data valid at this point
             startDelay[1] <= 0;
-            gapCounter <= {1'b0, sequenceRAMgap};
+            gapCounter <= {1'b0, sequenceRAMgap + evgDelayLatch[evgDelaySel]};
             pendingEvent <= sequenceRAMevent;
             readCounter <= readCounter + 1;
         end
@@ -178,7 +230,8 @@ always @(posedge evgTxClk) begin
                 end
                 evgSequenceEventTVALID <= 1;
                 evgSequenceEventTDATA <= pendingEvent;
-                gapCounter <= {1'b0, sequenceRAMgap} - 1;
+
+                gapCounter <= {1'b0, sequenceRAMgap + evgDelayLatch[evgDelaySel]} - 1;
                 pendingEvent <= sequenceRAMevent;
                 readCounter <= readCounter + 1;
             end
@@ -194,6 +247,10 @@ always @(posedge evgTxClk) begin
         startDelay <= 3;
         if (evgSequenceStart) begin
             if (|sequenceEnabled) begin
+                for(idx = 0; idx < EVENTCAT_NUM; idx = idx+1) begin
+                    evgDelayLatch[idx] <= evgDelay[idx];
+                end
+
                 sequenceActive <= 1;
                 sequenceBusy <= 1;
                 seqSelect <= sequenceEnabled[1];
@@ -241,8 +298,10 @@ always @(posedge sysClk) begin
             sysGapLatch <= sysGPIO_OUT[SEQUENCE_GAP_WIDTH-1:0];
         end
         SEQ_CSR_CMD_WRITE_ENTRY: begin
-            sequenceRAM[sysWriteAddress] <=
-                                {sysGapLatch, sysGPIO_OUT[EVENTCODE_WIDTH-1:0]};
+            sequenceRAM[sysWriteAddress] <= {
+                sysGPIO_OUT[EVENTCAT_WIDTH+EVENTCODE_WIDTH-1:EVENTCODE_WIDTH],
+                sysGapLatch,
+                sysGPIO_OUT[EVENTCODE_WIDTH-1:0]};
             sysWriteAddress <= sysWriteAddress + 1;
         end
         default: begin
