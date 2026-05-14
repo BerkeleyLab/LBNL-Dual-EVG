@@ -38,32 +38,6 @@
 #include "systemParameters.h"
 #include "util.h"
 
-#define SEQ_CSR_CMD_SET_ADDRESS         (1UL << 30)
-#define SEQ_CSR_CMD_LATCH_GAP           (2UL << 30)
-#define SEQ_CSR_CMD_WRITE_ENTRY         (3UL << 30)
-#define SEQ_CSR_ADDRESS_WIDTH_MASK      0x1F000000
-#define SEQ_CSR_ADDRESS_WIDTH_SHIFT     24
-#define SEQ_CSR_IGNORED_CYCLES_MASK     0xFF0000
-#define SEQ_CSR_W_RBK_MUX_SEL           (1UL << 24)
-#define SEQ_CSR_W_SET_PRECOMP_EVENT     (1UL << 25)
-#define SEQ_CSR_IGNORED_CYCLES_SHIFT    16
-#define SEQ_CSR_ACCEPTED_CYCLES_MASK    0xFF00
-#define SEQ_CSR_ACCEPTED_CYCLES_SHIFT   8
-#define SEQ_CSR_FORCE_UPDATE_STATUS_REG 0x20
-#define SEQ_CSR_FLIP_STATUS_REG         0x10
-#define SEQ_CSR_DISABLE_SEQ(n)          (0x4<<(n))
-#define SEQ_CSR_ENABLE_SEQ(n)           (0x1<<(n))
-
-#define SEQ_CSR_RD_STATUS_FIFO_RD_COUNT        0x3F0000
-#define SEQ_CSR_RD_STATUS_FIFO_RD_COUNT_SHIFT  16
-#define SEQ_CSR_RD_STATUS_FIFO_EMPTY           0x8
-#define SEQ_CSR_RD_STATUS_FIFO_ALMOST_FULL     0x4
-#define SEQ_CSR_RD_STATUS_FIFO_ACCEPT_WR       0x2
-#define SEQ_CSR_RD_STATUS_FIFO_VALID           0x1
-
-#define SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR       0x2
-#define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
-
 #define MONITOR_CHANNELS_PER_EVG        2
 #define SEQ_WARN_WAITING_TIME           1 // s
 #define COINCIDENCE_TIMEOUT             500000 // us
@@ -431,20 +405,29 @@ evgShowAlignment(void)
 static struct evgInfo *
 evgPtr(unsigned int idx)
 {
-    if (idx >= EVG_COUNT) return NULL;
+    if (idx >= EVG_COUNT) {
+        return NULL;
+    }
     return &evgs[idx];
 }
 
 static int
-addEntry(struct evgInfo *evgp, uint32_t delay, int evCode)
+addEntry(struct evgInfo *evgp, uint32_t delay, int evCode, int category)
 {
     if (debugFlags & DEBUGFLAG_STASH_SEQUENCE) {
-        printf("%10d, %d%s\n", delay, evCode,
-                             (evCode == evgp->precompletionEvent) ? ", *" : "");
+        printf("%10d, %d%s, %d\n", delay, evCode,
+                             (evCode == evgp->precompletionEvent) ? " *" : "",
+                             category);
     }
-    if (evgp->writeCount >= evgp->capacity) return 0;
-    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_CMD_LATCH_GAP | delay);
-    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_CMD_WRITE_ENTRY | evCode);
+
+    if (evgp->writeCount >= evgp->capacity) {
+        return 0;
+    }
+
+    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_CMD_LATCH_GAP | SEQ_CSR_DELAY_W(delay));
+    GPIO_WRITE(evgp->csrIdx, SEQ_CSR_CMD_WRITE_ENTRY |
+            SEQ_CSR_CAT_W(category) |
+            SEQ_CSR_EVCODE_W(evCode));
     evgp->writeCount++;
     return 1;
 }
@@ -458,6 +441,7 @@ evgStashSequence(unsigned int idx, int pkNumber, int count,const uint32_t *seqp)
     if ((evgp == NULL) || (count == 0)) {
         return 0;
     }
+
     if (pkNumber == 0) {
         int sequenceSelect = (idx & 0xF) * evgp->capacity;
         evgEnableSequence(idx, 0);
@@ -470,9 +454,18 @@ evgStashSequence(unsigned int idx, int pkNumber, int count,const uint32_t *seqp)
     else if (!evgp->isWriting || (pkNumber != evgp->pkNumber)) {
         return 0;
     }
+
     for (i = 0 ; i < count ; i++, seqp++) {
         uint32_t delay = *seqp >> 8;
         int evCode = *seqp & 0xFF;
+
+        i++;
+        if (i == count) {
+            return 0;
+        }
+
+        int category = *++seqp & 0xFF;
+
         if (delay == EVG_PROTOCOL_WAVEFORM_SINGLE_WORD_DELAY_LIMIT) {
             i++;
             if (i == count) {
@@ -480,20 +473,28 @@ evgStashSequence(unsigned int idx, int pkNumber, int count,const uint32_t *seqp)
             }
             delay = *++seqp;
         }
+
         /*
          * Maximum firmware value is 2^28-1
          */
         while (delay > ((1<<28)-1)) {
-            if (!addEntry(evgp, ((1<<28)-1), 0)) return 0;
+            if (!addEntry(evgp, ((1<<28)-1), 0, 0)) {
+                return 0;
+            }
             delay -= ((1<<28)-1);
         }
-        if (!addEntry(evgp, delay, evCode)) return 0;
+
+        if (!addEntry(evgp, delay, evCode, category)) {
+            return 0;
+        }
+
         if (evCode == EVG_PROTOCOL_WAVEFORM_END_OF_TABLE_EVENT_CODE) {
             evgp->isWriting = 0;
             evgp->isValid = 1;
             return 1;
         }
     }
+
     evgp->pkNumber++;
     return 1;
 }
@@ -504,10 +505,16 @@ evgEnableSequence(unsigned int idx, int enable)
     struct evgInfo *evgp = evgPtr((idx >> 4) & 0xF);
     int sequence;
     uint32_t cmd;
-    if (evgp == NULL) return 0;
+
+    if (evgp == NULL) {
+        return 0;
+    }
+
     sequence = (idx & 0xF);
     if (enable) {
-        if (evgp->isWriting || !evgp->isValid) return 0;
+        if (evgp->isWriting || !evgp->isValid) {
+            return 0;
+        }
         cmd = SEQ_CSR_ENABLE_SEQ(sequence);
     }
     else {
@@ -522,7 +529,9 @@ evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction)
 {
     struct evgInfo *evgp = evgPtr(idx);
 
-    if (evgp == NULL) return 0;
+    if (evgp == NULL) {
+        return 0;
+    }
     return evgStatusRead(evgp, seconds, fraction);
 }
 
@@ -531,7 +540,11 @@ evgSoftwareTrigger(unsigned int idx, int eventCode)
 {
     struct evgInfo *evgp = evgPtr(idx);
     int pass = 0;
-    if (evgp == NULL) return;
+
+    if (evgp == NULL) {
+        return;
+    }
+
     while (GPIO_READ(evgp->swIdx) & 0x100) {
         if (++pass == 10) {
             printf("E%d SW BUSY!\n", idx);
@@ -546,7 +559,11 @@ evgHardwareTrigger(unsigned int idx, int eventCode)
 {
     struct evgInfo *evgp = evgPtr(idx >> 4);
     int chan = idx & 0xF;
-    if ((evgp == NULL) || (chan >= CFG_HARDWARE_TRIGGER_COUNT))return;
+
+    if ((evgp == NULL) || (chan >= CFG_HARDWARE_TRIGGER_COUNT)) {
+        return;
+    }
+
     GPIO_WRITE(evgp->hwIdx, (1 << 31) | (chan << 8) | (eventCode & 0xFF));
 }
 
