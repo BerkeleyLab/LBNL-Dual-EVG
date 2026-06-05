@@ -48,6 +48,7 @@ static struct evgInfo {
     uint16_t    csrStatusFifoIdx;
     uint16_t    csrSecondsIdx;
     uint16_t    csrFractionIdx;
+    uint16_t    csrCatDelayStartIdx;
     uint16_t    rbkIdx;
     uint16_t    hwIdx;
     uint16_t    swIdx;
@@ -63,11 +64,13 @@ static struct evgInfo {
     uint32_t    seqStatus;
     uint32_t    seqSeconds;
     uint32_t    seqFraction;
+    uint32_t    seqCatDelay[CFG_EVENT_CAT_NUM];
 } evgs[EVG_COUNT] = {
     { .csrIdx   = GPIO_IDX_EVG_1_SEQ_CSR,
       .csrStatusFifoIdx = GPIO_IDX_EVG_1_SEQ_STATUS_FIFO_CSR,
       .csrSecondsIdx = GPIO_IDX_EVG_1_SEQ_SECONDS_CSR,
       .csrFractionIdx = GPIO_IDX_EVG_1_SEQ_FRACTION_CSR,
+      .csrCatDelayStartIdx = GPIO_IDX_EVG_1_0_CAT_DELAY_RBK_0,
       .rbkIdx   = GPIO_IDX_EVG_1_SEQ_RBK,
       .hwIdx    = GPIO_IDX_EVG_1_HW_CSR,
       .swIdx    = GPIO_IDX_EVG_1_SW_CSR,
@@ -78,6 +81,7 @@ static struct evgInfo {
       .csrStatusFifoIdx = GPIO_IDX_EVG_2_SEQ_STATUS_FIFO_CSR,
       .csrSecondsIdx = GPIO_IDX_EVG_2_SEQ_SECONDS_CSR,
       .csrFractionIdx = GPIO_IDX_EVG_2_SEQ_FRACTION_CSR,
+      .csrCatDelayStartIdx = GPIO_IDX_EVG_2_0_CAT_DELAY_RBK_0,
       .rbkIdx   = GPIO_IDX_EVG_2_SEQ_RBK,
       .hwIdx    = GPIO_IDX_EVG_2_HW_CSR,
       .swIdx    = GPIO_IDX_EVG_2_SW_CSR,
@@ -106,7 +110,8 @@ evgStatusFifoForceWr(struct evgInfo *evgp)
 }
 
 static uint32_t
-evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
+evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction,
+        uint32_t *catDelay, unsigned int numCatDelay)
 {
     uint32_t statusFifo = GPIO_READ(evgp->csrStatusFifoIdx);
     uint32_t now;
@@ -129,6 +134,10 @@ evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
         evgp->seqSeconds = GPIO_READ(evgp->csrSecondsIdx);
         evgp->seqFraction = GPIO_READ(evgp->csrFractionIdx);
 
+        for (int i = 0; i < CFG_EVENT_CAT_NUM; i++) {
+            evgp->seqCatDelay[i] = GPIO_READ(evgp->csrCatDelayStartIdx+i);
+        }
+
         /* Acknowledge valid word from the FIFO */
         uint32_t statusFifoWr = SEQ_CSR_WR_STATUS_FIFO_RE;
         if (statusFifo & SEQ_CSR_RD_STATUS_FIFO_ACCEPT_WR) {
@@ -141,6 +150,12 @@ evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction)
         *seconds = evgp->seqSeconds;
     if (fraction)
         *fraction = evgp->seqFraction;
+
+    if (catDelay) {
+        for (int i = 0; i < numCatDelay && i < CFG_EVENT_CAT_NUM; i++) {
+            catDelay[i] = evgp->seqCatDelay[i];
+        }
+    }
 
     return evgp->seqStatus;
 }
@@ -398,7 +413,7 @@ evgInit(void)
         // Wait for register to be updated
         microsecondSpin(1000);
 
-        uint32_t csr = evgStatusRead(evgp, NULL, NULL);
+        uint32_t csr = evgStatusRead(evgp, NULL, NULL, NULL, 0);
         int addressWidth = (csr & SEQ_CSR_ADDRESS_WIDTH_MASK) >>
                                                     SEQ_CSR_ADDRESS_WIDTH_SHIFT;
         evgp->capacity = (1 << addressWidth);
@@ -545,14 +560,17 @@ evgEnableSequence(unsigned int idx, int enable)
 }
 
 uint32_t
-evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction)
+evgSequencerStatus(unsigned int idx, uint32_t *seconds, uint32_t *fraction,
+        uint32_t *catDelay, unsigned int numCatDelay)
 {
     struct evgInfo *evgp = evgPtr(idx);
 
     if (evgp == NULL) {
         return 0;
     }
-    return evgStatusRead(evgp, seconds, fraction);
+
+    return evgStatusRead(evgp, seconds, fraction, catDelay,
+            numCatDelay);
 }
 
 void

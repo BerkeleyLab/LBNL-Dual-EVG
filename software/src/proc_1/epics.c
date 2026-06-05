@@ -377,7 +377,7 @@ epicsHandler(bwudpHandle replyHandle, char *payload, int length)
 static void
 seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
 {
-    int i;
+    int i, j;
     uint32_t now = MICROSECONDS_SINCE_BOOT();
     static bwudpHandle seqStatusPublisher;
     static int mustSend, mustSwap;
@@ -385,6 +385,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     uint32_t currentStatus[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusSeconds[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusFraction[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t currentCatDelay[EVG_PROTOCOL_EVG_COUNT][CFG_EVENT_CAT_NUM];
     static uint32_t sentStatus[EVG_PROTOCOL_EVG_COUNT];
 
     if (replyHandle) {
@@ -411,7 +412,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     if ((now - whenSent) < SHORTEST_US) return;
     for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
         currentStatus[i] = evgSequencerStatus(i, &currentStatusSeconds[i],
-                &currentStatusFraction[i]);
+                &currentStatusFraction[i], currentCatDelay[i], CFG_EVENT_CAT_NUM);
         if (currentStatus[i] != sentStatus[i]) {
             mustSend = 1;
         }
@@ -425,6 +426,11 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
             pk.sequencerStatus[i] = sentStatus[i] = currentStatus[i];
             pk.posixSeconds[i] = currentStatusSeconds[i] - NTP_POSIX_OFFSET;
             pk.ntpFraction[i] = currentStatusFraction[i];
+
+            for (j = 0; j < CFG_EVENT_CAT_NUM; j++) {
+                pk.sequencerCatDelay[i][j] = currentCatDelay[i][j];
+            }
+
         }
         if (mustSwap) {
             bswap32(&pk.magic, sizeof(pk) / sizeof(int32_t));
