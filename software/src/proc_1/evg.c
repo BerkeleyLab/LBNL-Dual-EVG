@@ -149,7 +149,7 @@ static int
 convertSequence(const char *csv, uint32_t *dest, int16_t *precompletionEvent)
 {
     char *endp;
-    int period, gap, event = 0;
+    int period, gap, event = 0, category = 0;
     int idx = 0;
     int line = 2;
 
@@ -160,14 +160,16 @@ convertSequence(const char *csv, uint32_t *dest, int16_t *precompletionEvent)
         printf("Bad period (%d ms)\n", period);
         return 0;
     }
+
     csv = endp;
     while (*csv != '\n') {
         if (!*csv) {
-            printf("No gap,event lines\n");
+            printf("No gap,event,category lines\n");
             return 0;
         }
         csv++;
     }
+
     while (*csv) {
         gap = strtol(csv, &endp, 10);
         if ((*endp != ',')
@@ -176,14 +178,25 @@ convertSequence(const char *csv, uint32_t *dest, int16_t *precompletionEvent)
             printf("Line %d: Bad gap\n", line);
             return 0;
         }
+
         csv = endp + 1;
         event = strtol(csv, &endp, 10);
-        if (((*endp != ',') && (*endp != '\n'))
+        if (((*endp != ',')
          || (event <= 0)
-         || (event > 255)) {
+         || (event > 255))) {
             printf("Line %d: Bad event\n", line);
             return 0;
         }
+
+        csv = endp + 1;
+        category = strtol(csv, &endp, 10);
+        if (((*endp != ',') && (*endp != '\n'))
+         || (category < 0)
+         || (category > 255)) {
+            printf("Line %d: Bad category\n", line);
+            return 0;
+        }
+
         if (*endp == ',') {
             endp++;
             while (*endp == ' ') endp++;
@@ -197,23 +210,30 @@ convertSequence(const char *csv, uint32_t *dest, int16_t *precompletionEvent)
                 return 0;
             }
         }
+
         csv = endp + 1;
         if (gap < EVG_PROTOCOL_WAVEFORM_SINGLE_WORD_DELAY_LIMIT) {
-            dest[idx++] = (gap << 8) |  event;
+            dest[idx++] = (gap << 8) | (event & 0xFF);
+            dest[idx++] = category & 0xFF;
         }
         else {
             dest[idx++] =
-                   (EVG_PROTOCOL_WAVEFORM_SINGLE_WORD_DELAY_LIMIT << 8) | event;
+                   (EVG_PROTOCOL_WAVEFORM_SINGLE_WORD_DELAY_LIMIT << 8) |
+                   (event & 0xFF);
+            dest[idx++] = category & 0xFF;
             dest[idx++] = gap;
         }
         line++;
     }
+
     if (event != EVG_PROTOCOL_WAVEFORM_END_OF_TABLE_EVENT_CODE) {
         printf("No end-of-sequence event\n");
         return 0;
     }
+
     printf("%10d\n", period);
     injectionCycleSetBaseInterval(period);
+
     return idx;
 }
 
@@ -415,9 +435,9 @@ static int
 addEntry(struct evgInfo *evgp, uint32_t delay, int evCode, int category)
 {
     if (debugFlags & DEBUGFLAG_STASH_SEQUENCE) {
-        printf("%10d, %d%s, %d\n", delay, evCode,
-                             (evCode == evgp->precompletionEvent) ? " *" : "",
-                             category);
+        printf("%10d, %d, %d%s\n", delay, evCode,
+                             category,
+                             (evCode == evgp->precompletionEvent) ? ", *" : "");
     }
 
     if (evgp->writeCount >= evgp->capacity) {
