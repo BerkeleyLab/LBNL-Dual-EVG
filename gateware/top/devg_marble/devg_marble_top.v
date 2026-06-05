@@ -366,7 +366,7 @@ wire ppsMarker = sysPpsMarker_f1;
 //
 localparam EVG1_EVENTCODE_WIDTH              = 8;
 localparam EVG1_EVENTCAT_WIDTH               = 8;
-localparam EVG1_EVENTCAT_NUM                 = 8;
+localparam EVG1_EVENTCAT_NUM                 = 4;
 localparam EVG1_DEBUG                        = "false";
 localparam EVG1_SEQUENCE_GAP_CAT_WIDTH       = 28;
 
@@ -622,7 +622,7 @@ assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 
 localparam EVG2_EVENTCODE_WIDTH              = 8;
 localparam EVG2_EVENTCAT_WIDTH               = 8;
-localparam EVG2_EVENTCAT_NUM                 = 8;
+localparam EVG2_EVENTCAT_NUM                 = 4;
 localparam EVG2_DEBUG                        = "false";
 localparam EVG2_SEQUENCE_GAP_CAT_WIDTH       = 28;
 
