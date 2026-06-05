@@ -361,7 +361,8 @@ wire [EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelay [0:EVG1_EVENTCAT_NUM-1];
 
 generate
 for (i = 0 ; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay_flatten
-    assign evg1CatDelayFlatten[i*EVG1_SEQUENCE_GAP_CAT_WIDTH+:EVG1_SEQUENCE_GAP_CAT_WIDTH] = evg1CatDelay[i];
+    assign evg1CatDelayFlatten[i*EVG1_SEQUENCE_GAP_CAT_WIDTH+:EVG1_SEQUENCE_GAP_CAT_WIDTH] =
+        evg1CatDelay[i];
 end
 endgenerate
 
@@ -516,6 +517,8 @@ assign evg1TxClksIn = {4{evg1TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg1HwTrigger;
 wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg1DiagnosticIn;
+wire [EVG1_EVENTCAT_NUM*32-1:0] evg1CatDelayRBK;
+
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -538,6 +541,7 @@ evg #(
     .sysSequencerStatus(GPIO_IN[GPIO_IDX_EVG_1_SEQ_CSR]),
     .sysSequencerStatusNtpSeconds(GPIO_IN[GPIO_IDX_EVG_1_SEQ_SECONDS_CSR]),
     .sysSequencerStatusNtpFraction(GPIO_IN[GPIO_IDX_EVG_1_SEQ_FRACTION_CSR]),
+    .sysSequencerStatusCatDelay(evg1CatDelayRBK),
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_1_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
@@ -555,6 +559,12 @@ evg #(
     .evgSecondsNext(evgPosixSecondsNext_f1),
     .evgNtpSeconds(evgNtpSeconds_f1),
     .evgNtpFraction(evgNtpFraction_f1));
+
+generate
+for (i = 0 ; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay_rbk
+    assign GPIO_IN[GPIO_IDX_EVG_1_0_CAT_DELAY_RBK_0+i] = evg1CatDelayRBK[i*32+:32];
+end
+endgenerate
 
 evLogger #(.DEBUG("false"))
   evg1LoggerDisplay (
@@ -750,6 +760,8 @@ assign evg2TxClksIn = {4{evg2TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg2HwTrigger;
 wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg2DiagnosticIn;
+wire [EVG2_EVENTCAT_NUM*32-1:0] evg2CatDelayRBK;
+
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -772,6 +784,7 @@ evg #(
     .sysSequencerStatus(GPIO_IN[GPIO_IDX_EVG_2_SEQ_CSR]),
     .sysSequencerStatusNtpSeconds(GPIO_IN[GPIO_IDX_EVG_2_SEQ_SECONDS_CSR]),
     .sysSequencerStatusNtpFraction(GPIO_IN[GPIO_IDX_EVG_2_SEQ_FRACTION_CSR]),
+    .sysSequencerStatusCatDelay(evg2CatDelayRBK),
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_2_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
@@ -789,6 +802,12 @@ evg #(
     .evgSecondsNext(evgPosixSecondsNext_f2),
     .evgNtpSeconds(evgNtpSeconds_f2),
     .evgNtpFraction(evgNtpFraction_f2));
+
+generate
+for (i = 0 ; i < EVG2_EVENTCAT_NUM ; i = i + 1) begin : evg2_cat_delay_rbk
+    assign GPIO_IN[GPIO_IDX_EVG_2_0_CAT_DELAY_RBK_0+i] = evg2CatDelayRBK[i*32+:32];
+end
+endgenerate
 
 evLogger #(.DEBUG("false"))
   evg2LoggerDisplay (
