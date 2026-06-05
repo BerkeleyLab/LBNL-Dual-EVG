@@ -41,7 +41,7 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
-#define GPIO_IDX_COUNT 128
+#define GPIO_IDX_COUNT 256
 
 #define GPIO_IDX_FIRMWARE_BUILD_DATE      0 // Firmware build POSIX seconds (R)
 #define GPIO_IDX_MICROSECONDS_SINCE_BOOT  1 // Microseconds since boot (R)
@@ -108,8 +108,8 @@
 #define GPIO_IDX_EVG_2_CLK_GEN_3_CSR     62 // EVG 2 Clk Generation 3 status
 
 // Per EVG 1 MGT
-#define GPIO_IDX_EVG_1_0_DRP_CSR         64 // EVG 1 ID 0 transceiver DRP access
-#define GPIO_IDX_EVG_1_0_LATENCY         65 // EVG 1 ID 0 round-trip latency
+#define GPIO_IDX_EVG_1_0_DRP_CSR         128 // EVG 1 ID 0 transceiver DRP access
+#define GPIO_IDX_EVG_1_0_LATENCY         129 // EVG 1 ID 0 round-trip latency
 
 #define GPIO_IDX_PER_MGTWRAPPER          (GPIO_IDX_EVG_1_0_LATENCY-GPIO_IDX_EVG_1_0_DRP_CSR+1)
 
