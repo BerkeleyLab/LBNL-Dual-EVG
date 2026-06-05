@@ -23,6 +23,7 @@ module evgSequencer # (
     output      [31:0] status,
     output      [31:0] statusNtpSeconds,
     output      [31:0] statusNtpFraction,
+    output      [EVENTCAT_NUM*32-1:0] statusCatDelay,
 
     output wire [31:0] statusFifo,
     output reg  [31:0] sysSequenceReadback,
@@ -126,6 +127,9 @@ reg [START_REQUEST_COUNTER_WIDTH-1:0] startRequestsIgnored = 0,
 // Unblundle category delays
 wire [SEQUENCE_GAP_CAT_WIDTH-1:0] evgDelay [0:EVENTCAT_NUM-1];
 reg  [SEQUENCE_GAP_CAT_WIDTH-1:0] evgDelayLatch [0:EVENTCAT_NUM-1];
+// For readback
+reg  [31:0] evgDelayLatchStatus [0:EVENTCAT_NUM-1];
+wire [32*EVENTCAT_NUM-1:0] evgDelayLatchStatusFlatten;
 
 // For simulation
 integer idx;
@@ -139,6 +143,7 @@ genvar i;
 generate
 for(i = 0; i < EVENTCAT_NUM; i = i+1) begin
 
+assign evgDelayLatchStatusFlatten[i*32+:32] = evgDelayLatchStatus[i];
 assign evgDelay[i] = evgCatDelay[i*SEQUENCE_GAP_CAT_WIDTH+:SEQUENCE_GAP_CAT_WIDTH];
 
 end
@@ -257,6 +262,12 @@ always @(posedge evgTxClk) begin
                 sequenceEnabled[1] <= 0;
                 startRequestsAccepted <= startRequestsAccepted + 1;
                 {evgNtpSecondsLatch, evgNtpFractionLatch} <= {evgNtpSeconds, evgNtpFraction};
+
+                for (idx = 0; idx < EVENTCAT_NUM; idx = idx + 1) begin
+                    evgDelayLatchStatus[idx] <= {{32-SEQUENCE_GAP_CAT_WIDTH{1'b0}},
+                        evgDelayLatch[idx]};
+                end
+
                 statusFifoWrEvent <= 1;
             end
         end
@@ -327,7 +338,7 @@ end
 
 localparam STATUS_FIFO_AW = 5;
 localparam STATUS_FIFO_USERW = 0;
-localparam STATUS_FIFO_DATAW = 32 + 64;
+localparam STATUS_FIFO_DATAW = 32 + 64 + EVENTCAT_NUM*32;
 localparam STATUS_FIFO_DW = STATUS_FIFO_USERW + STATUS_FIFO_DATAW;
 localparam STATUS_FIFO_MAX = 2**STATUS_FIFO_AW-1;
 
@@ -345,13 +356,13 @@ genericFifo_2c #(
     .fwft(1))
   statusFifo_2c (
     .wr_clk(evgTxClk),
-    .din({evgStatus, evgNtpSecondsLatch, evgNtpFractionLatch}),
+    .din({evgStatus, evgNtpSecondsLatch, evgNtpFractionLatch, evgDelayLatchStatusFlatten}),
     .we(statusFifoWE),
     .full(),
     .wr_count(statusFifoWRCount),
 
     .rd_clk(sysClk),
-    .dout({status, statusNtpSeconds, statusNtpFraction}),
+    .dout({status, statusNtpSeconds, statusNtpFraction, statusCatDelay}),
     .re(sysStatusFifoRE),
     .empty(sysStatusFifoEmpty),
     .rd_count(sysStatusFifoRDCount)
