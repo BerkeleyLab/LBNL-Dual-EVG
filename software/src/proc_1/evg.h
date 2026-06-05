@@ -108,6 +108,27 @@
 #define SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR       0x2
 #define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
 
+#define SEQ_RBK_SEL_0_EVENT_SIZE                8
+#define SEQ_RBK_SEL_0_EVENT_SHIFT               0
+#define SEQ_RBK_SEL_0_EVENT_MASK                REG_GEN_MASK(SEQ_RBK_SEL_0_EVENT_SHIFT, \
+                                                    SEQ_RBK_SEL_0_EVENT_SIZE)
+#define SEQ_RBK_SEL_0_EVENT_R(reg)              REG_GEN_READ(reg, SEQ_RBK_SEL_0_EVENT_SHIFT, \
+                                                    SEQ_RBK_SEL_0_EVENT_SIZE)
+
+#define SEQ_RBK_SEL_0_CAT_SIZE                  8
+#define SEQ_RBK_SEL_0_CAT_SHIFT                 16
+#define SEQ_RBK_SEL_0_CAT_MASK                  REG_GEN_MASK(SEQ_RBK_SEL_0_CAT_SHIFT, \
+                                                    SEQ_RBK_SEL_0_CAT_SIZE)
+#define SEQ_RBK_SEL_0_CAT_R(reg)                REG_GEN_READ(reg, SEQ_RBK_SEL_0_CAT_SHIFT, \
+                                                    SEQ_RBK_SEL_0_CAT_SIZE)
+
+#define SEQ_RBK_SEL_1_GAP_SIZE                  28
+#define SEQ_RBK_SEL_1_GAP_SHIFT                 0
+#define SEQ_RBK_SEL_1_GAP_MASK                  REG_GEN_MASK(SEQ_RBK_SEL_1_GAP_SHIFT, \
+                                                  SEQ_RBK_SEL_1_GAP_SIZE)
+#define SEQ_RBK_SEL_1_GAP_R(reg)                REG_GEN_READ(reg, SEQ_RBK_SEL_1_GAP_SHIFT, \
+                                                  SEQ_RBK_SEL_1_GAP_SIZE)
+
 void evgInit(void);
 void evgCrank(void);
 int evgAlign(void);

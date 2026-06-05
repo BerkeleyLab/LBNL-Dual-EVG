@@ -628,25 +628,39 @@ evgDumpSequence(int evg, int seq)
 {
     struct evgInfo *evgp = evgPtr(evg - 1);
     int i;
+    int cat;
     int event;
     int gap = 0;
+    uint32_t reg = 0;
 
     if ((evgp == NULL)
      || (seq < 0)
      || (seq > 1)) {
         return;
     }
-    printf("EVG %d  SEQ %d:\n", evg, seq);
+
+    printf("EVG %d SEQ %d:\n", evg, seq);
+    printf("  Cat delays:\n");
+    for (int i = 0; i < CFG_EVENT_CAT_NUM; i++) {
+        printf("    Cat%d(%u)\n", i, evgp->seqCatDelay[i]);
+    }
+
+    printf("  Events:\n", i, evgp->seqCatDelay[i]);
     for (i = 0 ; i < evgp->capacity ; i++) {
         uint32_t cmd = SEQ_CSR_CMD_SET_ADDRESS | (seq * evgp->capacity) | i;
         GPIO_WRITE(evgp->csrIdx, cmd);
-        gap += GPIO_READ(evgp->rbkIdx);
+        reg = GPIO_READ(evgp->rbkIdx);
+        gap += SEQ_RBK_SEL_1_GAP_R(reg);
         GPIO_WRITE(evgp->csrIdx, cmd | SEQ_CSR_W_RBK_MUX_SEL);
-        event = GPIO_READ(evgp->rbkIdx);
+        reg = GPIO_READ(evgp->rbkIdx);
+        event = SEQ_RBK_SEL_0_EVENT_R(reg);
+        cat = SEQ_RBK_SEL_0_CAT_R(reg);
+
         if (event != 0) {
-            printf("%8d,%3d\n", gap, event);
+            printf("    %8d,%3d,%3d\n", gap, event, cat);
             gap = 0;
         }
+
         if (event == EVG_PROTOCOL_WAVEFORM_END_OF_TABLE_EVENT_CODE) {
             break;
         }
