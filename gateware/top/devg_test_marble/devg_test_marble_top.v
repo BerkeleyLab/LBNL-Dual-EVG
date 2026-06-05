@@ -349,18 +349,17 @@ wire ppsMarker = sysPpsMarker_f1;
 //
 localparam EVG1_EVENTCODE_WIDTH              = 8;
 localparam EVG1_EVENTCAT_WIDTH               = 8;
-localparam EVG1_EVENTCAT_NUM                 = 4;
 localparam EVG1_DEBUG                        = "false";
 localparam EVG1_SEQUENCE_GAP_CAT_WIDTH       = 28;
 
 localparam EVG1_INJ_DELAY_WIDTH = EVG1_SEQUENCE_GAP_CAT_WIDTH;
 localparam EVG1_EXTR_DELAY_WIDTH = EVG1_SEQUENCE_GAP_CAT_WIDTH;
 
-wire [EVG1_EVENTCAT_NUM*EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelayFlatten;
-wire [EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelay [0:EVG1_EVENTCAT_NUM-1];
+wire [CFG_EVENT_CAT_NUM*EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelayFlatten;
+wire [EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelay [0:CFG_EVENT_CAT_NUM-1];
 
 generate
-for (i = 0 ; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay_flatten
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg1_cat_delay_flatten
     assign evg1CatDelayFlatten[i*EVG1_SEQUENCE_GAP_CAT_WIDTH+:EVG1_SEQUENCE_GAP_CAT_WIDTH] =
         evg1CatDelay[i];
 end
@@ -434,7 +433,7 @@ assign evg1CatDelay[1] = evg1InjDelay;
 assign evg1CatDelay[2] = evg1ExtrDelay;
 
 generate
-for (i = 3; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay
+for (i = 3; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg1_cat_delay
     assign evg1CatDelay[i] = 0;
 end
 endgenerate
@@ -517,7 +516,7 @@ assign evg1TxClksIn = {4{evg1TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg1HwTrigger;
 wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg1DiagnosticIn;
-wire [EVG1_EVENTCAT_NUM*32-1:0] evg1CatDelayRBK;
+wire [CFG_EVENT_CAT_NUM*32-1:0] evg1CatDelayRBK;
 
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -529,7 +528,7 @@ evg #(
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
     .EVENTCODE_WIDTH(EVG1_EVENTCODE_WIDTH),
     .EVENTCAT_WIDTH(EVG1_EVENTCAT_WIDTH),
-    .EVENTCAT_NUM(EVG1_EVENTCAT_NUM),
+    .EVENTCAT_NUM(CFG_EVENT_CAT_NUM),
     .DEBUG(EVG1_DEBUG),
     .SEQUENCE_GAP_CAT_WIDTH(EVG1_SEQUENCE_GAP_CAT_WIDTH))
   evg1 (
@@ -561,7 +560,7 @@ evg #(
     .evgNtpFraction(evgNtpFraction_f1));
 
 generate
-for (i = 0 ; i < EVG1_EVENTCAT_NUM ; i = i + 1) begin : evg1_cat_delay_rbk
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg1_cat_delay_rbk
     assign GPIO_IN[GPIO_IDX_EVG_1_0_CAT_DELAY_RBK_0+i] = evg1CatDelayRBK[i*32+:32];
 end
 endgenerate
@@ -627,18 +626,17 @@ assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 
 localparam EVG2_EVENTCODE_WIDTH              = 8;
 localparam EVG2_EVENTCAT_WIDTH               = 8;
-localparam EVG2_EVENTCAT_NUM                 = 4;
 localparam EVG2_DEBUG                        = "false";
 localparam EVG2_SEQUENCE_GAP_CAT_WIDTH       = 28;
 
 localparam EVG2_INJ_DELAY_WIDTH = EVG2_SEQUENCE_GAP_CAT_WIDTH;
 localparam EVG2_EXTR_DELAY_WIDTH = EVG2_SEQUENCE_GAP_CAT_WIDTH;
 
-wire [EVG2_EVENTCAT_NUM*EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelayFlatten;
-wire [EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelay [0:EVG2_EVENTCAT_NUM-1];
+wire [CFG_EVENT_CAT_NUM*EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelayFlatten;
+wire [EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelay [0:CFG_EVENT_CAT_NUM-1];
 
 generate
-for (i = 0 ; i < EVG2_EVENTCAT_NUM ; i = i + 1) begin : evg2_cat_delay_flatten
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg2_cat_delay_flatten
     assign evg2CatDelayFlatten[i*EVG2_SEQUENCE_GAP_CAT_WIDTH+:EVG2_SEQUENCE_GAP_CAT_WIDTH] = evg2CatDelay[i];
 end
 endgenerate
@@ -677,7 +675,7 @@ swapoutSequenceControl #(
     .evgSequenceStart(swapoutSequenceStart));
 
 generate
-for (i = 0; i < EVG2_EVENTCAT_NUM ; i = i + 1) begin : evg2_cat_delay
+for (i = 0; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg2_cat_delay
     assign evg2CatDelay[i] = 0;
 end
 endgenerate
@@ -760,7 +758,7 @@ assign evg2TxClksIn = {4{evg2TxClk}};
 
 wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] evg2HwTrigger;
 wire [CFG_EVIO_DIAG_IN_COUNT-1:0] evg2DiagnosticIn;
-wire [EVG2_EVENTCAT_NUM*32-1:0] evg2CatDelayRBK;
+wire [CFG_EVENT_CAT_NUM*32-1:0] evg2CatDelayRBK;
 
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
@@ -772,7 +770,7 @@ evg #(
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
     .EVENTCODE_WIDTH(EVG2_EVENTCODE_WIDTH),
     .EVENTCAT_WIDTH(EVG2_EVENTCAT_WIDTH),
-    .EVENTCAT_NUM(EVG2_EVENTCAT_NUM),
+    .EVENTCAT_NUM(CFG_EVENT_CAT_NUM),
     .DEBUG(EVG2_DEBUG),
     .SEQUENCE_GAP_CAT_WIDTH(EVG2_SEQUENCE_GAP_CAT_WIDTH))
   evg2 (
@@ -804,7 +802,7 @@ evg #(
     .evgNtpFraction(evgNtpFraction_f2));
 
 generate
-for (i = 0 ; i < EVG2_EVENTCAT_NUM ; i = i + 1) begin : evg2_cat_delay_rbk
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg2_cat_delay_rbk
     assign GPIO_IN[GPIO_IDX_EVG_2_0_CAT_DELAY_RBK_0+i] = evg2CatDelayRBK[i*32+:32];
 end
 endgenerate

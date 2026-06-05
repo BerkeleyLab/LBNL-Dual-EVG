@@ -47,4 +47,7 @@
 // Automatic MGT TX alignment
 #define CFG_MGT_TX_REF_ALIGN               0
 
+// Number of event categories
+#define CFG_EVENT_CAT_NUM                  4
+
 #endif
