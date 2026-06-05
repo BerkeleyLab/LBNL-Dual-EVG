@@ -117,6 +117,11 @@
 #define GPIO_IDX_EVG_2_0_DRP_CSR         (GPIO_IDX_EVG_1_0_DRP_CSR+16) // EVG 2 ID 0 transceiver DRP access
 #define GPIO_IDX_EVG_2_0_LATENCY         (GPIO_IDX_EVG_1_0_LATENCY+16) // EVG 2 ID 0 round-trip latency
 
+// Per EVG 1 category. Maximum of 32
+#define GPIO_IDX_EVG_1_0_CAT_DELAY_RBK_0    160 // EVG 1 ID 0 category delay RBK
+
+// Per EVG 2 category. Maximum of 32
+#define GPIO_IDX_EVG_2_0_CAT_DELAY_RBK_0    192 // EVG 2 ID 0 category delay RBK
 
 #include <xil_io.h>
 #include <xparameters.h>
