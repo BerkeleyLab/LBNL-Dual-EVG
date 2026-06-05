@@ -125,7 +125,11 @@
 
 #include <xil_io.h>
 #include <xparameters.h>
+#include <assert.h>
 #include "config.h"
+
+static_assert(CFG_EVENT_CAT_NUM < 8,
+        "CFG_EVENT_CAT_NUM cannot be greater than 8");
 
 #define GPIO_READ(i)    Xil_In32(XPAR_AXI_LITE_GENERIC_REG_0_BASEADDR+(4*(i)))
 #define GPIO_WRITE(i,x) Xil_Out32(XPAR_AXI_LITE_GENERIC_REG_0_BASEADDR+(4*(i)),(x))
