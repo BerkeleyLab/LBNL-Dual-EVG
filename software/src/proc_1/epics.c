@@ -265,6 +265,13 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
             }
             break;
 
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_AR_TARGET:
+            ret = injectionTargetSetRfCoincTerm(cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
+            }
+            break;
+
         case EVG_PROTOCOL_CMD_LONGOUT_LO_GENERIC:
             switch (idx) {
             case EVG_PROTOCOL_CMD_LONGOUT_GENERIC_IDX_REBOOT:

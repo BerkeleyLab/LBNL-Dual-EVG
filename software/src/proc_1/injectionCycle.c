@@ -176,6 +176,10 @@ injectionTargetSetRfCoincTerm(unsigned int arBucket)
     GPIO_WRITE(GPIO_IDX_INJECTION_TARGET_CSR,
             CSR_TGT_RF_COINC_IDX_W(rfCoincIdx) | CSR_TGT_RF_COINC_TERM_W(rfCoincTerm));
 
+    if (debugFlags & DEBUGFLAG_INJ_CYCLE) {
+        injectionTargetDisplay();
+    }
+
     return 0;
 }
 
