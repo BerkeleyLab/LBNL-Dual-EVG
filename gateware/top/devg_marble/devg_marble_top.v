@@ -432,6 +432,7 @@ injectorSequenceControl #(
     .sysAlignStatus(GPIO_IN[GPIO_IDX_INJECTION_ALIGN_CSR]),
     .sysCsrTargetStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_TARGET_CSR]),
     .sysTargetStatus(GPIO_IN[GPIO_IDX_INJECTION_TARGET_CSR]),
+    .sysTargetStatus2(GPIO_IN[GPIO_IDX_INJECTION_TARGET2_CSR]),
     .powerline_a(powerlineMarker),
 
     .evgTxClk(evg1TxClk),
