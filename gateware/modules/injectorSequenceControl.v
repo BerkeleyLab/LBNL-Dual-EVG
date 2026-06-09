@@ -1,6 +1,7 @@
 // Provide sequencer start signals for injector
 module injectorSequenceControl #(
     parameter SYSCLK_RATE               = -1,
+    parameter DEBUG                     = "FALSE",
     parameter ALIGNMENT_SYNC_COUNT      =  2,
     parameter RF_COINC_IDX_WIDTH        = -1,
     parameter RF_ALIGN_IDX_WIDTH        = -1,
@@ -574,5 +575,36 @@ assign sysAlignStatus = {{12{1'b0}},
                         {4-ALIGNMENT_SYNC_COUNT_MAX_WIDTH{1'b0}}, evgAlignCounterSel,
                         {4-ALIGNMENT_SYNC_COUNT_WIDTH{1'b0}}, evgAlignCounterSelLatch,
                         {8-ALIGNMENT_SYNC_COUNT{1'b0}}, alignmentCounterSynced };
+
+generate
+if (DEBUG != "TRUE" && DEBUG != "FALSE" && DEBUG != "true" && DEBUG != "false") begin
+    DEBUG_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (DEBUG == "TRUE" || DEBUG == "true") begin
+
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(evgTxClk),
+    .probe0({
+        injectorStartState,
+        evgBRBucketLatch_valid,
+        evgRFCoincIdxSelLatch_valid,
+        evgDelays_valid,
+        evgDelaysLatch_valid,
+        evgSequenceStart,
+        evgBRBucketLatch,
+        evgBRInjDelayLatch,
+        evgBRExtrDelayLatch,
+        evgInjDelay,
+        evgExtrDelay
+    })
+);
+`endif
+
+end // end if
+endgenerate
 
 endmodule

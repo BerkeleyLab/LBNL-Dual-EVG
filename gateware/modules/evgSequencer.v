@@ -385,4 +385,35 @@ always @(posedge sysClk) begin
     end
 end
 
+generate
+if (DEBUG != "TRUE" && DEBUG != "FALSE" && DEBUG != "true" && DEBUG != "false") begin
+    DEBUG_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (DEBUG == "TRUE" || DEBUG == "true") begin
+
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(evgTxClk),
+    .probe0({
+        evgSequenceStart,
+        sequenceEnabled[0],
+        sequenceEnabled[1],
+        statusFifoWrEvent,
+        evgStatus,
+        evgDelay[1],
+        evgDelay[2],
+        evgDelayLatch[1],
+        evgDelayLatch[2],
+        evgDelayLatchFlatten[1],
+        evgDelayLatchFlatten[2]
+    })
+);
+`endif
+
+end // end if
+endgenerate
+
 endmodule
