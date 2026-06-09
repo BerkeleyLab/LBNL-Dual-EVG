@@ -428,6 +428,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     if (mustSend) {
         static struct evgStatusPacket pk;
         static uint32_t pkNumber;
+        uint32_t evgSeqStart = 0;
         pk.magic = EVG_PROTOCOL_MAGIC;
         pk.pkNumber = ++pkNumber;
         for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
@@ -439,12 +440,18 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
                 pk.sequencerCatDelay[i][j] = currentCatDelay[i][j];
             }
 
-            if (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO) {
+            evgSeqStart = (pk.sequencerStatus[i] & EVG_STATUS_SEQUENCER_BUSY) != 0;
+
+            if (((debugFlags & DEBUGFLAG_SEQ_STATUS_START_FIFO) && evgSeqStart) ||
+                    (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO)) {
                 printf("EVG %d Seq Status:\n", i);
                 printf("    status: 0x%08X\n    secs: %d\n    ns: %d\n",
-                        pk.sequencerStatus[i], pk.posixSeconds[i], pk.ntpFraction[i]);
+                        pk.sequencerStatus[i],
+                        pk.posixSeconds[i],
+                        pk.ntpFraction[i]);
                 for (j = 0; j < CFG_EVENT_CAT_NUM; j++) {
-                    printf("    cat delay %d: %d\n", j, pk.sequencerCatDelay[i][j]);
+                    printf("    cat delay %d: %d\n",
+                            j, pk.sequencerCatDelay[i][j]);
                 }
 
                 // Does not exist for sequencer 1 (swapout)
