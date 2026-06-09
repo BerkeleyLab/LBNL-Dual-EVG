@@ -393,6 +393,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     uint32_t currentStatusSeconds[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusFraction[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentCatDelay[EVG_PROTOCOL_EVG_COUNT][CFG_EVENT_CAT_NUM];
+    uint32_t reg = 0;
     static uint32_t sentStatus[EVG_PROTOCOL_EVG_COUNT];
 
     if (replyHandle) {
@@ -438,10 +439,25 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
                 pk.sequencerCatDelay[i][j] = currentCatDelay[i][j];
             }
 
+            if (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO) {
+                printf("EVG %d Seq Status:\n", i);
+                printf("    status: 0x%08X\n    secs: %d\n    ns: %d\n",
+                        pk.sequencerStatus[i], pk.posixSeconds[i], pk.ntpFraction[i]);
+                for (j = 0; j < CFG_EVENT_CAT_NUM; j++) {
+                    printf("    cat delay %d: %d\n", j, pk.sequencerCatDelay[i][j]);
+                }
+                reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET2_CSR);
+                printf("    br_bucket:align_count %d:%d\n",
+                        reg & 0xFFFF,
+                        (reg & 0xFFFF0000) >> 16);
+                printf("\n");
+            }
         }
+
         if (mustSwap) {
             bswap32(&pk.magic, sizeof(pk) / sizeof(int32_t));
         }
+
         bwudpSend(seqStatusPublisher, (const char *)&pk, sizeof pk);
         whenSent = now;
         mustSend = 0;
