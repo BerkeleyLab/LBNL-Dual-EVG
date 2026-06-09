@@ -41,61 +41,66 @@
 #define EVG_COUNT               2
 #define EVG_COINCIDENCE_COUNT   2
 
-#define EVG_STATUS_SEQUENCE_0_ENABLED  (1UL << 0)
-#define EVG_STATUS_SEQUENCE_1_ENABLED  (1UL << 1)
-#define EVG_STATUS_MAP_1_ACTIVE        (1UL << 2)
-#define EVG_STATUS_SEQUENCER_ACTIVE    (1UL << 3)
-
-#define EVG_STATUS_START_COUNT_SHIFT   8
-#define EVG_STATUS_START_COUNT_MASK    (0xFF<<EVG_STATUS_START_COUNT_SHIFT)
-
-#define EVG_STATUS_MISSED_COUNT_SHIFT  16
-#define EVG_STATUS_MISSED_COUNT_MASK   (0xFF<<EVG_STATUS_MISSED_COUNT_SHIFT)
-
 /* CSR definitions */
 
-#define SEQ_CSR_CMD_SET_ADDRESS         (1UL << 30)
-#define SEQ_CSR_CMD_LATCH_GAP           (2UL << 30)
-#define SEQ_CSR_CMD_WRITE_ENTRY         (3UL << 30)
+/* Command register */
 
-#define SEQ_CSR_DELAY_SIZE              28
-#define SEQ_CSR_DELAY_SHIFT             0
-#define SEQ_CSR_DELAY_MASK              REG_GEN_MASK(SEQ_CSR_DELAY_SHIFT, \
-                                            SEQ_CSR_DELAY_SIZE)
-#define SEQ_CSR_DELAY_R(reg)            REG_GEN_READ(reg, SEQ_CSR_DELAY_SHIFT, \
-                                            SEQ_CSR_DELAY_SIZE)
-#define SEQ_CSR_DELAY_W(value)          REG_GEN_WRITE(value, SEQ_CSR_DELAY_SHIFT, \
-                                            SEQ_CSR_DELAY_SIZE)
+#define SEQ_CSR_CMD_SET_ADDRESS                (1UL << 30)
+#define SEQ_CSR_CMD_LATCH_GAP                  (2UL << 30)
+#define SEQ_CSR_CMD_WRITE_ENTRY                (3UL << 30)
 
-#define SEQ_CSR_EVCODE_SIZE             8
-#define SEQ_CSR_EVCODE_SHIFT            0
-#define SEQ_CSR_EVCODE_MASK             REG_GEN_MASK(SEQ_CSR_EVCODE_SHIFT, \
-                                            SEQ_CSR_EVCODE_SIZE)
-#define SEQ_CSR_EVCODE_W(value)         REG_GEN_WRITE(value, SEQ_CSR_EVCODE_SHIFT, \
-                                            SEQ_CSR_EVCODE_SIZE)
+#define SEQ_CSR_DELAY_SIZE                     28
+#define SEQ_CSR_DELAY_SHIFT                    0
+#define SEQ_CSR_DELAY_MASK                     REG_GEN_MASK(SEQ_CSR_DELAY_SHIFT, \
+                                                   SEQ_CSR_DELAY_SIZE)
+#define SEQ_CSR_DELAY_R(reg)                   REG_GEN_READ(reg, SEQ_CSR_DELAY_SHIFT, \
+                                                   SEQ_CSR_DELAY_SIZE)
+#define SEQ_CSR_DELAY_W(value)                 REG_GEN_WRITE(value, SEQ_CSR_DELAY_SHIFT, \
+                                                   SEQ_CSR_DELAY_SIZE)
 
-#define SEQ_CSR_CAT_SIZE                8
-#define SEQ_CSR_CAT_SHIFT               8
-#define SEQ_CSR_CAT_MASK                REG_GEN_MASK(SEQ_CSR_CAT_SHIFT, \
-                                               SEQ_CSR_CAT_SIZE)
-#define SEQ_CSR_CAT_W(value)            REG_GEN_WRITE(value, SEQ_CSR_CAT_SHIFT, \
-                                               SEQ_CSR_CAT_SIZE)
+#define SEQ_CSR_EVCODE_SIZE                    8
+#define SEQ_CSR_EVCODE_SHIFT                   0
+#define SEQ_CSR_EVCODE_MASK                    REG_GEN_MASK(SEQ_CSR_EVCODE_SHIFT, \
+                                                   SEQ_CSR_EVCODE_SIZE)
+#define SEQ_CSR_EVCODE_W(value)                REG_GEN_WRITE(value, SEQ_CSR_EVCODE_SHIFT, \
+                                                   SEQ_CSR_EVCODE_SIZE)
 
-#define SEQ_CSR_ADDRESS_WIDTH_MASK      0x1F000000
-#define SEQ_CSR_ADDRESS_WIDTH_SHIFT     24
-#define SEQ_CSR_IGNORED_CYCLES_MASK     0xFF0000
-#define SEQ_CSR_IGNORED_CYCLES_SHIFT    16
+#define SEQ_CSR_CAT_SIZE                       8
+#define SEQ_CSR_CAT_SHIFT                      8
+#define SEQ_CSR_CAT_MASK                       REG_GEN_MASK(SEQ_CSR_CAT_SHIFT, \
+                                                      SEQ_CSR_CAT_SIZE)
+#define SEQ_CSR_CAT_W(value)                   REG_GEN_WRITE(value, SEQ_CSR_CAT_SHIFT, \
+                                                      SEQ_CSR_CAT_SIZE)
 
-#define SEQ_CSR_W_RBK_MUX_SEL           (1UL << 24)
-#define SEQ_CSR_W_SET_PRECOMP_EVENT     (1UL << 25)
+#define SEQ_CSR_ADDRESS_WIDTH_MASK             0x1F000000
+#define SEQ_CSR_ADDRESS_WIDTH_SHIFT            24
+#define SEQ_CSR_IGNORED_CYCLES_MASK            0xFF0000
+#define SEQ_CSR_IGNORED_CYCLES_SHIFT           16
 
-#define SEQ_CSR_ACCEPTED_CYCLES_MASK    0xFF00
-#define SEQ_CSR_ACCEPTED_CYCLES_SHIFT   8
+#define SEQ_CSR_W_RBK_MUX_SEL                  (1UL << 24)
+#define SEQ_CSR_W_SET_PRECOMP_EVENT            (1UL << 25)
 
-#define SEQ_CSR_FORCE_UPDATE_STATUS_REG 0x20
-#define SEQ_CSR_FLIP_STATUS_REG         0x10
-#define SEQ_CSR_DISABLE_SEQ(n)          (0x4<<(n))
-#define SEQ_CSR_ENABLE_SEQ(n)           (0x1<<(n))
+#define SEQ_CSR_ACCEPTED_CYCLES_MASK           0xFF00
+#define SEQ_CSR_ACCEPTED_CYCLES_SHIFT          8
+
+#define SEQ_CSR_FORCE_UPDATE_STATUS_REG        0x20
+#define SEQ_CSR_FLIP_STATUS_REG                0x10
+#define SEQ_CSR_DISABLE_SEQ(n)                 (0x4<<(n))
+#define SEQ_CSR_ENABLE_SEQ(n)                  (0x1<<(n))
+
+#define EVG_STATUS_SEQUENCE_0_ENABLED          (1UL << 0)
+#define EVG_STATUS_SEQUENCE_1_ENABLED          (1UL << 1)
+#define EVG_STATUS_MAP_1_ACTIVE                (1UL << 2)
+#define EVG_STATUS_SEQUENCER_ACTIVE            (1UL << 3)
+#define EVG_STATUS_SEQUENCER_BUSY              (1UL << 4)
+
+#define EVG_STATUS_START_COUNT_SHIFT           8
+#define EVG_STATUS_START_COUNT_MASK            (0xFF<<EVG_STATUS_START_COUNT_SHIFT)
+
+#define EVG_STATUS_MISSED_COUNT_SHIFT          16
+#define EVG_STATUS_MISSED_COUNT_MASK           (0xFF<<EVG_STATUS_MISSED_COUNT_SHIFT)
+
+/* FIFO status register */
 
 #define SEQ_CSR_RD_STATUS_FIFO_RD_COUNT        0x3F0000
 #define SEQ_CSR_RD_STATUS_FIFO_RD_COUNT_SHIFT  16
@@ -107,6 +112,8 @@
 
 #define SEQ_CSR_WR_STATUS_FIFO_ACCEPT_WR       0x2
 #define SEQ_CSR_WR_STATUS_FIFO_RE              0x1
+
+/* Readback status register */
 
 #define SEQ_RBK_SEL_0_EVENT_SIZE                8
 #define SEQ_RBK_SEL_0_EVENT_SHIFT               0
