@@ -446,10 +446,14 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
                 for (j = 0; j < CFG_EVENT_CAT_NUM; j++) {
                     printf("    cat delay %d: %d\n", j, pk.sequencerCatDelay[i][j]);
                 }
-                reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET2_CSR);
-                printf("    br_bucket:align_count %d:%d\n",
-                        reg & 0xFFFF,
-                        (reg & 0xFFFF0000) >> 16);
+
+                // Does not exist for sequencer 1 (swapout)
+                if (i == 0) {
+                    reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET2_CSR);
+                    printf("    br_bucket:align_count %d:%d\n",
+                            reg & 0xFFFF,
+                            (reg & 0xFFFF0000) >> 16);
+                }
                 printf("\n");
             }
         }
