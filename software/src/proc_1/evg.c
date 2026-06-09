@@ -136,11 +136,6 @@ evgStatusRead(struct evgInfo *evgp, uint32_t *seconds, uint32_t *fraction,
 
         for (int i = 0; i < CFG_EVENT_CAT_NUM; i++) {
             evgp->seqCatDelay[i] = GPIO_READ(evgp->csrCatDelayStartIdx+i);
-
-            if (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO) {
-                printf("EVG %d evgp->seqCatDelay[i]: %d\n",
-                        evgp->evgNumber, evgp->seqCatDelay[i]);
-            }
         }
 
         /* Acknowledge valid word from the FIFO */
