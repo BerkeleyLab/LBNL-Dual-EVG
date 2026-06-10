@@ -36,21 +36,40 @@
 #define MINIMUM_INJECTION_PERIOD_MILLISECONDS  1000
 #define MAXIMUM_INJECTION_PERIOD_MILLISECONDS  ((1UL << 16) - 1)
 
-static unsigned int baseInterval = MINIMUM_INJECTION_PERIOD_MILLISECONDS;
-static unsigned int maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS -
-                                          MINIMUM_INJECTION_PERIOD_MILLISECONDS;
+static struct injCycle {
+    uint16_t    csrIdx;
+    uint16_t    csrAlignIdx;
+    uint16_t    csrTargetStatusIdx;
+    uint16_t    csrTargetStatus2Idx;
+    uint32_t    minInjPeriod;
+    uint32_t    maxInjPeriod;
+    uint32_t    baseInterval;
+    uint32_t    maxExtension;
+} injCycle = {
+    .csrIdx = GPIO_IDX_INJECTION_CYCLE_CSR,
+    .csrAlignIdx = GPIO_IDX_INJECTION_ALIGN_CSR,
+    .csrTargetStatusIdx = GPIO_IDX_INJECTION_TARGET_CSR,
+    .csrTargetStatus2Idx = GPIO_IDX_INJECTION_TARGET2_CSR,
+    .minInjPeriod = MINIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .maxInjPeriod = MAXIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .baseInterval = MINIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS -
+        MINIMUM_INJECTION_PERIOD_MILLISECONDS,
+};
+
+static struct injCycle *injp = &injCycle;
 
 void
 injectionCycleEnable(int enable)
 {
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, enable ?
+    GPIO_WRITE(injp->csrIdx, enable ?
                         CSR_INJ_W_ENABLE_TIMED_CYCLES : CSR_INJ_W_DISABLE_TIMED_CYCLES);
 }
 
 void
 injectionCycleManualTrigger(void)
 {
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_INJ_W_MANUAL_TRIGGER);
+    GPIO_WRITE(injp->csrIdx, CSR_INJ_W_MANUAL_TRIGGER);
 }
 
 void
@@ -59,25 +78,25 @@ injectionCycleExtendInterval(int milliseconds)
     if (milliseconds < 0) {
         milliseconds = 0;
     }
-    else if (milliseconds > maxExtension) {
-        milliseconds = maxExtension;
+    else if (milliseconds > injp->maxExtension) {
+        milliseconds = injp->maxExtension;
     }
-    milliseconds += baseInterval;
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_INJ_W_SET_CYCLE_MILLISECONDS |
+    milliseconds += injp->baseInterval;
+    GPIO_WRITE(injp->csrIdx, CSR_INJ_W_SET_CYCLE_MILLISECONDS |
                                                             (milliseconds - 2));
 }
 
 void
 injectionCycleSetBaseInterval(int milliseconds)
 {
-    if (milliseconds < MINIMUM_INJECTION_PERIOD_MILLISECONDS) {
-        milliseconds = MINIMUM_INJECTION_PERIOD_MILLISECONDS;
+    if (milliseconds < injp->minInjPeriod) {
+        milliseconds = injp->minInjPeriod;
     }
-    else if (milliseconds > MAXIMUM_INJECTION_PERIOD_MILLISECONDS) {
-        milliseconds = MAXIMUM_INJECTION_PERIOD_MILLISECONDS;
+    else if (milliseconds > injp->maxInjPeriod) {
+        milliseconds = injp->maxInjPeriod;
     }
-    baseInterval = milliseconds;
-    maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS - baseInterval;
+    injp->baseInterval = milliseconds;
+    injp->maxExtension = injp->maxInjPeriod - injp->baseInterval;
     injectionCycleExtendInterval(0);
 }
 
@@ -85,7 +104,7 @@ int
 injectionCycleFetchStatus(uint32_t *ap)
 {
     int idx = 0;
-    ap[idx++] = GPIO_READ(GPIO_IDX_INJECTION_CYCLE_CSR);
+    ap[idx++] = GPIO_READ(injp->csrIdx);
     return idx;
 }
 
@@ -96,7 +115,7 @@ injectionAlignSetAlignSel(int sel)
         return;
     }
 
-    GPIO_WRITE(GPIO_IDX_INJECTION_ALIGN_CSR, CSR_INJ_ALIGN_W_SET_ALIGN_SEL |
+    GPIO_WRITE(injp->csrAlignIdx, CSR_INJ_ALIGN_W_SET_ALIGN_SEL |
             CSR_INJ_ALIGN_W_SEL_W(sel));
 }
 
@@ -107,7 +126,7 @@ injectionAlignSetHeartbeatSel(int sel)
         return;
     }
 
-    GPIO_WRITE(GPIO_IDX_INJECTION_ALIGN_CSR, CSR_INJ_ALIGN_W_SET_HEARTBEAT_SEL |
+    GPIO_WRITE(injp->csrAlignIdx, CSR_INJ_ALIGN_W_SET_HEARTBEAT_SEL |
             CSR_INJ_ALIGN_W_SEL_W(sel));
 }
 
@@ -133,7 +152,7 @@ injectionAlignSetSel(unsigned int idx, int sel)
 int
 injectionAlignGetAlignSel(void)
 {
-    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+    uint32_t reg = GPIO_READ(injp->csrAlignIdx);
 
     return CSR_INJ_ALIGN_R_COUNTER_SEL_R(reg);
 }
@@ -141,7 +160,7 @@ injectionAlignGetAlignSel(void)
 int
 injectionAlignGetHbSel(void)
 {
-    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+    uint32_t reg = GPIO_READ(injp->csrAlignIdx);
 
     return CSR_INJ_ALIGN_R_HB_SEL_R(reg);
 }
@@ -150,7 +169,7 @@ int
 injectionAlignFetchStatus(uint32_t *ap)
 {
     int idx = 0;
-    ap[idx++] = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+    ap[idx++] = GPIO_READ(injp->csrAlignIdx);
     return idx;
 }
 
@@ -173,7 +192,7 @@ injectionTargetSetRfCoincTerm(unsigned int arBucket)
     rfCoincIdx = (5 * arBucket) % CFG_EVG1_BR_AR_COINC_PER_RF_COINC;
     rfCoincTerm = (43 * rfCoincIdx) % CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC;
 
-    GPIO_WRITE(GPIO_IDX_INJECTION_TARGET_CSR,
+    GPIO_WRITE(injp->csrTargetStatusIdx,
             CSR_TGT_RF_COINC_IDX_W(rfCoincIdx) | CSR_TGT_RF_COINC_TERM_W(rfCoincTerm));
 
     if (debugFlags & DEBUGFLAG_INJ_CYCLE) {
@@ -183,27 +202,36 @@ injectionTargetSetRfCoincTerm(unsigned int arBucket)
     return 0;
 }
 
-int
-injectionTargetGetRfIdxTerm(void)
+uint32_t
+injectionTargetStatus(void)
 {
-    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET_CSR);
-
-    return CSR_TGT_RF_COINC_IDX_R(reg);
+    return GPIO_READ(injp->csrTargetStatusIdx);
 }
 
-int
-injectionTargetGetRfCoincTerm(void)
+uint32_t
+injectionTargetStatus2(void)
 {
-    uint32_t reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET_CSR);
-
-    return CSR_TGT_RF_COINC_TERM_R(reg);
+    return GPIO_READ(injp->csrTargetStatus2Idx);
 }
 
-void injectionTargetDisplay(void)
+void
+injectionTargetDisplay(void)
 {
-    int rfCoincIdx = injectionTargetGetRfIdxTerm();
-    int rfCoincTerm = injectionTargetGetRfCoincTerm();
+    uint32_t reg = injectionTargetStatus();
+    int rfCoincIdx = CSR_TGT_RF_COINC_IDX_R(reg);
+    int rfCoincTerm = CSR_TGT_RF_COINC_TERM_R(reg);
 
     printf("Injection Target: rfCoincIdx: %d rfCoincTerm: %d\n",
             rfCoincIdx, rfCoincTerm);
+}
+
+void
+injectionTarget2Display(void)
+{
+    uint32_t reg = injectionTargetStatus2();
+    int brBucket = CSR_TGT2_BR_BUCKET_R(reg);
+    int alignCount = CSR_TGT2_ALIGN_COUNT_R(reg);
+
+    printf("Injection Target: brBucket: %d alignCount: %d\n",
+            brBucket, alignCount);
 }
