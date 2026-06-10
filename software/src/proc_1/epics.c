@@ -456,10 +456,10 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
 
                 // Does not exist for sequencer 1 (swapout)
                 if (i == 0) {
-                    reg = GPIO_READ(GPIO_IDX_INJECTION_TARGET2_CSR);
+                    reg = injectionTargetStatus2();
                     printf("    br_bucket:align_count %d:%d\n",
-                            reg & 0xFFFF,
-                            (reg & 0xFFFF0000) >> 16);
+                            CSR_TGT2_BR_BUCKET_R(reg),
+                            CSR_TGT2_ALIGN_COUNT_R(reg));
                 }
                 printf("\n");
             }
