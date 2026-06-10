@@ -393,7 +393,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     uint32_t currentStatusSeconds[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusFraction[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentCatDelay[EVG_PROTOCOL_EVG_COUNT][CFG_EVENT_CAT_NUM];
-    uint32_t reg = 0;
+    uint32_t reg = 0, reg2 = 0;
     static uint32_t sentStatus[EVG_PROTOCOL_EVG_COUNT];
 
     if (replyHandle) {
@@ -456,10 +456,14 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
 
                 // Does not exist for sequencer 1 (swapout)
                 if (i == 0) {
-                    reg = injectionTargetStatus2();
+                    reg = injectionTargetStatus();
+                    reg2 = injectionTargetStatus2();
+                    printf("    rf_coinc_idx:rf_coinc_term %d:%d\n",
+                            CSR_TGT_RF_COINC_IDX_R(reg),
+                            CSR_TGT_RF_COINC_TERM_R(reg));
                     printf("    br_bucket:align_count %d:%d\n",
-                            CSR_TGT2_BR_BUCKET_R(reg),
-                            CSR_TGT2_ALIGN_COUNT_R(reg));
+                            CSR_TGT2_BR_BUCKET_R(reg2),
+                            CSR_TGT2_ALIGN_COUNT_R(reg2));
                 }
                 printf("\n");
             }
