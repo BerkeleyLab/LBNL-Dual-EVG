@@ -578,7 +578,7 @@ assign sysAlignStatus = {{12{1'b0}},
 
 generate
 if (DEBUG != "TRUE" && DEBUG != "FALSE" && DEBUG != "true" && DEBUG != "false") begin
-    DEBUG_only_TRUE_or_FALSE_SUPPORTED();
+    DEBUG_only_TRUE_or_FALSE_SUPPORTED err();
 end
 endgenerate
 
