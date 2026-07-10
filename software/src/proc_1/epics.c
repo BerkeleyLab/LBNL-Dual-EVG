@@ -390,6 +390,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     static int mustSend, mustSwap;
     static uint32_t whenSubscribed, whenSent;
     uint32_t currentStatus[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t currentStatus2[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusSeconds[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusFraction[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentCatDelay[EVG_PROTOCOL_EVG_COUNT][CFG_EVENT_CAT_NUM];
@@ -421,6 +422,8 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
         currentStatus[i] = evgSequencerStatus(i, &currentStatusSeconds[i],
                 &currentStatusFraction[i], currentCatDelay[i], CFG_EVENT_CAT_NUM);
+        // Only sequencer 0 has this information
+        currentStatus2[i] = (i == 0)? injectionTargetStatus2() : 0;
         if (currentStatus[i] != sentStatus[i]) {
             mustSend = 1;
         }
@@ -433,6 +436,7 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
         pk.pkNumber = ++pkNumber;
         for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
             pk.sequencerStatus[i] = sentStatus[i] = currentStatus[i];
+            pk.sequencerStatus2[i] = currentStatus2[i];
             pk.posixSeconds[i] = currentStatusSeconds[i] - NTP_POSIX_OFFSET;
             pk.ntpFraction[i] = currentStatusFraction[i];
 
