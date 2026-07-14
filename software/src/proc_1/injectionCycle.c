@@ -103,6 +103,17 @@ injectionCycleSetBaseInterval(int milliseconds)
 }
 
 int
+injectionCycleSetInjMode(unsigned int injMode)
+{
+    if (injMode >= CFG_EVG1_INJ_MODE_COUNT) {
+        return -1;
+    }
+
+    GPIO_WRITE(injp->csrIdx, CSR_INJ_W_SET_INJ_MODE | injMode);
+    return 0;
+}
+
+int
 injectionCycleFetchStatus(uint32_t *ap)
 {
     int idx = 0;

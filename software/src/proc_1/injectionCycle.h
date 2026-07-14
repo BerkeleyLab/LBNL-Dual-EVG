@@ -43,6 +43,7 @@
  */
 
 #define CSR_INJ_W_SET_CYCLE_MILLISECONDS            (1UL << 31)
+#define CSR_INJ_W_SET_INJ_MODE                      (1UL << 30)
 #define CSR_INJ_W_MANUAL_TRIGGER                    (1UL << 7)
 #define CSR_INJ_W_DISABLE_TIMED_CYCLES              (1UL << 1)
 #define CSR_INJ_W_ENABLE_TIMED_CYCLES               (1UL << 0)
@@ -140,6 +141,7 @@ void injectionCycleEnable(int enable);
 void injectionCycleManualTrigger(void);
 void injectionCycleSetBaseInterval(int milliseconds);
 void injectionCycleExtendInterval(int milliseconds);
+int injectionCycleSetInjMode(unsigned int injMode);
 int injectionCycleFetchStatus(uint32_t *ap);
 void injectionAlignSetAlignSel(int sel);
 void injectionAlignSetHeartbeatSel(int sel);
