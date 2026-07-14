@@ -27,6 +27,8 @@
 #define CFG_EVG1_BR_AR_COINC_PER_RF_COINC    304
 #define CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC 125
 
+#define CFG_EVG1_INJ_MODE_COUNT              2
+
 // Alternate values to work with ALS SR. Used for alternate
 // injection sequence synchronization
 #define CFG_EVG1_ALT_CLK_PER_BR_AR_ALIGNMENT    10250
