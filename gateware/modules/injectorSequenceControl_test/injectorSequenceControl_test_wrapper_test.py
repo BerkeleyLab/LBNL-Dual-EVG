@@ -259,7 +259,7 @@ class TB:
 
         self.dut._log.info("inj_req: Programming injection mode...")
         await self.write_csr((1 << 30) | 
-            (self.dut.injectorSequenceControl.INJECTION_AR_MODE))  # Bit 30 = 1 selects injection mode
+            (int(self.dut.injectorSequenceControl.INJECTION_AR_MODE)))  # Bit 30 = 1 selects injection mode
 
         self.dut._log.info("inj_req: Triggering Injection Cycle...")
         await self.write_csr(0x80)
