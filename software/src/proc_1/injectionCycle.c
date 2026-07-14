@@ -45,7 +45,7 @@ static struct injCycle {
     uint32_t     maxInjPeriod;
     uint32_t     baseInterval;
     uint32_t     maxExtension;
-    unsigned int arTgtBucket;
+    unsigned int arTgtIdx;
 } injCycle = {
     .csrIdx = GPIO_IDX_INJECTION_CYCLE_CSR,
     .csrAlignIdx = GPIO_IDX_INJECTION_ALIGN_CSR,
@@ -56,7 +56,7 @@ static struct injCycle {
     .baseInterval = MINIMUM_INJECTION_PERIOD_MILLISECONDS,
     .maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS -
         MINIMUM_INJECTION_PERIOD_MILLISECONDS,
-    .arTgtBucket = 0,
+    .arTgtIdx = 0,
 };
 
 static struct injCycle *injp = &injCycle;
@@ -197,14 +197,15 @@ injectionTargetSetRfCoincTerm(unsigned int arBucket)
 {
     unsigned int rfCoincIdx = 0;
     unsigned int rfCoincTerm = 0;
+    unsigned int arIdx = arBucket - 1;
 
-    if (arBucket >= CFG_EVG1_BR_AR_COINC_PER_RF_COINC) {
+    if (arIdx >= CFG_EVG1_BR_AR_COINC_PER_RF_COINC) {
         return -1;
     }
 
-    injp->arTgtBucket = arBucket;
+    injp->arTgtIdx = arIdx;
 
-    rfCoincIdx = (5 * injp->arTgtBucket) % CFG_EVG1_BR_AR_COINC_PER_RF_COINC;
+    rfCoincIdx = (5 * injp->arTgtIdx) % CFG_EVG1_BR_AR_COINC_PER_RF_COINC;
     rfCoincTerm = (43 * rfCoincIdx) % CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC;
 
     GPIO_WRITE(injp->csrTargetStatusIdx,
