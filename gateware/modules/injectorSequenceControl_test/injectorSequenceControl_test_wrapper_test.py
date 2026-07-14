@@ -257,6 +257,10 @@ class TB:
         await self.write_align_csr((1 << 31))  # MSB=1 routes to alignCounterSel = 0
         await self.write_align_csr((1 << 30))  # Bit 30=1 routes to evgHeartbeatSel = 0
 
+        self.dut._log.info("inj_req: Programming injection mode...")
+        await self.write_csr((1 << 30) | 
+            (self.dut.injectorSequenceControl.INJECTION_AR_MODE))  # Bit 30 = 1 selects injection mode
+
         self.dut._log.info("inj_req: Triggering Injection Cycle...")
         await self.write_csr(0x80)
 
