@@ -1002,11 +1002,12 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticIn(FMC2_diagnosticIn),
     .diagnosticOut(diagnostic2ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic2Select));
+// FIXME: Change it back to evg2 for diagnstic2Select == 3'd4
 assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
      (diagnostic2Select == 3'h2) ? { evg2HeartbeatCore, evg2TxClk } :
      (diagnostic2Select == 3'h3) ? { AROrbitClock, evg2CoincidenceMarker } :
-     (diagnostic2Select == 3'h4) ? { evg2HeartbeatAlign, AROrbitClock } :
+     (diagnostic2Select == 3'h4) ? { evg1HeartbeatAlign, BROrbitClockDiv4Clock} :
      (diagnostic2Select == 3'h5) ? { evg2HeartbeatAlign, SROrbitClock } :
      (diagnostic2Select == 3'h6) ? { evg2HeartbeatAlign, ARSRCoincClock } :
      (diagnostic2Select == 3'h7) ? { AROrbitClock, ARSRCoincClock } :
