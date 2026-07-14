@@ -97,7 +97,6 @@ localparam INJECTION_MODE_WIDTH = 2;
 localparam INJECTION_NORMAL_MODE = 2'd0;
 localparam INJECTION_AR_MODE = 2'd1;
 
-
 reg [CYCLE_COUNTER_WIDTH-1:0] sysCycleCounter = 0;
 wire sysCycleCounterDone = sysCycleCounter[CYCLE_COUNTER_WIDTH-1];
 reg [CYCLE_COUNTER_RELOAD_WIDTH-1:0] sysCycleCounterReload = 1400 - 2;
