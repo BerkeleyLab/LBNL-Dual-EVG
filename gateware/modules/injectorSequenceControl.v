@@ -91,11 +91,19 @@ wire sysClkDividerDone = sysClkDivider[SYSCLK_DIVIDER_WIDTH-1];
 // Injection cycle trigger
 localparam CYCLE_COUNTER_RELOAD_WIDTH = 16;
 localparam CYCLE_COUNTER_WIDTH = CYCLE_COUNTER_RELOAD_WIDTH + 1;
+
+localparam INJECTION_MODE_WIDTH = 2;
+
+localparam INJECTION_NORMAL_MODE = 2'd0;
+localparam INJECTION_AR_MODE = 2'd1;
+
+
 reg [CYCLE_COUNTER_WIDTH-1:0] sysCycleCounter = 0;
 wire sysCycleCounterDone = sysCycleCounter[CYCLE_COUNTER_WIDTH-1];
 reg [CYCLE_COUNTER_RELOAD_WIDTH-1:0] sysCycleCounterReload = 1400 - 2;
 reg sysCycleEnabled = 0;
 reg sysInjectorStartToggle = 0;
+reg [INJECTION_MODE_WIDTH-1:0] sysInjMode = 0;
 
 always @(posedge sysClk) begin
     if (sysClkDividerDone) begin
@@ -108,6 +116,9 @@ always @(posedge sysClk) begin
     if (sysCsrStrobe) begin
         if (sysGPIO_OUT[31]) begin
             sysCycleCounterReload <= sysGPIO_OUT[CYCLE_COUNTER_RELOAD_WIDTH-1:0];
+        end
+        else if (sysGPIO_OUT[30]) begin
+            sysInjMode <= sysGPIO_OUT[INJECTION_MODE_WIDTH-1:0];
         end
         else begin
             if (sysGPIO_OUT[1]) begin
@@ -218,24 +229,28 @@ assign evgRFCoincCountMon = evgRFCoincCount;
 assign evgRFAlignCountMon = evgRFAlignCount;
 
 // Forward to TX clk
+wire [INJECTION_MODE_WIDTH-1:0] evgInjMode;
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgAlignCounterSel;
 wire [ALIGNMENT_SYNC_COUNT_MAX_WIDTH-1:0] evgHeartbeatSel;
 wire [RF_COINC_IDX_WIDTH-1:0] evgRFCoincIdxSel;
 wire [RF_COINC_TERM_WIDTH-1:0] evgRFCoincTerm;
 
 forwardData #(
-    .DATA_WIDTH(RF_COINC_TERM_WIDTH+
+    .DATA_WIDTH(INJECTION_MODE_WIDTH+
+                RF_COINC_TERM_WIDTH+
                 RF_COINC_IDX_WIDTH+
                 ALIGNMENT_SYNC_COUNT_MAX_WIDTH+
                 ALIGNMENT_SYNC_COUNT_MAX_WIDTH))
   forwardDataToEVG (
     .inClk(sysClk),
-    .inData({sysRFCoincTerm,
+    .inData({sysInjMode,
+            sysRFCoincTerm,
             sysRFCoincIdxSel,
             sysAlignCounterSel,
             sysEvgHeartbeatSel}),
     .outClk(evgTxClk),
-    .outData({evgRFCoincTerm,
+    .outData({evgInjMode,
+              evgRFCoincTerm,
               evgRFCoincIdxSel,
               evgAlignCounterSel,
               evgHeartbeatSel}));
@@ -336,7 +351,12 @@ always @(posedge evgTxClk) begin
         // "Max" -> 0. So, it's always guaranteed that the
         // evgRFCoincIdxSel == evgRFCoincCount will happen in the next alignment cycle.
         if (alignmentCounterDone[evgAlignCounterSelLatch]) begin
-            injectorStartState <= ST_AWAIT_COINC_IDX_SEL;
+            if (evgInjMode == INJECTION_NORMAL_MODE) begin
+                injectorStartState <= ST_TRIGGER;
+            end
+            else if (evgInjMode == INJECTION_AR_MODE) begin
+                injectorStartState <= ST_AWAIT_COINC_IDX_SEL;
+            end
         end
     end
 
@@ -567,7 +587,7 @@ assign evgHeartbeatCore = evgHeartbeat[evgHeartbeatCoreSel];
 assign sysStatus = { !sysPowerlineTimeout, alignmentCounterSyncedAll,
                      {24-2-CYCLE_COUNTER_RELOAD_WIDTH{1'b0}},
                      sysCycleCounterReload,
-                     {8-1{1'b0}}, sysCycleEnabled };
+                     {8-INJECTION_MODE_WIDTH-1{1'b0}}, sysInjMode, sysCycleEnabled };
 
 // in TX CLK domain, but these signals change only ~@1s
 assign sysAlignStatus = {{12{1'b0}},
