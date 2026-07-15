@@ -16,6 +16,8 @@
 #define CFG_SEQUENCE_RAM_CAPACITY           1024
 
 #define CFG_EVG1_HEARTBEAT_COUNT            2
+#define CFG_EVG1_HEARTBEAT_NORMAL_IDX       0
+#define CFG_EVG1_HEARTBEAT_ALT_IDX          1
 
 #define CFG_EVG1_CLK_PER_RF_COINCIDENCE     668
 #define CFG_EVG1_CLK_PER_TICKS_COINCIDENCE  167
@@ -27,12 +29,15 @@
 #define CFG_EVG1_BR_AR_COINC_PER_RF_COINC    304
 #define CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC 125
 
+#define CFG_EVG1_INJ_MODE_COUNT              2
+
 // Alternate values to work with ALS SR. Used for alternate
 // injection sequence synchronization
 #define CFG_EVG1_ALT_CLK_PER_BR_AR_ALIGNMENT    10250
 #define CFG_EVG1_ALT_CLK_PER_HEARTBEAT          124640000
 
 #define CFG_EVG2_HEARTBEAT_COUNT            1
+#define CFG_EVG2_HEARTBEAT_NORMAL_IDX       0
 
 #define CFG_EVG2_CLK_PER_RF_COINCIDENCE     669
 #define CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK   76
