@@ -948,7 +948,7 @@ evgCounters #(
     .clk(evg2TxClk),
     .ens({NUM_EVG2_COUNTERS{1'b1}}),
     // These counters are only synchronous to the "normal" heartbeat
-    .heartbeatStrobe(evg2HeartbeatRequest[CFG_EVG2_HEARTBEAT_NORMAL]),
+    .heartbeatStrobe(evg2HeartbeatRequest[CFG_EVG2_HEARTBEAT_NORMAL_IDX]),
     .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
     .clkGenSynceds({
