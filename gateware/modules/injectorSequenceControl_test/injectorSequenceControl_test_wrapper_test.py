@@ -97,6 +97,7 @@ class TB:
 
     async def wait_for_powerline(self):
         await RisingEdge(self.dut.evgPowerlineMon)
+        await RisingEdge(self.dut.evgTxClk)
 
     async def wait_for_alignment(self, idx=0):
         sig = self.dut.evgAlignCounterDone
@@ -111,11 +112,15 @@ class TB:
 
             prev_val = curr_val
 
+        await RisingEdge(self.dut.evgTxClk)
+
     async def wait_for_coinc_idx(self, coinc_idx):
         current_coinc_idx, _ = await self.read_current_counters()
 
         while current_coinc_idx != coinc_idx:
             current_coinc_idx, _ = await self.read_current_counters()
+
+        await RisingEdge(self.dut.evgTxClk)
 
     async def _write_csr(self, strobe_name, value):
         stb = getattr(self.dut, strobe_name)
