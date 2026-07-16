@@ -357,6 +357,17 @@ async def do_coincidence_index_0_test(tb):
     tb.dut._log.info("--- Coincidence Index 0 Test Complete ---\n")
 
 
+async def do_coincidence_index_303_test(tb):
+    tb.dut._log.info("--- Starting Coincidence Index 303 Test ---")
+
+    num_cycles = await tb.wait_random()
+    # AR bucket = 243 -> RF coincidence index = 303
+    ar_bucket = 243
+    await tb.injection_request_check(ar_bucket=ar_bucket)
+
+    tb.dut._log.info("--- Coincidence Index 303 Test Complete ---\n")
+
+
 @cocotb.test(timeout_time=10, timeout_unit="sec")
 async def execute_all_tests(dut):
     tb = TB(dut)
@@ -366,4 +377,5 @@ async def execute_all_tests(dut):
 
     # Tests themselves
     await do_coincidence_index_0_test(tb)
+    await do_coincidence_index_303_test(tb)
     await do_randomized_tests(tb, num_tests=20)
