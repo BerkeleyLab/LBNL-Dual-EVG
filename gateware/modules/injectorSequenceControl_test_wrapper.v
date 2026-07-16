@@ -147,7 +147,7 @@ evgCounters #(
     .csrs(),
     .clk(evgTxClk),
     .ens(evgCountersEn),
-    .heartbeatStrobe(evgHeartbeatAlign),
+    .heartbeatStrobe(evgHeartbeat[0]),
     .pulsePerSecondStrobe(1'b0),
     .clkGenSynceds(clkGenSynceds),
     .clkGens(),
