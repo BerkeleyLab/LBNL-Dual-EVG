@@ -193,11 +193,10 @@ injectionAlignFetchStatus(uint32_t *ap)
  */
 
 int
-injectionTargetSetRfCoincTerm(unsigned int arBucket)
+injectionTargetSetRfCoincTerm(unsigned int arIdx)
 {
     unsigned int rfCoincIdx = 0;
     unsigned int rfCoincTerm = 0;
-    unsigned int arIdx = arBucket - 1;
 
     if (arIdx >= CFG_EVG1_BR_AR_COINC_PER_RF_COINC) {
         return -1;
