@@ -107,6 +107,7 @@
 #define GPIO_IDX_EVG_2_CLK_GEN_1_CSR     61 // EVG 2 Clk Generation 1 status
 #define GPIO_IDX_EVG_2_CLK_GEN_2_CSR     62 // EVG 2 Clk Generation 2 status
 #define GPIO_IDX_EVG_2_CLK_GEN_3_CSR     63 // EVG 2 Clk Generation 3 status
+#define GPIO_IDX_EVG_1_ALS_CLK_GEN_1_CSR 64 // EVG 1 ALS Clk Generation 1 status
 
 // Per EVG 1 MGT
 #define GPIO_IDX_EVG_1_0_DRP_CSR         128 // EVG 1 ID 0 transceiver DRP access

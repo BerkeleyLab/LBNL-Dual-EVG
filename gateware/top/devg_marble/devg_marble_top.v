@@ -100,6 +100,9 @@ localparam DRP_DATA_WIDTH        = 16;
 if ((CFG_EVG1_CLK_PER_HEARTBEAT % CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT)!=0)
     CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT_BAD();
 
+if ((CFG_EVG1_ALS_CLK_PER_HEARTBEAT % CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT)!=0)
+    CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT_BAD();
+
 ///////////////////////////////////////////////////////////////////////////////
 assign VCXO_EN = 0;
 assign PHY_RSTN = 1;
@@ -223,7 +226,7 @@ coincidenceRecorder #(
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
     .HEARTBEAT_GEN_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
     .TX_CLK_PER_HEARTBEAT({
-        CFG_EVG1_ALT_CLK_PER_HEARTBEAT,
+        CFG_EVG1_ALS_CLK_PER_HEARTBEAT,
         CFG_EVG1_CLK_PER_HEARTBEAT}))
   coincidenceRecorder1 (
     .sysClk(sysClk),
@@ -403,6 +406,13 @@ wire BRARAlignStrobe, BRARCoincPerRFCoincStrobe, BRARAlignPerBRARCoincStrobe;
 wire [31:0] RFf1CoincCounter, BRARCoincCounter, BROrbitCounterDiv4Counter;
 wire [31:0] BRARAlignCounter, BRARCoincPerRFCoincCounter, BRARAlignPerBRARCoincCounter;
 
+localparam EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT_WIDTH   = $clog2(CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT+1);
+
+wire ALSBRSRAlignClockSynced;
+wire ALSBRSRAlignClock;
+wire ALSBRSRAlignStrobe;
+wire [31:0] ALSBRSRAlignCounter;
+
 wire injectorSequenceStart;
 wire evg1HeartbeatAlign, evg1HeartbeatCore;
 wire [15:0] evg1TxData;
@@ -422,7 +432,7 @@ injectorSequenceControl #(
     .INJ_DELAY_WIDTH(EVG1_INJ_DELAY_WIDTH),
     .EXTR_DELAY_WIDTH(EVG1_EXTR_DELAY_WIDTH),
     .TX_CLK_PER_ALIGNMENT({
-        CFG_EVG1_ALT_CLK_PER_BR_AR_ALIGNMENT,
+        CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT,
         CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
   injectorSequenceControl (
     .sysClk(sysClk),
@@ -919,6 +929,45 @@ evgCounters #(
     );
 
 //////////////////////////////////////////////////////////////////////////////
+// EVG 1 ALS Rates generation
+
+localparam NUM_EVG1_ALS_COUNTERS = 1;
+
+wire [NUM_EVG1_ALS_COUNTERS-1:0] evg1ALSCountersEn = 1'b1;
+
+evgCounters #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .DEBUG("false"),
+    .NUM_COUNTERS(NUM_EVG1_ALS_COUNTERS),
+    .COUNTER_WIDTHS(
+        EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT_WIDTH),
+    .DEFAULT_RATE_COUNTS(
+        CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT))
+  evg1ALSCounters (
+    .sysClk(sysClk),
+    .GPIO_OUT(GPIO_OUT),
+
+    .csrStrobes(0),
+    .csrs({
+        GPIO_IN[GPIO_IDX_EVG_1_ALS_CLK_GEN_1_CSR]}),
+
+    .clk(evg1TxClk),
+    .ens(evg1ALSCountersEn),
+    // These counters are only synchronous to the "ALS" heartbeat
+    .heartbeatStrobe(evg1HeartbeatRequest[CFG_EVG1_HEARTBEAT_ALS_IDX]),
+    .pulsePerSecondStrobe(evgPpsStrobe_f1),
+
+    .clkGenSynceds(
+        ALSBRSRAlignClockSynced),
+    .clkGens(
+        ALSBRSRAlignClock),
+    .clkGenStrobes(
+        ALSBRSRAlignStrobe),
+    .clkGenCounters(
+        ALSBRSRAlignCounter)
+    );
+
+//////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
 
 localparam NUM_EVG2_COUNTERS                      = 3;
@@ -984,7 +1033,7 @@ assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h2) ? { evg1HeartbeatCore, evg1TxClk } :
      (diagnostic1Select == 3'h3) ? { evg1HeartbeatAlign, evg1CoincidenceMarker } :
      (diagnostic1Select == 3'h4) ? { evg1HeartbeatAlign, BROrbitClockDiv4Clock} :
-     (diagnostic1Select == 3'h5) ? { evg1HeartbeatAlign, BRARAlignClock} :
+     (diagnostic1Select == 3'h5) ? { ALSBRSRAlignClock, BRARAlignClock} :
      (diagnostic1Select == 3'h6) ? { evg1HeartbeatAlign, BRARCoincClock} :
      (diagnostic1Select == 3'h7) ? { evg1HeartbeatAlign, RFf1CoincClock } :
                                      diagnostic1ProgrammableOutputs;
