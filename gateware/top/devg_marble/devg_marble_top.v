@@ -3,6 +3,7 @@
 module devg_marble_top #(
     // Include file is machine generated from C header
     `include "gpioIDX.vh"
+    parameter ILA_CHIPSCOPE_DBG       = "FALSE",
     parameter SYSCLK_FREQUENCY        = 100000000,
     parameter TXCLK_NOMINAL_FREQUENCY = 125000000
     ) (
@@ -98,6 +99,9 @@ localparam DRP_DATA_WIDTH        = 16;
 // Sanity check
 if ((CFG_EVG1_CLK_PER_HEARTBEAT % CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT)!=0)
     CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT_BAD();
+
+if ((CFG_EVG1_ALS_CLK_PER_HEARTBEAT % CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT)!=0)
+    CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT_BAD();
 
 ///////////////////////////////////////////////////////////////////////////////
 assign VCXO_EN = 0;
@@ -209,8 +213,10 @@ mmcMailbox #(.DEBUG("false"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coincidence detection
-wire evg1HeartbeatRequest, evg2HeartbeatRequest;
+wire [CFG_EVG1_HEARTBEAT_COUNT-1:0] evg1HeartbeatRequest;
+wire [CFG_EVG2_HEARTBEAT_COUNT-1:0] evg2HeartbeatRequest;
 wire sysRealignToggle;
+wire sampEvg1CoincidenceMarker, sampEvg2CoincidenceMarker;
 wire evg1CoincidenceMarker, evg2CoincidenceMarker;
 
 coincidenceRecorder #(
@@ -218,18 +224,21 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(1023),
     .SAMPLE_CLKS_PER_COINCIDENCE(CFG_EVG2_CLK_PER_RF_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
-    .TX_CLK_PER_HEARTBEAT(CFG_EVG1_CLK_PER_HEARTBEAT))
+    .HEARTBEAT_GEN_COUNT(CFG_EVG1_HEARTBEAT_COUNT),
+    .TX_CLK_PER_HEARTBEAT({
+        CFG_EVG1_ALS_CLK_PER_HEARTBEAT,
+        CFG_EVG1_CLK_PER_HEARTBEAT}))
   coincidenceRecorder1 (
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_1_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_1_COINC_CSR]),
-    .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
     .samplingClk(evg2RefClk),
     .refClk({evg1TxClk, evg1RefClk}),
-    .coincidenceMarker(evg1CoincidenceMarker),
+    .coincidenceMarker(sampEvg1CoincidenceMarker),
     .txClk(evg1TxClk),
+    .txCoincidenceMarker(evg1CoincidenceMarker),
     .txHeartbeatStrobe(evg1HeartbeatRequest));
 
 coincidenceRecorder #(
@@ -237,17 +246,20 @@ coincidenceRecorder #(
     .CYCLES_PER_ACQUISITION(1023),
     .SAMPLE_CLKS_PER_COINCIDENCE(CFG_EVG1_CLK_PER_RF_COINCIDENCE),
     .INPUT_CYCLES_PER_COINCIDENCE(CFG_EVG2_CLK_PER_RF_COINCIDENCE),
+    .HEARTBEAT_GEN_COUNT(CFG_EVG2_HEARTBEAT_COUNT),
     .TX_CLK_PER_HEARTBEAT(CFG_EVG2_CLK_PER_HEARTBEAT))
   coincidenceRecorder2 (
     .sysClk(sysClk),
     .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_EVG_2_COINC_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysRealignToggle(sysRealignToggle),
     .sysRealignToggleIn(sysRealignToggle),
     .sysCsr(GPIO_IN[GPIO_IDX_EVG_2_COINC_CSR]),
     .samplingClk(evg1RefClk),
     .refClk({evg2TxClk, evg2RefClk}),
-    .coincidenceMarker(evg2CoincidenceMarker),
+    .coincidenceMarker(sampEvg2CoincidenceMarker),
     .txClk(evg2TxClk),
+    .txCoincidenceMarker(evg2CoincidenceMarker),
     .txHeartbeatStrobe(evg2HeartbeatRequest));
 
 //////////////////////////////////////////////////////////////////////////////
@@ -320,6 +332,7 @@ wire [31:0] sysNtpSeconds_f1, sysNtpFraction_f1, sysPosixSeconds_f1, sysPosixSec
 wire [31:0] evgNtpSeconds_f1, evgNtpFraction_f1, evgPosixSeconds_f1, evgPosixSecondsNext_f1, evgNtpStatusReg_f1;
 wire evgPpsToggle_f1, evgPpsMarker_f1;
 wire sysPpsToggle_f1, sysPpsMarker_f1;
+wire evgPpsStrobe_f1;
 ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
            .DEBUG("false"))
   ntpClock_f1 (
@@ -337,6 +350,7 @@ ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
     .clk(evg1TxClk),
     .pps_a(bestPPS_a),
     .ppsToggle(evgPpsToggle_f1),
+    .ppsStrobe(evgPpsStrobe_f1),
     .ppsMarker(evgPpsMarker_f1),
     .seconds(evgNtpSeconds_f1),
     .fraction(evgNtpFraction_f1),
@@ -352,21 +366,106 @@ wire ppsMarker = sysPpsMarker_f1;
 
 /////////////////////////////////////////////////////////////////////////////
 // First generator (injector)
+//
+localparam EVG1_EVENTCODE_WIDTH              = 8;
+localparam EVG1_EVENTCAT_WIDTH               = 8;
+localparam EVG1_DEBUG                        = "false";
+localparam EVG1_SEQUENCE_GAP_CAT_WIDTH       = 28;
+
+localparam EVG1_INJ_DELAY_WIDTH = EVG1_SEQUENCE_GAP_CAT_WIDTH;
+localparam EVG1_EXTR_DELAY_WIDTH = EVG1_SEQUENCE_GAP_CAT_WIDTH;
+
+wire [CFG_EVENT_CAT_NUM*EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelayFlatten;
+wire [EVG1_SEQUENCE_GAP_CAT_WIDTH-1:0] evg1CatDelay [0:CFG_EVENT_CAT_NUM-1];
+
+generate
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg1_cat_delay_flatten
+    assign evg1CatDelayFlatten[i*EVG1_SEQUENCE_GAP_CAT_WIDTH+:EVG1_SEQUENCE_GAP_CAT_WIDTH] =
+        evg1CatDelay[i];
+end
+endgenerate
+
+localparam EVG1_ALIGNMENT_SYNC_COUNT = CFG_EVG1_HEARTBEAT_COUNT;
+
+localparam EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH      = $clog2(CFG_EVG1_BR_AR_COINC_PER_RF_COINC+1);
+localparam EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH   = $clog2(CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC+1);
+localparam EVG1_CLK_PER_TICKS_COINCIDENCE_WIDTH     = $clog2(CFG_EVG1_CLK_PER_TICKS_COINCIDENCE+1);
+localparam EVG1_CLK_PER_BR_AR_COINCIDENCE_WIDTH     = $clog2(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE+1);
+localparam EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4_WIDTH   = $clog2(CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4+1);
+localparam EVG1_CLK_PER_BR_AR_ALIGNMENT_WIDTH       = $clog2(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT+1);
+
+wire RFf1CoincClockSynced, BRARCoincClockSynced, BROrbitClockDiv4ClockSynced;
+wire BRARAlignClockSynced, BRARCoincPerRFCoincClockSynced, BRARAlignPerBRARCoincClockSynced;
+
+wire RFf1CoincClock, BRARCoincClock, BROrbitClockDiv4Clock;
+wire BRARAlignClock, BRARCoincPerRFCoincClock, BRARAlignPerBRARCoincClock;
+
+wire RFf1CoincStrobe, BRARCoincStrobe, BROrbitStrobeDiv4Strobe;
+wire BRARAlignStrobe, BRARCoincPerRFCoincStrobe, BRARAlignPerBRARCoincStrobe;
+
+wire [31:0] RFf1CoincCounter, BRARCoincCounter, BROrbitCounterDiv4Counter;
+wire [31:0] BRARAlignCounter, BRARCoincPerRFCoincCounter, BRARAlignPerBRARCoincCounter;
+
+localparam EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT_WIDTH   = $clog2(CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT+1);
+
+wire ALSBRSRAlignClockSynced;
+wire ALSBRSRAlignClock;
+wire ALSBRSRAlignStrobe;
+wire [31:0] ALSBRSRAlignCounter;
+
 wire injectorSequenceStart;
+wire evg1HeartbeatAlign, evg1HeartbeatCore;
 wire [15:0] evg1TxData;
 wire  [1:0] evg1TxCharIsK;
+wire [EVG1_ALIGNMENT_SYNC_COUNT-1:0] evg1AlignCounterDone;
+
+wire [EVG1_INJ_DELAY_WIDTH-1:0] evg1InjDelay;
+wire [EVG1_EXTR_DELAY_WIDTH-1:0] evg1ExtrDelay;
+
 injectorSequenceControl #(
     .SYSCLK_RATE(SYSCLK_FREQUENCY),
-    .TXCLK_PER_BR_AR_ALIGNMENT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT))
+    .DEBUG("FALSE"),
+    .ALIGNMENT_SYNC_COUNT(EVG1_ALIGNMENT_SYNC_COUNT),
+    .RF_COINC_IDX_WIDTH(EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH),
+    .RF_ALIGN_IDX_WIDTH(EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH),
+    .RF_COINC_TERM_WIDTH(EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH),
+    .INJ_DELAY_WIDTH(EVG1_INJ_DELAY_WIDTH),
+    .EXTR_DELAY_WIDTH(EVG1_EXTR_DELAY_WIDTH),
+    .TX_CLK_PER_ALIGNMENT({
+        CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT,
+        CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
   injectorSequenceControl (
     .sysClk(sysClk),
-    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_CYCLE_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_CYCLE_CSR]),
     .sysStatus(GPIO_IN[GPIO_IDX_INJECTION_CYCLE_CSR]),
+    .sysCsrAlignStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_ALIGN_CSR]),
+    .sysAlignStatus(GPIO_IN[GPIO_IDX_INJECTION_ALIGN_CSR]),
+    .sysCsrTargetStrobe(GPIO_STROBES[GPIO_IDX_INJECTION_TARGET_CSR]),
+    .sysTargetStatus(GPIO_IN[GPIO_IDX_INJECTION_TARGET_CSR]),
+    .sysTargetStatus2(GPIO_IN[GPIO_IDX_INJECTION_TARGET2_CSR]),
     .powerline_a(powerlineMarker),
+
     .evgTxClk(evg1TxClk),
+    .evgRFCoincCount(BRARCoincPerRFCoincCounter[EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH-1:0]),
+    .evgRFAlignCount(BRARAlignPerBRARCoincCounter[EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH-1:0]),
+    .evgAlignCounterDone(evg1AlignCounterDone),
     .evgHeartbeat(evg1HeartbeatRequest),
-    .evgSequenceStart(injectorSequenceStart));
+    .evgHeartbeatAlign(evg1HeartbeatAlign),
+    .evgHeartbeatCore(evg1HeartbeatCore),
+    .evgSequenceStart(injectorSequenceStart),
+    .evgInjDelay(evg1InjDelay),
+    .evgExtrDelay(evg1ExtrDelay));
+
+assign evg1CatDelay[0] = 0;
+assign evg1CatDelay[1] = evg1InjDelay;
+assign evg1CatDelay[2] = evg1ExtrDelay;
+
+generate
+for (i = 3; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg1_cat_delay
+    assign evg1CatDelay[i] = 0;
+end
+endgenerate
 
 wire evg1RxClkOut;
 wire evg1TxClkOut;
@@ -402,6 +501,16 @@ mgtWrapper #(.EVG(1),
     .rx_p(MGT_RX_1_P),
     .rx_n(MGT_RX_1_N));
 
+wire evg1GtTxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][30];
+wire evg1GtRxReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][29];
+wire evg1CpllReset = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][28];
+wire evg1GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][27];
+wire evg1GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][26];
+wire evg1GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][25];
+wire evg1TxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][24];
+wire evg1RxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][23];
+wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
+
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 clocks
 BUFG evg1RxBuf (.I(evg1RxClkOut), .O(evg1RxClk));
@@ -414,6 +523,8 @@ wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC1_hwTrigger_remap =
     {FMC1_hwTrigger[3], FMC1_hwTrigger[2], FMC1_hwTrigger[1], FMC1_hwTrigger[0],
      1'b0, 1'b0, FMC1_hwTrigger[5], FMC1_hwTrigger[4]};
 
+wire [CFG_EVENT_CAT_NUM*32-1:0] evg1CatDelayRBK;
+
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -422,7 +533,11 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("false"))
+    .EVENTCODE_WIDTH(EVG1_EVENTCODE_WIDTH),
+    .EVENTCAT_WIDTH(EVG1_EVENTCAT_WIDTH),
+    .EVENTCAT_NUM(CFG_EVENT_CAT_NUM),
+    .DEBUG(EVG1_DEBUG),
+    .SEQUENCE_GAP_CAT_WIDTH(EVG1_SEQUENCE_GAP_CAT_WIDTH))
   evg1 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
@@ -432,6 +547,7 @@ evg #(
     .sysSequencerStatus(GPIO_IN[GPIO_IDX_EVG_1_SEQ_CSR]),
     .sysSequencerStatusNtpSeconds(GPIO_IN[GPIO_IDX_EVG_1_SEQ_SECONDS_CSR]),
     .sysSequencerStatusNtpFraction(GPIO_IN[GPIO_IDX_EVG_1_SEQ_FRACTION_CSR]),
+    .sysSequencerStatusCatDelay(evg1CatDelayRBK),
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_1_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_1_SW_CSR]),
@@ -441,13 +557,20 @@ evg #(
     .evgTxClk(evg1TxClk),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
-    .evgHeartbeatRequest(evg1HeartbeatRequest),
+    .evgHeartbeatRequest(evg1HeartbeatCore),
     .evgSequenceStart(injectorSequenceStart),
+    .evgCatDelay(evg1CatDelayFlatten),
     .evgPPStoggle(evgPpsToggle_f1),
     .evgSeconds(evgPosixSeconds_f1),
     .evgSecondsNext(evgPosixSecondsNext_f1),
     .evgNtpSeconds(evgNtpSeconds_f1),
     .evgNtpFraction(evgNtpFraction_f1));
+
+generate
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg1_cat_delay_rbk
+    assign GPIO_IN[GPIO_IDX_EVG_1_0_CAT_DELAY_RBK_0+i] = evg1CatDelayRBK[i*32+:32];
+end
+endgenerate
 
 evLogger #(.DEBUG("false"))
   evg1LoggerDisplay (
@@ -475,6 +598,7 @@ wire [31:0] sysNtpSeconds_f2, sysNtpFraction_f2, sysPosixSeconds_f2, sysPosixSec
 wire [31:0] evgNtpSeconds_f2, evgNtpFraction_f2, evgPosixSeconds_f2, evgPosixSecondsNext_f2, evgNtpStatusReg_f2;
 wire evgPpsToggle_f2, evgPpsMarker_f2;
 wire sysPpsToggle_f2, sysPpsMarker_f2;
+wire evgPpsStrobe_f2;
 ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
            .DEBUG("false"))
   ntpClock_f2 (
@@ -492,6 +616,7 @@ ntpClock #(.CLK_RATE(TXCLK_NOMINAL_FREQUENCY),
     .clk(evg2TxClk),
     .pps_a(bestPPS_a),
     .ppsToggle(evgPpsToggle_f2),
+    .ppsStrobe(evgPpsStrobe_f2),
     .ppsMarker(evgPpsMarker_f2),
     .seconds(evgNtpSeconds_f2),
     .fraction(evgNtpFraction_f2),
@@ -505,20 +630,62 @@ assign GPIO_IN[GPIO_IDX_NTP_SERVER_F2_STATUS] = sysNtpStatusReg_f2;
 
 /////////////////////////////////////////////////////////////////////////////
 // Second generator (accumulator and storage rings)
+
+localparam EVG2_EVENTCODE_WIDTH              = 8;
+localparam EVG2_EVENTCAT_WIDTH               = 8;
+localparam EVG2_DEBUG                        = "false";
+localparam EVG2_SEQUENCE_GAP_CAT_WIDTH       = 28;
+
+localparam EVG2_INJ_DELAY_WIDTH = EVG2_SEQUENCE_GAP_CAT_WIDTH;
+localparam EVG2_EXTR_DELAY_WIDTH = EVG2_SEQUENCE_GAP_CAT_WIDTH;
+
+wire [CFG_EVENT_CAT_NUM*EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelayFlatten;
+wire [EVG2_SEQUENCE_GAP_CAT_WIDTH-1:0] evg2CatDelay [0:CFG_EVENT_CAT_NUM-1];
+
+generate
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg2_cat_delay_flatten
+    assign evg2CatDelayFlatten[i*EVG2_SEQUENCE_GAP_CAT_WIDTH+:EVG2_SEQUENCE_GAP_CAT_WIDTH] = evg2CatDelay[i];
+end
+endgenerate
+
+localparam EVG2_ALIGNMENT_SYNC_COUNT = CFG_EVG2_HEARTBEAT_COUNT;
+
+localparam EVG2_CLOCK_PER_AR_SR_COINCIDENCE_WIDTH = $clog2(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE+1);
+localparam EVG2_CLOCK_PER_SR_ORBIT_CLOCK_WIDTH    = $clog2(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK+1);
+localparam EVG2_CLOCK_PER_AR_ORBIT_CLOCK_WIDTH    = $clog2(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK+1);
+
+wire ARSRCoincClock, SROrbitClock, AROrbitClock;
+wire ARSRCoincClockSynced, SROrbitClockSynced, AROrbitClockSynced;
+
 wire swapoutSequenceStart;
+wire evg2HeartbeatAlign, evg2HeartbeatCore;
 wire [15:0] evg2TxData;
 wire  [1:0] evg2TxCharIsK;
-swapoutSequenceControl
-    #(.CLOCK_PER_ARSR_COINCIDENCE(CFG_EVG2_CLOCK_PER_ARSR_COINCIDENCE),
-      .DEBUG("false"))
+
+wire [EVG2_INJ_DELAY_WIDTH-1:0] evg2InjDelay;
+wire [EVG2_EXTR_DELAY_WIDTH-1:0] evg2ExtrDelay;
+
+swapoutSequenceControl #(
+    .ALIGNMENT_SYNC_COUNT(EVG2_ALIGNMENT_SYNC_COUNT),
+    .TX_CLK_PER_ALIGNMENT(CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE))
   swapoutSequenceControl (
     .sysClk(sysClk),
-    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
     .sysGPIO_OUT(GPIO_OUT),
+    .sysCsrStrobe(GPIO_STROBES[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
     .sysStatus(GPIO_IN[GPIO_IDX_SWAPOUT_CYCLE_CSR]),
+    .sysCsrAlignStrobe(GPIO_STROBES[GPIO_IDX_SWAPOUT_ALIGN_CSR]),
+    .sysAlignStatus(GPIO_IN[GPIO_IDX_SWAPOUT_ALIGN_CSR]),
     .evgTxClk(evg2TxClk),
-    .evgHeartbeatRequest(evg2HeartbeatRequest),
+    .evgHeartbeat(evg2HeartbeatRequest),
+    .evgHeartbeatAlign(evg2HeartbeatAlign),
+    .evgHeartbeatCore(evg2HeartbeatCore),
     .evgSequenceStart(swapoutSequenceStart));
+
+generate
+for (i = 0; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg2_cat_delay
+    assign evg2CatDelay[i] = 0;
+end
+endgenerate
 
 wire evg2RxClkOut;
 wire evg2TxClkOut;
@@ -553,6 +720,16 @@ mgtWrapper #(.EVG(2),
     .rx_p(MGT_RX_2_P),
     .rx_n(MGT_RX_2_N));
 
+wire evg2GtTxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][30];
+wire evg2GtRxReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][29];
+wire evg2CpllReset = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][28];
+wire evg2GtRxIsAligned = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][27];
+wire evg2GtTxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][26];
+wire evg2GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][25];
+wire evg2TxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][24];
+wire evg2RxResetDone = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][23];
+wire evg2CpllLock = GPIO_IN[GPIO_IDX_EVG_2_0_DRP_CSR][22];
+
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG2 clocks
 BUFG evg2RxBuf (.I(evg2RxClkOut), .O(evg2RxClk));
@@ -565,6 +742,8 @@ wire [CFG_HARDWARE_TRIGGER_COUNT-1:0] FMC2_hwTrigger_remap =
     {FMC2_hwTrigger[3], FMC2_hwTrigger[2], FMC2_hwTrigger[1], FMC2_hwTrigger[0],
      1'b0, 1'b0, FMC2_hwTrigger[5], FMC2_hwTrigger[4]};
 
+wire [CFG_EVENT_CAT_NUM*32-1:0] evg2CatDelayRBK;
+
 evg #(
     .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .TXCLK_NOMINAL_FREQUENCY(TXCLK_NOMINAL_FREQUENCY),
@@ -573,7 +752,11 @@ evg #(
     .GPIO_WIDTH(GPIO_WIDTH),
     .SEQUENCE_RAM_CAPACITY(CFG_SEQUENCE_RAM_CAPACITY),
     .HARDWARE_TRIGGER_COUNT(CFG_HARDWARE_TRIGGER_COUNT),
-    .DEBUG("false"))
+    .EVENTCODE_WIDTH(EVG2_EVENTCODE_WIDTH),
+    .EVENTCAT_WIDTH(EVG2_EVENTCAT_WIDTH),
+    .EVENTCAT_NUM(CFG_EVENT_CAT_NUM),
+    .DEBUG(EVG2_DEBUG),
+    .SEQUENCE_GAP_CAT_WIDTH(EVG2_SEQUENCE_GAP_CAT_WIDTH))
   evg2 (
     .sysClk(sysClk),
     .sysGPIO_OUT(GPIO_OUT),
@@ -583,6 +766,7 @@ evg #(
     .sysSequencerStatus(GPIO_IN[GPIO_IDX_EVG_2_SEQ_CSR]),
     .sysSequencerStatusNtpSeconds(GPIO_IN[GPIO_IDX_EVG_2_SEQ_SECONDS_CSR]),
     .sysSequencerStatusNtpFraction(GPIO_IN[GPIO_IDX_EVG_2_SEQ_FRACTION_CSR]),
+    .sysSequencerStatusCatDelay(evg2CatDelayRBK),
     .sysSequenceReadback(GPIO_IN[GPIO_IDX_EVG_2_SEQ_RBK]),
     .sysHardwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_HW_CSR]),
     .sysSoftwareTriggerStatus(GPIO_IN[GPIO_IDX_EVG_2_SW_CSR]),
@@ -592,13 +776,20 @@ evg #(
     .evgTxClk(evg2TxClk),
     .evgTxData(evg2TxData),
     .evgTxCharIsK(evg2TxCharIsK),
-    .evgHeartbeatRequest(evg2HeartbeatRequest),
+    .evgHeartbeatRequest(evg2HeartbeatCore),
     .evgSequenceStart(swapoutSequenceStart),
+    .evgCatDelay(evg2CatDelayFlatten),
     .evgPPStoggle(evgPpsToggle_f2),
     .evgSeconds(evgPosixSeconds_f2),
     .evgSecondsNext(evgPosixSecondsNext_f2),
     .evgNtpSeconds(evgNtpSeconds_f2),
     .evgNtpFraction(evgNtpFraction_f2));
+
+generate
+for (i = 0 ; i < CFG_EVENT_CAT_NUM ; i = i + 1) begin : evg2_cat_delay_rbk
+    assign GPIO_IN[GPIO_IDX_EVG_2_0_CAT_DELAY_RBK_0+i] = evg2CatDelayRBK[i*32+:32];
+end
+endgenerate
 
 evLogger #(.DEBUG("false"))
   evg2LoggerDisplay (
@@ -662,124 +853,162 @@ fanTach #(.CLK_FREQUENCY(SYSCLK_FREQUENCY),
     .tachs_a({FMC2_FAN2_TACH, FMC2_FAN1_TACH,
                 FMC1_FAN2_TACH, FMC1_FAN1_TACH}));
 
-
 //////////////////////////////////////////////////////////////////////////////
 // EVG 1 Rates generation
-wire [31:0] BRARAlignClockStatus;
-wire BRARAlignClockSynced;
-wire BRARAlignClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT),
-          .DEBUG("false"))
-  evgBRARAlignClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(BRARAlignClockStatus),
 
-          .evrClk(evg1TxClk),
-          .evrHeartbeatMarker(evg1HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+localparam NUM_EVG1_COUNTERS = 6;
 
-          .evrClkGenSynced(BRARAlignClockSynced),
-          .evrClkGen(BRARAlignClock),
-          .evrClkGenStrobe());
+wire [NUM_EVG1_COUNTERS-1:0] evg1CountersEn = {RFf1CoincStrobe, BRARAlignStrobe,
+                                                {4{1'b1}}};
 
-wire [31:0] BROrbitClockDiv4ClockStatus;
-wire BROrbitClockDiv4ClockSynced;
-wire BROrbitClockDiv4Clock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4),
-          .DEBUG("false"))
-  evgBROrbitClockDiv4Clock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(BROrbitClockDiv4ClockStatus),
+evgCounters #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .DEBUG("false"),
+    .NUM_COUNTERS(NUM_EVG1_COUNTERS),
+    .COUNTER_WIDTHS({
+        EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH,
+        EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH,
+        EVG1_CLK_PER_TICKS_COINCIDENCE_WIDTH,
+        EVG1_CLK_PER_BR_AR_COINCIDENCE_WIDTH,
+        EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4_WIDTH,
+        EVG1_CLK_PER_BR_AR_ALIGNMENT_WIDTH}),
+    .DEFAULT_RATE_COUNTS({
+        CFG_EVG1_BR_AR_COINC_PER_RF_COINC,
+        CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC,
+        CFG_EVG1_CLK_PER_TICKS_COINCIDENCE,
+        CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE,
+        CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4,
+        CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT}))
+  evg1Counters (
+    .sysClk(sysClk),
+    .GPIO_OUT(GPIO_OUT),
 
-          .evrClk(evg1TxClk),
-          .evrHeartbeatMarker(evg1HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+    .csrStrobes(0),
+    .csrs({
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_6_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_5_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_4_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_3_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_2_CSR],
+        GPIO_IN[GPIO_IDX_EVG_1_CLK_GEN_1_CSR]}),
 
-          .evrClkGenSynced(BROrbitClockDiv4ClockSynced),
-          .evrClkGen(BROrbitClockDiv4Clock),
-          .evrClkGenStrobe());
+    .clk(evg1TxClk),
+    .ens(evg1CountersEn),
+    // These counters are only synchronous to the "normal" heartbeat
+    .heartbeatStrobe(evg1HeartbeatRequest[CFG_EVG1_HEARTBEAT_NORMAL_IDX]),
+    .pulsePerSecondStrobe(evgPpsStrobe_f1),
 
-wire [31:0] BRARCoincClockStatus;
-wire BRARCoincClockSynced;
-wire BRARCoincClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE),
-          .DEBUG("false"))
-  evgBRARCoincClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(BRARCoincClockStatus),
+    .clkGenSynceds({
+        BRARCoincPerRFCoincClockSynced,
+        BRARAlignPerBRARCoincClockSynced,
+        RFf1CoincClockSynced,
+        BRARCoincClockSynced,
+        BROrbitClockDiv4ClockSynced,
+        BRARAlignClockSynced}),
+    .clkGens({
+        BRARCoincPerRFCoincClock,
+        BRARAlignPerBRARCoincClock,
+        RFf1CoincClock,
+        BRARCoincClock,
+        BROrbitClockDiv4Clock,
+        BRARAlignClock}),
+    .clkGenStrobes({
+        BRARCoincPerRFCoincStrobe,
+        BRARAlignPerBRARCoincStrobe,
+        RFf1CoincStrobe,
+        BRARCoincStrobe,
+        BROrbitStrobeDiv4Strobe,
+        BRARAlignStrobe}),
+    .clkGenCounters({
+        BRARCoincPerRFCoincCounter,
+        BRARAlignPerBRARCoincCounter,
+        RFf1CoincCounter,
+        BRARCoincCounter,
+        BROrbitCounterDiv4Counter,
+        BRARAlignCounter})
+    );
 
-          .evrClk(evg1TxClk),
-          .evrHeartbeatMarker(evg1HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f1),
+//////////////////////////////////////////////////////////////////////////////
+// EVG 1 ALS Rates generation
 
-          .evrClkGenSynced(BRARCoincClockSynced),
-          .evrClkGen(BRARCoincClock),
-          .evrClkGenStrobe());
+localparam NUM_EVG1_ALS_COUNTERS = 1;
+
+wire [NUM_EVG1_ALS_COUNTERS-1:0] evg1ALSCountersEn = 1'b1;
+
+evgCounters #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .DEBUG("false"),
+    .NUM_COUNTERS(NUM_EVG1_ALS_COUNTERS),
+    .COUNTER_WIDTHS(
+        EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT_WIDTH),
+    .DEFAULT_RATE_COUNTS(
+        CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT))
+  evg1ALSCounters (
+    .sysClk(sysClk),
+    .GPIO_OUT(GPIO_OUT),
+
+    .csrStrobes(0),
+    .csrs({
+        GPIO_IN[GPIO_IDX_EVG_1_ALS_CLK_GEN_1_CSR]}),
+
+    .clk(evg1TxClk),
+    .ens(evg1ALSCountersEn),
+    // These counters are only synchronous to the "ALS" heartbeat
+    .heartbeatStrobe(evg1HeartbeatRequest[CFG_EVG1_HEARTBEAT_ALS_IDX]),
+    .pulsePerSecondStrobe(evgPpsStrobe_f1),
+
+    .clkGenSynceds(
+        ALSBRSRAlignClockSynced),
+    .clkGens(
+        ALSBRSRAlignClock),
+    .clkGenStrobes(
+        ALSBRSRAlignStrobe),
+    .clkGenCounters(
+        ALSBRSRAlignCounter)
+    );
 
 //////////////////////////////////////////////////////////////////////////////
 // EVG 2 Rates generation
-wire [31:0] AROrbitClockStatus;
-wire AROrbitClockSynced;
-wire AROrbitClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK),
-          .DEBUG("false"))
-  evgAROrbitClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(AROrbitClockStatus),
 
-          .evrClk(evg2TxClk),
-          .evrHeartbeatMarker(evg2HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+localparam NUM_EVG2_COUNTERS                      = 3;
 
-          .evrClkGenSynced(AROrbitClockSynced),
-          .evrClkGen(AROrbitClock),
-          .evrClkGenStrobe());
+evgCounters #(
+    .SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
+    .DEBUG("false"),
+    .NUM_COUNTERS(NUM_EVG2_COUNTERS),
+    .COUNTER_WIDTHS({
+        EVG2_CLOCK_PER_AR_SR_COINCIDENCE_WIDTH,
+        EVG2_CLOCK_PER_SR_ORBIT_CLOCK_WIDTH,
+        EVG2_CLOCK_PER_AR_ORBIT_CLOCK_WIDTH}),
+    .DEFAULT_RATE_COUNTS({
+        CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE,
+        CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK,
+        CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK}))
+  evg2Counters (
+    .sysClk(sysClk),
+    .GPIO_OUT(GPIO_OUT),
 
-wire [31:0] SROrbitClockStatus;
-wire SROrbitClockSynced;
-wire SROrbitClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK),
-          .DEBUG("false"))
-  evgSROrbitClock(.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(SROrbitClockStatus),
+    .csrStrobes(0),
+    .csrs({
+        GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_3_CSR],
+        GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_2_CSR],
+        GPIO_IN[GPIO_IDX_EVG_2_CLK_GEN_1_CSR]}),
 
-          .evrClk(evg2TxClk),
-          .evrHeartbeatMarker(evg2HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f2),
+    .clk(evg2TxClk),
+    .ens({NUM_EVG2_COUNTERS{1'b1}}),
+    // These counters are only synchronous to the "normal" heartbeat
+    .heartbeatStrobe(evg2HeartbeatRequest[CFG_EVG2_HEARTBEAT_NORMAL_IDX]),
+    .pulsePerSecondStrobe(evgPpsStrobe_f2),
 
-          .evrClkGenSynced(SROrbitClockSynced),
-          .evrClkGen(SROrbitClock),
-          .evrClkGenStrobe());
-
-wire [31:0] ARSRCoincClockStatus;
-wire ARSRCoincClockSynced;
-wire ARSRCoincClock;
-clkGen #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
-          .DEFAULT_RATE_COUNT(CFG_EVG2_CLOCK_PER_ARSR_COINCIDENCE),
-          .DEBUG("false"))
-  evgARSRCoincClock (.sysClk(sysClk),
-          .csrStrobe(1'b0),
-          .GPIO_OUT(GPIO_OUT),
-          .csr(ARSRCoincClockStatus),
-
-          .evrClk(evg2TxClk),
-          .evrHeartbeatMarker(evg2HeartbeatRequest),
-          .evrPulsePerSecondMarker(evgPpsMarker_f2),
-
-          .evrClkGenSynced(ARSRCoincClockSynced),
-          .evrClkGen(ARSRCoincClock),
-          .evrClkGenStrobe());
+    .clkGenSynceds({
+        ARSRCoincClockSynced,
+        SROrbitClockSynced,
+        AROrbitClockSynced}),
+    .clkGens({
+        ARSRCoincClock,
+        SROrbitClock,
+        AROrbitClock}),
+    .clkGenStrobes());
 
 //////////////////////////////////////////////////////////////////////////////
 // Diagnostic I/O
@@ -801,12 +1030,12 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticOutputSelect(diagnostic1Select));
 assign FMC1_diagnosticOut =
      (diagnostic1Select == 3'h1) ? { evg1RefClk, evg1TxClk } :
-     (diagnostic1Select == 3'h2) ? { evg1HeartbeatRequest, evg1TxClk } :
-     (diagnostic1Select == 3'h3) ? { BRARAlignClock, evg1CoincidenceMarker } :
-     (diagnostic1Select == 3'h4) ? { evg1HeartbeatRequest, BROrbitClockDiv4Clock} :
-     (diagnostic1Select == 3'h5) ? { evg1HeartbeatRequest, BRARAlignClock} :
-     (diagnostic1Select == 3'h6) ? { evg1HeartbeatRequest, BRARCoincClock} :
-     (diagnostic1Select == 3'h7) ? { BRARAlignClock, BRARCoincClock} :
+     (diagnostic1Select == 3'h2) ? { evg1HeartbeatCore, evg1TxClk } :
+     (diagnostic1Select == 3'h3) ? { evg1HeartbeatAlign, evg1CoincidenceMarker } :
+     (diagnostic1Select == 3'h4) ? { evg1HeartbeatAlign, BROrbitClockDiv4Clock} :
+     (diagnostic1Select == 3'h5) ? { ALSBRSRAlignClock, BRARAlignClock} :
+     (diagnostic1Select == 3'h6) ? { evg1HeartbeatAlign, BRARCoincClock} :
+     (diagnostic1Select == 3'h7) ? { evg1HeartbeatAlign, RFf1CoincClock } :
                                      diagnostic1ProgrammableOutputs;
 
 localparam DIAG2_SELECT_WIDTH = 3;
@@ -824,13 +1053,14 @@ diagnosticIO #(.INPUT_WIDTH(CFG_EVIO_DIAG_IN_COUNT),
     .diagnosticIn(FMC2_diagnosticIn),
     .diagnosticOut(diagnostic2ProgrammableOutputs),
     .diagnosticOutputSelect(diagnostic2Select));
+// FIXME: Change it back to evg2 for diagnstic2Select == 3'd4
 assign FMC2_diagnosticOut =
      (diagnostic2Select == 3'h1) ? { evg2RefClk, evg2TxClk } :
-     (diagnostic2Select == 3'h2) ? { evg2HeartbeatRequest, evg2TxClk } :
+     (diagnostic2Select == 3'h2) ? { evg2HeartbeatCore, evg2TxClk } :
      (diagnostic2Select == 3'h3) ? { AROrbitClock, evg2CoincidenceMarker } :
-     (diagnostic2Select == 3'h4) ? { evg2HeartbeatRequest, AROrbitClock } :
-     (diagnostic2Select == 3'h5) ? { evg2HeartbeatRequest, SROrbitClock } :
-     (diagnostic2Select == 3'h6) ? { evg2HeartbeatRequest, ARSRCoincClock } :
+     (diagnostic2Select == 3'h4) ? { evg1HeartbeatAlign, BROrbitClockDiv4Clock} :
+     (diagnostic2Select == 3'h5) ? { evg2HeartbeatAlign, SROrbitClock } :
+     (diagnostic2Select == 3'h6) ? { evg2HeartbeatAlign, ARSRCoincClock } :
      (diagnostic2Select == 3'h7) ? { AROrbitClock, ARSRCoincClock } :
                                      diagnostic2ProgrammableOutputs;
 
@@ -936,5 +1166,82 @@ bd bd_i (
     .console_rxd(FPGA_TxD),
     .console_txd(FPGA_RxD));
 `endif // `ifndef SIMULATE
+
+generate
+if (ILA_CHIPSCOPE_DBG != "TRUE" && ILA_CHIPSCOPE_DBG != "FALSE") begin
+    ILA_CHIPSCOPE_DBG_only_TRUE_or_FALSE_SUPPORTED();
+end
+endgenerate
+
+generate
+if (ILA_CHIPSCOPE_DBG == "TRUE") begin
+
+wire [255:0] probe;
+`ifndef SIMULATE
+ila_td256_s4096_cap ila_td256_s4096_cap_inst (
+    .clk(evg1TxClk),
+    .probe0(probe)
+);
+`endif
+
+assign probe[0] = gpsPPS_a;
+assign probe[1] = gpsPPSvalid;
+assign probe[2] = bestPPS_a;
+assign probe[3] = sysPpsToggle_f1;
+assign probe[4] = sysPpsMarker_f1;
+assign probe[5] = sysPpsToggle_f2;
+assign probe[6] = sysPpsMarker_f2;
+
+assign probe[7]  = BRARCoincPerRFCoincStrobe;
+assign probe[8]  = BRARAlignPerBRARCoincStrobe;
+assign probe[9] = RFf1CoincStrobe;
+assign probe[10] = BRARCoincStrobe;
+assign probe[11] = BROrbitStrobeDiv4Strobe;
+assign probe[12] = BRARAlignStrobe;
+
+assign probe[13] = BRARCoincPerRFCoincClockSynced;
+assign probe[14] = BRARAlignPerBRARCoincClockSynced;
+assign probe[15] = RFf1CoincClockSynced;
+assign probe[16] = BRARCoincClockSynced;
+assign probe[17] = BROrbitClockDiv4ClockSynced;
+assign probe[18] = BRARAlignClockSynced;
+
+assign probe[19] = evg1AlignCounterDone[0];
+assign probe[20] = evg1AlignCounterDone[1];
+
+assign probe[31:21] = 0;
+
+assign probe[32] = evg1GtTxReset;
+assign probe[33] = evg1GtRxReset;
+assign probe[34] = evg1CpllReset;
+assign probe[35] = evg1GtRxIsAligned;
+assign probe[36] = evg1GtTxFSMResetDone;
+assign probe[37] = evg1GtRxFSMResetDone;
+assign probe[38] = evg1TxResetDone;
+assign probe[39] = evg1RxResetDone;
+assign probe[40] = evg1CpllLock;
+
+assign probe[63:41] = 0;
+
+assign probe[64] = evg2GtTxReset;
+assign probe[65] = evg2GtRxReset;
+assign probe[66] = evg2CpllReset;
+assign probe[67] = evg2GtRxIsAligned;
+assign probe[68] = evg2GtTxFSMResetDone;
+assign probe[69] = evg2GtRxFSMResetDone;
+assign probe[70] = evg2TxResetDone;
+assign probe[71] = evg2RxResetDone;
+assign probe[72] = evg2CpllLock;
+
+assign probe[151:128] = BRARCoincPerRFCoincCounter[EVG1_BR_AR_COINC_PER_RF_COINC_WIDTH-1:0];
+assign probe[175:152] = BRARAlignPerBRARCoincCounter[EVG1_BR_AR_ALIGN_PER_BR_AR_COINC_WIDTH-1:0];
+assign probe[199:176] = RFf1CoincCounter[23:0];
+assign probe[223:200] = BRARCoincCounter[23:0];
+assign probe[247:224] = BRARAlignCounter[23:0];
+
+assign probe[255:248] = 0;
+
+end // end if
+endgenerate
 
 endmodule

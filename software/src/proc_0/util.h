@@ -45,17 +45,6 @@
 #define printf(...) xil_printf(__VA_ARGS__)
 
 /*
- * Read/Write registers
- */
-#ifndef __REG_MACROS_DEFINED__
-#define __REG_MACROS_DEFINED__
-#define REG_GEN_MASK(offset, size) (((1<<(size))-1) << (offset))
-#define REG_GEN_WRITE(value, offset, size) (((value) & ((1<<(size))-1)) << (offset))
-#define REG_GEN_READ(reg, offset, size) (((reg) >> (offset)) & ((1<<(size))-1))
-#define REG_SIGN_EXTEND(value, bits) (((value) & (1<<bits) ? ~((1<<(bits))-1): 0 ) | (value))
-#endif
-
-/*
  * Diagnostics
  */
 #define DEBUGFLAG_EPICS             0x1
@@ -76,12 +65,15 @@
 #define DEBUGFLAG_IIC_SCAN          0x8000
 #define DEBUGFLAG_DISPLAY_NEXT_PAGE 0x10000
 #define DEBUGFLAG_SEQ_STATUS_FIFO   0x200000
+#define DEBUGFLAG_INJ_CYCLE         0x400000
 #define DEBUGFLAG_SHOW_COINC_ADDR_RB \
                                     0x800000
 #define DEBUGFLAG_DUMP_SCREEN       0x1000000
 #define DEBUGFLAG_DUMP_MGT_SWITCH   0x2000000
 #define DEBUGFLAG_DUMP_CROSSPOINT   0x4000000
 #define DEBUGFLAG_NO_RESYNC_ON_LOL  0x8000000
+#define DEBUGFLAG_SEQ_STATUS_START_FIFO \
+                                    0x10000000
 #define DEBUGFLAG_TX_RESET          0x40000000
 
 void warn(const char *fmt, ...);

@@ -8,7 +8,12 @@ module evgSource #(
     parameter SEQUENCE_RAM_CAPACITY        = -1,
     parameter HARDWARE_TRIGGER_COUNT       = 4,
     parameter DISTRIBUTED_BUS_WIDTH        = 8,
-    parameter DEBUG                        = "false"
+    parameter EVENTCODE_WIDTH              = 8,
+    parameter EVENTCAT_WIDTH               = 8,
+    parameter EVENTCAT_NUM                 = 8,
+    parameter DEBUG                        = "false",
+    // Don't change these
+    parameter SEQUENCE_GAP_CAT_WIDTH       = 28
     ) (
     input                  sysClk,
     input [GPIO_WIDTH-1:0] sysGPIO_OUT,
@@ -23,6 +28,7 @@ module evgSource #(
     output wire [GPIO_WIDTH-1:0] sysSequencerStatus,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpSeconds,
     output wire [GPIO_WIDTH-1:0] sysSequencerStatusNtpFraction,
+    output wire [EVENTCAT_NUM*GPIO_WIDTH-1:0] sysSequencerStatusCatDelay,
     output wire [GPIO_WIDTH-1:0] sysSequenceReadback,
 
     output wire [GPIO_WIDTH-1:0] sysHardwareTriggerStatus,
@@ -31,6 +37,8 @@ module evgSource #(
     input  [HARDWARE_TRIGGER_COUNT-1:0] hwTriggers_a,
     input                               evgHeartbeatRequest,
     input                               evgSequenceStart,
+    input      [EVENTCAT_NUM*SEQUENCE_GAP_CAT_WIDTH-1:0]
+                                        evgCatDelay,
 
     // Distributed bus
     input [DISTRIBUTED_BUS_WIDTH-1:0] evgDistributedBus,
@@ -46,8 +54,6 @@ module evgSource #(
     input [GPIO_WIDTH-1:0] evgNtpSeconds,
     input [GPIO_WIDTH-1:0] evgNtpFraction
 );
-
-localparam EVENTCODE_WIDTH       = 8;
 
 wire [EVENTCODE_WIDTH-1:0] evgSequenceEventTDATA;
 wire                       evgSequenceEventTVALID;
@@ -80,7 +86,11 @@ evgCore #(.SYSCLK_FREQUENCY(SYSCLK_FREQUENCY),
     .evgSoftwareEventTREADY(evgSoftwareEventTREADY));
 
 evgSequencer #(.SEQUENCE_RAM_CAPACITY(SEQUENCE_RAM_CAPACITY),
-               .DEBUG(DEBUG))
+               .EVENTCODE_WIDTH(EVENTCODE_WIDTH),
+               .EVENTCAT_WIDTH(EVENTCAT_WIDTH),
+               .EVENTCAT_NUM(EVENTCAT_NUM),
+               .DEBUG(DEBUG),
+               .SEQUENCE_GAP_CAT_WIDTH(SEQUENCE_GAP_CAT_WIDTH))
    evgSequencer (
     .sysClk(sysClk),
     .sysCSRstrobe(sysSequencerCSRstrobe),
@@ -90,11 +100,13 @@ evgSequencer #(.SEQUENCE_RAM_CAPACITY(SEQUENCE_RAM_CAPACITY),
     .statusFifo(sysSequencerStatusFifo),
     .statusNtpSeconds(sysSequencerStatusNtpSeconds),
     .statusNtpFraction(sysSequencerStatusNtpFraction),
+    .statusCatDelay(sysSequencerStatusCatDelay),
     .sysSequenceReadback(sysSequenceReadback),
     .evgTxClk(evgTxClk),
     .evgNtpSeconds(evgNtpSeconds),
     .evgNtpFraction(evgNtpFraction),
     .evgSequenceStart(evgSequenceStart),
+    .evgCatDelay(evgCatDelay),
     .evgSequenceEventTDATA(evgSequenceEventTDATA),
     .evgSequenceEventTVALID(evgSequenceEventTVALID));
 

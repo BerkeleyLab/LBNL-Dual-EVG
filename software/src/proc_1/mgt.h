@@ -35,7 +35,7 @@
 #ifndef _MGT_H_
 #define _MGT_H_
 
-#include "util.h"
+#include "reg_macros.h"
 
 #define CSR_W_ENABLE_RESETS     0x80000000
 #define CSR_RW_GT_TX_RESET      0x40000000

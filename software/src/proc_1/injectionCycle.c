@@ -36,26 +36,42 @@
 #define MINIMUM_INJECTION_PERIOD_MILLISECONDS  1000
 #define MAXIMUM_INJECTION_PERIOD_MILLISECONDS  ((1UL << 16) - 1)
 
-#define CSR_W_SET_CYCLE_MILLISECONDS    (1UL << 31)
-#define CSR_W_MANUAL_TRIGGER            (1UL << 7)
-#define CSR_W_DISABLE_TIMED_CYCLES      (1UL << 1)
-#define CSR_W_ENABLE_TIMED_CYCLES       (1UL << 0)
+static struct injCycle {
+    uint16_t     csrIdx;
+    uint16_t     csrAlignIdx;
+    uint16_t     csrTargetStatusIdx;
+    uint16_t     csrTargetStatus2Idx;
+    uint32_t     minInjPeriod;
+    uint32_t     maxInjPeriod;
+    uint32_t     baseInterval;
+    uint32_t     maxExtension;
+    unsigned int arTgtIdx;
+} injCycle = {
+    .csrIdx = GPIO_IDX_INJECTION_CYCLE_CSR,
+    .csrAlignIdx = GPIO_IDX_INJECTION_ALIGN_CSR,
+    .csrTargetStatusIdx = GPIO_IDX_INJECTION_TARGET_CSR,
+    .csrTargetStatus2Idx = GPIO_IDX_INJECTION_TARGET2_CSR,
+    .minInjPeriod = MINIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .maxInjPeriod = MAXIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .baseInterval = MINIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS -
+        MINIMUM_INJECTION_PERIOD_MILLISECONDS,
+    .arTgtIdx = 0,
+};
 
-static unsigned int baseInterval = MINIMUM_INJECTION_PERIOD_MILLISECONDS;
-static unsigned int maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS -
-                                          MINIMUM_INJECTION_PERIOD_MILLISECONDS;
+static struct injCycle *injp = &injCycle;
 
 void
 injectionCycleEnable(int enable)
 {
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, enable ?
-                        CSR_W_ENABLE_TIMED_CYCLES : CSR_W_DISABLE_TIMED_CYCLES);
+    GPIO_WRITE(injp->csrIdx, enable ?
+                        CSR_INJ_W_ENABLE_TIMED_CYCLES : CSR_INJ_W_DISABLE_TIMED_CYCLES);
 }
 
 void
 injectionCycleManualTrigger(void)
 {
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_W_MANUAL_TRIGGER);
+    GPIO_WRITE(injp->csrIdx, CSR_INJ_W_MANUAL_TRIGGER);
 }
 
 void
@@ -64,32 +80,173 @@ injectionCycleExtendInterval(int milliseconds)
     if (milliseconds < 0) {
         milliseconds = 0;
     }
-    else if (milliseconds > maxExtension) {
-        milliseconds = maxExtension;
+    else if (milliseconds > injp->maxExtension) {
+        milliseconds = injp->maxExtension;
     }
-    milliseconds += baseInterval;
-    GPIO_WRITE(GPIO_IDX_INJECTION_CYCLE_CSR, CSR_W_SET_CYCLE_MILLISECONDS |
+    milliseconds += injp->baseInterval;
+    GPIO_WRITE(injp->csrIdx, CSR_INJ_W_SET_CYCLE_MILLISECONDS |
                                                             (milliseconds - 2));
 }
 
 void
 injectionCycleSetBaseInterval(int milliseconds)
 {
-    if (milliseconds < MINIMUM_INJECTION_PERIOD_MILLISECONDS) {
-        milliseconds = MINIMUM_INJECTION_PERIOD_MILLISECONDS;
+    if (milliseconds < injp->minInjPeriod) {
+        milliseconds = injp->minInjPeriod;
     }
-    else if (milliseconds > MAXIMUM_INJECTION_PERIOD_MILLISECONDS) {
-        milliseconds = MAXIMUM_INJECTION_PERIOD_MILLISECONDS;
+    else if (milliseconds > injp->maxInjPeriod) {
+        milliseconds = injp->maxInjPeriod;
     }
-    baseInterval = milliseconds;
-    maxExtension = MAXIMUM_INJECTION_PERIOD_MILLISECONDS - baseInterval;
+    injp->baseInterval = milliseconds;
+    injp->maxExtension = injp->maxInjPeriod - injp->baseInterval;
     injectionCycleExtendInterval(0);
+}
+
+int
+injectionCycleSetInjMode(unsigned int injMode)
+{
+    if (injMode >= CFG_EVG1_INJ_MODE_COUNT) {
+        return -1;
+    }
+
+    GPIO_WRITE(injp->csrIdx, CSR_INJ_W_SET_INJ_MODE | injMode);
+    return 0;
 }
 
 int
 injectionCycleFetchStatus(uint32_t *ap)
 {
     int idx = 0;
-    ap[idx++] = GPIO_READ(GPIO_IDX_INJECTION_CYCLE_CSR);
+    ap[idx++] = GPIO_READ(injp->csrIdx);
     return idx;
+}
+
+void
+injectionAlignSetAlignSel(int sel)
+{
+    if (sel >= CFG_EVG1_HEARTBEAT_COUNT) {
+        return;
+    }
+
+    GPIO_WRITE(injp->csrAlignIdx, CSR_INJ_ALIGN_W_SET_ALIGN_SEL |
+            CSR_INJ_ALIGN_W_SEL_W(sel));
+}
+
+void
+injectionAlignSetHeartbeatSel(int sel)
+{
+    if (sel >= CFG_EVG1_HEARTBEAT_COUNT) {
+        return;
+    }
+
+    GPIO_WRITE(injp->csrAlignIdx, CSR_INJ_ALIGN_W_SET_HEARTBEAT_SEL |
+            CSR_INJ_ALIGN_W_SEL_W(sel));
+}
+
+int
+injectionAlignSetSel(unsigned int idx, int sel)
+{
+    switch (idx) {
+        case 0:
+            injectionAlignSetAlignSel(sel);
+            break;
+
+        case 1:
+            injectionAlignSetHeartbeatSel(sel);
+            break;
+
+        default:
+            return -1;
+    }
+
+    return 0;
+}
+
+int
+injectionAlignGetAlignSel(void)
+{
+    uint32_t reg = GPIO_READ(injp->csrAlignIdx);
+
+    return CSR_INJ_ALIGN_R_COUNTER_SEL_R(reg);
+}
+
+int
+injectionAlignGetHbSel(void)
+{
+    uint32_t reg = GPIO_READ(injp->csrAlignIdx);
+
+    return CSR_INJ_ALIGN_R_HB_SEL_R(reg);
+}
+
+int
+injectionAlignFetchStatus(uint32_t *ap)
+{
+    int idx = 0;
+    ap[idx++] = GPIO_READ(injp->csrAlignIdx);
+    return idx;
+}
+
+/*
+ * Implementing the first part of:
+ * bBR =[(43*[(5*bAR) (mod 304)](mod125) + 72*iAR,BR(mod 125)] (mod 125) :
+ * bBR =[(43*[(5*bAR) (mod 304)](mod125)
+ */
+
+int
+injectionTargetSetRfCoincTerm(unsigned int arIdx)
+{
+    unsigned int rfCoincIdx = 0;
+    unsigned int rfCoincTerm = 0;
+
+    if (arIdx >= CFG_EVG1_BR_AR_COINC_PER_RF_COINC) {
+        return -1;
+    }
+
+    injp->arTgtIdx = arIdx;
+
+    rfCoincIdx = (5 * injp->arTgtIdx) % CFG_EVG1_BR_AR_COINC_PER_RF_COINC;
+    rfCoincTerm = (43 * rfCoincIdx) % CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC;
+
+    GPIO_WRITE(injp->csrTargetStatusIdx,
+            CSR_TGT_RF_COINC_IDX_W(rfCoincIdx) | CSR_TGT_RF_COINC_TERM_W(rfCoincTerm));
+
+    if (debugFlags & DEBUGFLAG_INJ_CYCLE) {
+        injectionTargetDisplay();
+    }
+
+    return 0;
+}
+
+uint32_t
+injectionTargetStatus(void)
+{
+    return GPIO_READ(injp->csrTargetStatusIdx);
+}
+
+uint32_t
+injectionTargetStatus2(void)
+{
+    return GPIO_READ(injp->csrTargetStatus2Idx);
+}
+
+void
+injectionTargetDisplay(void)
+{
+    uint32_t reg = injectionTargetStatus();
+    int rfCoincIdx = CSR_TGT_RF_COINC_IDX_R(reg);
+    int rfCoincTerm = CSR_TGT_RF_COINC_TERM_R(reg);
+
+    printf("Injection Target: rfCoincIdx: %d rfCoincTerm: %d\n",
+            rfCoincIdx, rfCoincTerm);
+}
+
+void
+injectionTarget2Display(void)
+{
+    uint32_t reg = injectionTargetStatus2();
+    int brBucket = CSR_TGT2_BR_BUCKET_R(reg);
+    int alignCount = CSR_TGT2_ALIGN_COUNT_R(reg);
+
+    printf("Injection Target: brBucket: %d alignCount: %d\n",
+            brBucket, alignCount);
 }

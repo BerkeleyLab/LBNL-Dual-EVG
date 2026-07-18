@@ -57,6 +57,7 @@ __HDR_FILES = \
 	tftp.h \
 	tod.h \
 	util.h \
+	reg_macros.h \
 	xadc.h
 HDR_FILES = $(addprefix $(SW_SRC_DIR)/$(PROC_NAME)/, $(__HDR_FILES))
 

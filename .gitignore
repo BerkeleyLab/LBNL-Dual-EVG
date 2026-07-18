@@ -22,6 +22,8 @@ _xilinx/
 *.elf.size
 *.prm
 *.bin
+*.vcd
+*_tb
 
 # Bundled binary file with PL/PS config
 *BOOT.bin
@@ -48,6 +50,17 @@ software/app/devg_test_alsu/proc_1/devg_test_internal_pps_alsu_marble_proc_1
 work/
 
 ######################
+# Icarus/Verilator/cocotb
+######################
+
+__pycache__/
+*.fst
+*.vcd
+*results.xml
+sim_build/
+
+
+######################
 # Temporary files
 ######################
 
@@ -68,6 +81,8 @@ work/
 !/gateware/platform/xilinx/*/*/bd/bd.bd
 /gateware/platform/xilinx/*/*/ila_td256_s4096_cap/
 !/gateware/platform/xilinx/*/*/ila_td256_s4096_cap/ila_td256_s4096_cap.xci
+
+/gateware/syn/*/*.rpt
 
 # NCO tables
 *csv

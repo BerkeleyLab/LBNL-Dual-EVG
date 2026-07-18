@@ -139,6 +139,8 @@ sysmonFetch(uint32_t *args)
     *ap++ = GPIO_READ(GPIO_IDX_SWAPOUT_CYCLE_CSR);
     ap += fetchFanSpeeds(ap);
     ap += mgtFetchStatus(ap);
+    ap += injectionAlignFetchStatus(ap);
+    ap += swapoutAlignFetchStatus(ap);
     return ap - args;
 }
 
@@ -152,6 +154,7 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
     int lo = cmdp->command & EVG_PROTOCOL_CMD_MASK_LO;
     int idx = cmdp->command & EVG_PROTOCOL_CMD_MASK_IDX;
     int replyArgCount = 0;
+    int ret = 0;
     static int powerUpStatus = 1;
 
     switch (cmdp->command & EVG_PROTOCOL_CMD_MASK_HI) {
@@ -183,6 +186,14 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
             if (l < 0) return -1;
             replyp->args[0] = l;
             }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGIN_LO_INJ_ALIGN_SEL:
+            replyp->args[0] = GPIO_READ(GPIO_IDX_INJECTION_ALIGN_CSR);
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGIN_LO_SWAPOUT_ALIGN_SEL:
+            replyp->args[0] = GPIO_READ(GPIO_IDX_SWAPOUT_ALIGN_CSR);
             break;
 
         default: return -1;
@@ -237,6 +248,34 @@ handleCommand(int commandArgCount, struct evgPacket *cmdp,
                 sharedMemory->loopbackRequest =
                                    (sharedMemory->loopbackRequest & ~mask) |
                                        ((cmdp->args[0] << shift) & mask);
+            }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_INJ_ALIGN_SEL:
+            ret = injectionAlignSetSel(idx, cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
+            }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_SWAPOUT_ALIGN_SEL:
+            ret = swapoutAlignSetSel(idx, cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
+            }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_AR_TARGET:
+            ret = injectionTargetSetRfCoincTerm(cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
+            }
+            break;
+
+        case EVG_PROTOCOL_CMD_LONGOUT_LO_INJ_MODE:
+            ret = injectionCycleSetInjMode(cmdp->args[0]);
+            if (ret != 0) {
+                return -1;
             }
             break;
 
@@ -352,14 +391,17 @@ epicsHandler(bwudpHandle replyHandle, char *payload, int length)
 static void
 seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
 {
-    int i;
+    int i, j;
     uint32_t now = MICROSECONDS_SINCE_BOOT();
     static bwudpHandle seqStatusPublisher;
     static int mustSend, mustSwap;
     static uint32_t whenSubscribed, whenSent;
     uint32_t currentStatus[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t currentStatus2[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusSeconds[EVG_PROTOCOL_EVG_COUNT];
     uint32_t currentStatusFraction[EVG_PROTOCOL_EVG_COUNT];
+    uint32_t currentCatDelay[EVG_PROTOCOL_EVG_COUNT][CFG_EVENT_CAT_NUM];
+    uint32_t reg = 0, reg2 = 0;
     static uint32_t sentStatus[EVG_PROTOCOL_EVG_COUNT];
 
     if (replyHandle) {
@@ -386,7 +428,9 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     if ((now - whenSent) < SHORTEST_US) return;
     for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
         currentStatus[i] = evgSequencerStatus(i, &currentStatusSeconds[i],
-                &currentStatusFraction[i]);
+                &currentStatusFraction[i], currentCatDelay[i], CFG_EVENT_CAT_NUM);
+        // Only sequencer 0 has this information
+        currentStatus2[i] = (i == 0)? injectionTargetStatus2() : 0;
         if (currentStatus[i] != sentStatus[i]) {
             mustSend = 1;
         }
@@ -394,16 +438,52 @@ seqStatusHandler(bwudpHandle replyHandle, char *payload, int length)
     if (mustSend) {
         static struct evgStatusPacket pk;
         static uint32_t pkNumber;
+        uint32_t evgSeqStart = 0;
         pk.magic = EVG_PROTOCOL_MAGIC;
         pk.pkNumber = ++pkNumber;
         for (i = 0 ; i < EVG_PROTOCOL_EVG_COUNT ; i++) {
             pk.sequencerStatus[i] = sentStatus[i] = currentStatus[i];
+            pk.sequencerStatus2[i] = currentStatus2[i];
             pk.posixSeconds[i] = currentStatusSeconds[i] - NTP_POSIX_OFFSET;
             pk.ntpFraction[i] = currentStatusFraction[i];
+
+            for (j = 0; j < CFG_EVENT_CAT_NUM; j++) {
+                pk.sequencerCatDelay[i][j] = currentCatDelay[i][j];
+            }
+
+            evgSeqStart = (pk.sequencerStatus[i] & EVG_STATUS_SEQUENCER_BUSY) != 0;
+
+            if (((debugFlags & DEBUGFLAG_SEQ_STATUS_START_FIFO) && evgSeqStart) ||
+                    (debugFlags & DEBUGFLAG_SEQ_STATUS_FIFO)) {
+                printf("EVG %d Seq Status:\n", i);
+                printf("    status: 0x%08X\n    secs: %d\n    ns: %d\n",
+                        pk.sequencerStatus[i],
+                        pk.posixSeconds[i],
+                        pk.ntpFraction[i]);
+                for (j = 0; j < CFG_EVENT_CAT_NUM; j++) {
+                    printf("    cat delay %d: %d\n",
+                            j, pk.sequencerCatDelay[i][j]);
+                }
+
+                // Does not exist for sequencer 1 (swapout)
+                if (i == 0) {
+                    reg = injectionTargetStatus();
+                    reg2 = injectionTargetStatus2();
+                    printf("    rf_coinc_idx:rf_coinc_term %d:%d\n",
+                            CSR_TGT_RF_COINC_IDX_R(reg),
+                            CSR_TGT_RF_COINC_TERM_R(reg));
+                    printf("    br_bucket:align_count %d:%d\n",
+                            CSR_TGT2_BR_BUCKET_R(reg2),
+                            CSR_TGT2_ALIGN_COUNT_R(reg2));
+                }
+                printf("\n");
+            }
         }
+
         if (mustSwap) {
             bswap32(&pk.magic, sizeof(pk) / sizeof(int32_t));
         }
+
         bwudpSend(seqStatusPublisher, (const char *)&pk, sizeof pk);
         whenSent = now;
         mustSend = 0;
