@@ -28,6 +28,9 @@ module mgtWrapper #(
     output                            tx_n,
     input                             evgRxClkIn,
     output                            evgRxClkOut,
+    (*mark_debug=DEBUG*)output [15:0] evgRxData,
+    (*mark_debug=DEBUG*)output  [1:0] evgRxCharIsK,
+    output                            rxIsAligned,
     input                             rx_p,
     input                             rx_n);
 
@@ -48,7 +51,6 @@ localparam RESET_STATUS_WIDTH = 13;
 
 (*mark_debug=DEBUG*) wire lolAck, gtTxReset, gtRxReset, cpllReset;
 wire rx_fsm_reset_done, rxResetDone, tx_fsm_reset_done, txResetDone, cpllLock;
-wire rxIsAligned;
 
 wire [RESET_CONTROL_WIDTH-1:0] resetControl;
 assign { gtTxReset,
@@ -181,8 +183,7 @@ localparam COMMA_COUNTER_WIDTH = $clog2(COMMA_COUNTER_RELOAD+1) + 1;
 (*mark_debug=DEBUG*) reg [COMMA_COUNTER_WIDTH-1:0] commaCounter =
                                                            COMMA_COUNTER_RELOAD;
 assign rxIsAligned = commaCounter[COMMA_COUNTER_WIDTH-1];
-(*mark_debug=DEBUG*) wire [1:0] evgRxCharIsK, evgRxNotInTable;
-(*mark_debug=DEBUG*) wire [15:0] evgRxData;
+(*mark_debug=DEBUG*) wire [1:0] evgRxNotInTable;
 always @(posedge evgRxClkIn) begin
     if ((evgRxNotInTable != 0) || evgRxCharIsK[1]) begin
         commaCounter <= COMMA_COUNTER_RELOAD;
