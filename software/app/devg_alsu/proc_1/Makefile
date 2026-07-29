@@ -92,9 +92,9 @@ INCLUDE_FLAGS = $(addprefix -I, $(INCLUDE_DIRS))
 
 .PHONY: all clean bsp
 
-vpath *.c $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
-vpath *.h $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
-vpath *.o $(SW_SRC_DIR)/$(PROC_NAME)
+vpath %.c $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
+vpath %.h $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
+vpath %.o $(SW_SRC_DIR)/$(PROC_NAME)
 
 # Actual build rules
 include $(SW_DEVG_APP_DIR)/bottom_rules.mk
