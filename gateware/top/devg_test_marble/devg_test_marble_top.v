@@ -66,6 +66,9 @@ module devg_test_marble_top #(
     output PMOD2_4,
     output PMOD2_5,
 
+    output LD17,
+    output LD16,
+
     // Buttons
     output PMOD2_6,
     output PMOD2_7,
@@ -127,8 +130,8 @@ assign GPIO_IN[GPIO_IDX_GITHASH] = GIT_REV_32BIT;
 (*ASYNC_REG="TRUE"*) reg Reset_RecoveryModeSwitch_m, DisplayModeSwitch_m;
 reg Reset_RecoveryModeSwitch, DisplayModeSwitch;
 always @(posedge sysClk) begin
-    Reset_RecoveryModeSwitch_m <= !PMOD2_6;
-    DisplayModeSwitch_m        <= !PMOD2_7;
+    // Reset_RecoveryModeSwitch_m <= !PMOD2_6;
+    // DisplayModeSwitch_m        <= !PMOD2_7;
     Reset_RecoveryModeSwitch   <= Reset_RecoveryModeSwitch_m;
     DisplayModeSwitch          <= DisplayModeSwitch_m;
 end
@@ -358,6 +361,14 @@ wire [3:0] evg1TxClksIn;
 wire [3:0] evg1RxClks;
 wire [3:0] evg2RxClks;
 
+// Readback signals from EVGs
+wire [15:0] evg1RxData [0:3];
+wire [15:0] evg2RxData [0:3];
+wire [1:0]  evg1RxCharIsK [0:3];
+wire [1:0]  evg2RxCharIsK [0:3];
+wire [0:0]  evg1RxIsAligned [0:3];
+wire [0:0]  evg2RxIsAligned [0:3];
+
 wire evg1RefClkUnbuf;
 IBUFDS_GTE2 evg1RefBuf (.I(MGT_CLK_0_P), .IB(MGT_CLK_0_N), .O(evg1RefClkUnbuf));
 BUFG f1BUFG (.I(evg1RefClkUnbuf), .O(evg1RefClk));
@@ -381,6 +392,9 @@ mgtWrapper #(.EVG(1),
     .evgTxClkOut(evg1TxClksOut[i]),
     .evgTxData(evg1TxData),
     .evgTxCharIsK(evg1TxCharIsK),
+    .evgRxData(evg1RxData[i]),
+    .evgRxCharIsK(evg1RxCharIsK[i]),
+    .rxIsAligned(evg1RxIsAligned[i]),
     .refClk(evg1RefClkUnbuf),
     .gt0_qplloutclk_i(gt0_qplloutclk_i),
     .gt0_qplloutrefclk_i(gt0_qplloutrefclk_i),
@@ -412,6 +426,55 @@ wire evg1GtRxFSMResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][25];
 wire evg1TxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][24];
 wire evg1RxResetDone = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][23];
 wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
+
+//////////////////////////////////////////////////////////////////////////////
+// Readback-to-PMOD bridge
+
+localparam PMOD_BRIDGE_EVG_CHAN_SELECT   = 0;     // Channels 0-3
+localparam PMOD_BRIDGE_EVG_SELECT        = 0;     // EVG1 or EVG2
+localparam PMOD_BRIDGE_EV_TIMEOUT_CYCLES = 12500; // ~100 us
+generate
+    if (PMOD_BRIDGE_EVG_SELECT > 1) begin
+        ERROR_PMOD_BRIDGE_EVG_SELECT_EXCEEDING_ALLOWED_VALUE();
+    end
+    if (PMOD_BRIDGE_EVG_CHAN_SELECT > 3) begin
+        ERROR_PMOD_BRIDGE_EVG_CHAN_SELECT_EXCEEDING_ALLOWED_VALUE();
+    end
+endgenerate
+
+wire [15:0] pmodRxData      = PMOD_BRIDGE_EVG_SELECT ?
+    evg2RxData[PMOD_BRIDGE_EVG_CHAN_SELECT] : evg1RxData[PMOD_BRIDGE_EVG_CHAN_SELECT];
+wire [1:0]  pmodRxDataIsK   = PMOD_BRIDGE_EVG_SELECT ?
+    evg2RxCharIsK[PMOD_BRIDGE_EVG_CHAN_SELECT] : evg1RxCharIsK[PMOD_BRIDGE_EVG_CHAN_SELECT];
+wire        pmodRxIsAligned = PMOD_BRIDGE_EVG_SELECT ?
+    evg2RxIsAligned[PMOD_BRIDGE_EVG_CHAN_SELECT] : evg1RxIsAligned[PMOD_BRIDGE_EVG_CHAN_SELECT];
+wire        pmodRxClk = PMOD_BRIDGE_EVG_SELECT ?
+    evg2RxClks[PMOD_BRIDGE_EVG_CHAN_SELECT] : evg1RxClks[PMOD_BRIDGE_EVG_CHAN_SELECT];
+wire [7:0]  pmodStreamOutput;
+streamToPmod # (
+    .TIMEOUT_CYCLES(PMOD_BRIDGE_EV_TIMEOUT_CYCLES)
+) streamToPmod_inst (
+    .clk(pmodRxClk),
+    .rst(),
+    .dataIn(pmodRxData[7:0]),
+    .aligned(pmodRxIsAligned),
+    .charIsK(pmodRxDataIsK[0]),
+    .dataOut(pmodStreamOutput)
+);
+
+// LEDs
+assign LD17 = pmodRxIsAligned;
+assign LD16 = pmodRxIsAligned;
+// PMOD2
+assign PMOD2_0 = pmodStreamOutput[0];
+assign PMOD2_1 = pmodStreamOutput[1];
+assign PMOD2_2 = pmodStreamOutput[2];
+assign PMOD2_3 = pmodStreamOutput[3];
+// Currently hardcoded to 4'b1010, unnecessary for now
+// assign PMOD2_4 = pmodStreamOutput[4];
+// assign PMOD2_5 = pmodStreamOutput[5];
+// assign PMOD2_6 = pmodStreamOutput[6];
+// assign PMOD2_7 = pmodStreamOutput[7];
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 Tx clocks
@@ -803,20 +866,6 @@ pulseStretcher #(
     .pulse_a(bncPowerline_a),
     .pulseStretch(powerlineStretch)
 );
-
-// LEDs
-assign PMOD2_0 = evg1HeartbeatStretch;
-assign PMOD2_1 = evg2HeartbeatStretch;
-assign PMOD2_2 = ppsStretch;
-assign PMOD2_3 = powerlineStretch;
-
-// Unused
-assign PMOD2_4 = 1'b0;
-assign PMOD2_5 = 1'b0;
-
-// Buttons
-assign PMOD2_6 = 1'b1;
-assign PMOD2_7 = 1'b1;
 
 /////////////////////////////////////////////////////////////////////////////
 // Measure clock rates
