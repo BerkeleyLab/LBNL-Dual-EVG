@@ -2,7 +2,7 @@
 // application specific module
 
 module streamToPmod #(
-    parameter TIMEOUT_CYCLES = 62500000,
+    parameter TIMEOUT_CYCLES = 12500,
     parameter [3:0] MSG_HEADER = 4'b1010
 ) (
     input  wire        clk,
@@ -32,7 +32,7 @@ always @(posedge clk) begin
         end
 
         if(timeout || !aligned) begin
-            dataOut <= 0;
+            dataOut <= 8'h00;
         end else if(!charIsK & header_matched) begin
             dataOut <= dataIn;
         end
