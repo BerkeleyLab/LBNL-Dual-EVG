@@ -433,6 +433,7 @@ wire evg1CpllLock = GPIO_IN[GPIO_IDX_EVG_1_0_DRP_CSR][22];
 localparam PMOD_BRIDGE_EVG_CHAN_SELECT   = 0;     // Channels 0-3
 localparam PMOD_BRIDGE_EVG_SELECT        = 0;     // EVG1 or EVG2
 localparam PMOD_BRIDGE_EV_TIMEOUT_CYCLES = 12500; // ~100 us
+localparam PMOD_BRIDGE_INVERTED_OUTPUT   = 1;
 generate
     if (PMOD_BRIDGE_EVG_SELECT > 1) begin
         ERROR_PMOD_BRIDGE_EVG_SELECT_EXCEEDING_ALLOWED_VALUE();
@@ -466,15 +467,15 @@ streamToPmod # (
 assign LD17 = pmodRxIsAligned;
 assign LD16 = pmodRxIsAligned;
 // PMOD2
-assign PMOD2_0 = pmodStreamOutput[0];
-assign PMOD2_1 = pmodStreamOutput[1];
-assign PMOD2_2 = pmodStreamOutput[2];
-assign PMOD2_3 = pmodStreamOutput[3];
+assign PMOD2_0 = PMOD_BRIDGE_INVERTED_OUTPUT ? ~pmodStreamOutput[0] : pmodStreamOutput[0];
+assign PMOD2_1 = PMOD_BRIDGE_INVERTED_OUTPUT ? ~pmodStreamOutput[1] : pmodStreamOutput[1];
+assign PMOD2_2 = PMOD_BRIDGE_INVERTED_OUTPUT ? ~pmodStreamOutput[2] : pmodStreamOutput[2];
+assign PMOD2_3 = PMOD_BRIDGE_INVERTED_OUTPUT ? ~pmodStreamOutput[3] : pmodStreamOutput[3];
 // Currently hardcoded to 4'b1010, unnecessary for now
-// assign PMOD2_4 = pmodStreamOutput[4];
-// assign PMOD2_5 = pmodStreamOutput[5];
-// assign PMOD2_6 = pmodStreamOutput[6];
-// assign PMOD2_7 = pmodStreamOutput[7];
+assign PMOD2_4 = PMOD_BRIDGE_INVERTED_OUTPUT ? 1'b1 : 1'b0;
+assign PMOD2_5 = PMOD_BRIDGE_INVERTED_OUTPUT ? 1'b1 : 1'b0;
+assign PMOD2_6 = PMOD_BRIDGE_INVERTED_OUTPUT ? 1'b1 : 1'b0;
+assign PMOD2_7 = PMOD_BRIDGE_INVERTED_OUTPUT ? 1'b1 : 1'b0;
 
 //////////////////////////////////////////////////////////////////////////////
 // Buffer EVG1 Tx clocks
