@@ -1,3 +1,6 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
 /*
  * Configuration parameters shared between software and firmware
  * The restrictions noted in gpio.h apply here, too.
@@ -12,23 +15,34 @@
 #define CFG_FAN_COUNT                       4
 #define CFG_SEQUENCE_RAM_CAPACITY           1024
 
-//#define CFG_EVG1_CLK_PER_RF_COINCIDENCE     666
-//#define CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT    50616
-//#define CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4 125
-//#define CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE  6327000
-//#define CFG_EVG1_CLK_PER_HEARTBEAT          126540000
+#define CFG_EVG1_HEARTBEAT_COUNT            2
+#define CFG_EVG1_HEARTBEAT_NORMAL_IDX       0
+#define CFG_EVG1_HEARTBEAT_ALS_IDX          1
 
-// FIXME: Alternate values to work with ALS SR
-#define CFG_EVG1_CLK_PER_RF_COINCIDENCE     666
-#define CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT    10250
+#define CFG_EVG1_CLK_PER_RF_COINCIDENCE     668
+#define CFG_EVG1_CLK_PER_TICKS_COINCIDENCE  167
+#define CFG_EVG1_CLK_PER_BR_AR_ALIGNMENT    50768
 #define CFG_EVG1_CLK_PER_BR_ORBIT_CLOCK_DIV4 125
-#define CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE  6232000
-#define CFG_EVG1_CLK_PER_HEARTBEAT          124640000
+#define CFG_EVG1_CLK_PER_BR_AR_COINCIDENCE  6346000
+#define CFG_EVG1_CLK_PER_HEARTBEAT          126920000
 
-#define CFG_EVG2_CLK_PER_RF_COINCIDENCE     667
+#define CFG_EVG1_BR_AR_COINC_PER_RF_COINC    304
+#define CFG_EVG1_BR_AR_ALIGN_PER_BR_AR_COINC 125
+
+#define CFG_EVG1_INJ_MODE_COUNT              2
+
+// Alternate values to work with ALS SR. Used for alternate
+// injection sequence synchronization
+#define CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT    10250
+#define CFG_EVG1_ALS_CLK_PER_HEARTBEAT          124640000
+
+#define CFG_EVG2_HEARTBEAT_COUNT            1
+#define CFG_EVG2_HEARTBEAT_NORMAL_IDX       0
+
+#define CFG_EVG2_CLK_PER_RF_COINCIDENCE     669
 #define CFG_EVG2_CLOCK_PER_AR_ORBIT_CLOCK   76
 #define CFG_EVG2_CLOCK_PER_SR_ORBIT_CLOCK   82
-#define CFG_EVG2_CLOCK_PER_ARSR_COINCIDENCE 3116
+#define CFG_EVG2_CLOCK_PER_AR_SR_COINCIDENCE 3116
 #define CFG_EVG2_CLK_PER_HEARTBEAT          124640000
 
 // Use FMC for 115 MGT quad. 0 = FMC, 1 = QSFP 2
@@ -37,3 +51,8 @@
 // Disable MGT Tx:Ref alignement, as we are using
 // Automatic MGT TX alignment
 #define CFG_MGT_TX_REF_ALIGN               0
+
+// Number of event categories
+#define CFG_EVENT_CAT_NUM                  4
+
+#endif

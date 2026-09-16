@@ -1,0 +1,295 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Tue Mar 31 22:23:22 2026
+[*]
+[dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/injectorSequenceControl.vcd"
+[dumpfile_mtime] "Tue Mar 31 22:20:56 2026"
+[dumpfile_size] 186023805
+[savefile] "/home/lrusso/repos/dual-evg/gateware/modules/injectorSequenceControl.gtkw"
+[timestart] 1883081700
+[size] 2188 1340
+[pos] -3 39
+*-16.610216 1670140000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] injectorSequenceControl_tb.
+[treeopen] injectorSequenceControl_tb.dut.
+[treeopen] injectorSequenceControl_tb.dut.genblk5[0].
+[treeopen] injectorSequenceControl_tb.evgCountersInst.genblk1[0].
+[treeopen] injectorSequenceControl_tb.evgCountersInst.genblk1[1].
+[treeopen] injectorSequenceControl_tb.evgCountersInst.genblk1[2].
+[treeopen] injectorSequenceControl_tb.evgCountersInst.genblk1[3].
+[treeopen] injectorSequenceControl_tb.evgCountersInst.genblk1[4].
+[treeopen] injectorSequenceControl_tb.evgCountersInst.genblk1[5].
+[sst_width] 249
+[signals_width] 505
+[sst_expanded] 1
+[sst_vpaned_height] 419
+@200
+-TB
+@420
+injectorSequenceControl_tb.ALIGNMENT_SYNC_COUNT
+injectorSequenceControl_tb.CLK_PER_BR_AR_ALIGN_WIDTH
+injectorSequenceControl_tb.CLK_PER_BR_AR_COINC_WIDTH
+injectorSequenceControl_tb.CLK_PER_BR_ORBIT_DIV4_WIDTH
+injectorSequenceControl_tb.CLK_PER_TICKS_COINC_WIDTH
+injectorSequenceControl_tb.CSR_DATA_BUS_WIDTH
+injectorSequenceControl_tb.CSR_STROBE_BUS_WIDTH
+injectorSequenceControl_tb.GPIO_IDX_COUNT
+injectorSequenceControl_tb.GPIO_IDX_INJECTION_ALIGN_CSR
+injectorSequenceControl_tb.GPIO_IDX_INJECTION_CYCLE_CSR
+injectorSequenceControl_tb.GPIO_IDX_INJECTION_TARGET_CSR
+@22
+injectorSequenceControl_tb.GPIO_OUT[31:0]
+injectorSequenceControl_tb.GPIO_STROBES[127:0]
+@420
+injectorSequenceControl_tb.NUM_EVG_COUNTERS
+injectorSequenceControl_tb.RF_ALIGN_IDX_WIDTH
+injectorSequenceControl_tb.RF_COINC_IDX_WIDTH
+@24
+injectorSequenceControl_tb.SIM_ALT_CLK_PER_BR_AR_ALIGNMENT
+injectorSequenceControl_tb.SIM_BR_AR_ALIGN_PER_BR_AR_COINC
+injectorSequenceControl_tb.SIM_CLK_PER_BR_AR_ALIGNMENT
+injectorSequenceControl_tb.SIM_CLK_PER_BR_AR_COINCIDENCE
+injectorSequenceControl_tb.SIM_CLK_PER_BR_ORBIT_CLOCK_DIV4
+injectorSequenceControl_tb.SIM_CLK_PER_HEARTBEAT
+injectorSequenceControl_tb.SIM_CLK_PER_TICKS_COINCIDENCE
+injectorSequenceControl_tb.SYSCLK_RATE
+@22
+injectorSequenceControl_tb.brArAlignPerBrArCoincCounter[31:0]
+@28
+injectorSequenceControl_tb.brArAlignStrobe
+@22
+injectorSequenceControl_tb.clkGenCounters[191:0]
+injectorSequenceControl_tb.clkGenStrobes[5:0]
+injectorSequenceControl_tb.clkGenSynceds[5:0]
+@420
+injectorSequenceControl_tb.errors
+@28
+injectorSequenceControl_tb.evgAlignCounterDone[1:0]
+@22
+injectorSequenceControl_tb.evgCountersEn[5:0]
+@28
+injectorSequenceControl_tb.evgHeartbeatAlign
+injectorSequenceControl_tb.evgHeartbeatCore
+injectorSequenceControl_tb.evgHeartbeatRequest
+injectorSequenceControl_tb.evgHeartbeat[1:0]
+injectorSequenceControl_tb.evgSequenceStart
+injectorSequenceControl_tb.evgTxClk
+injectorSequenceControl_tb.powerlineA
+@24
+injectorSequenceControl_tb.powerlineCounter
+@28
+injectorSequenceControl_tb.rfF1CoincStrobe
+@22
+injectorSequenceControl_tb.sysAlignStatus[31:0]
+@28
+injectorSequenceControl_tb.sysClk
+@22
+injectorSequenceControl_tb.sysStatus[31:0]
+injectorSequenceControl_tb.sysTargetStatus[31:0]
+@200
+-HB Generation
+@24
+injectorSequenceControl_tb.heartbeatGen.TX_CLK_PER_HEARTBEAT
+injectorSequenceControl_tb.heartbeatGen.TX_HB_COUNTER_RELOAD
+@420
+injectorSequenceControl_tb.heartbeatGen.TX_HB_COUNTER_WIDTH
+@28
+injectorSequenceControl_tb.heartbeatGen.sampCoincidenceMarker
+injectorSequenceControl_tb.heartbeatGen.sysRealignToggleIn
+injectorSequenceControl_tb.heartbeatGen.txClk
+injectorSequenceControl_tb.heartbeatGen.txCoincIntMarker
+injectorSequenceControl_tb.heartbeatGen.txCoincIntMarker_d
+injectorSequenceControl_tb.heartbeatGen.txCoincIntMarker_m
+injectorSequenceControl_tb.heartbeatGen.txCoincidenceMarker
+@22
+injectorSequenceControl_tb.heartbeatGen.txHeartbeatCounter[18:0]
+@28
+injectorSequenceControl_tb.heartbeatGen.txHeartbeatStrobe
+injectorSequenceControl_tb.heartbeatGen.txRealignMatch
+injectorSequenceControl_tb.heartbeatGen.txRealignToggle
+injectorSequenceControl_tb.heartbeatGen.txRealignToggle_m
+@200
+-Counter 0
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[0].clkGen.DEFAULT_RATE_COUNT
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[0].clkGen.en
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[0].clkGen.clkGenCounter[14:0]
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[0].clkGen.clkGenStrobe
+injectorSequenceControl_tb.evgCountersInst.genblk1[0].clkGen.clkGenSynced
+injectorSequenceControl_tb.evgCountersInst.genblk1[0].clkGen.heartbeatStrobe
+@200
+-Counter 1
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[1].clkGen.en
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[1].clkGen.clkGenCounter[2:0]
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[1].clkGen.clkGenStrobe
+injectorSequenceControl_tb.evgCountersInst.genblk1[1].clkGen.clkGenSynced
+injectorSequenceControl_tb.evgCountersInst.genblk1[1].clkGen.heartbeatStrobe
+@200
+-Counter 2
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[2].clkGen.en
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[2].clkGen.clkGenCounter[16:0]
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[2].clkGen.clkGenStrobe
+injectorSequenceControl_tb.evgCountersInst.genblk1[2].clkGen.clkGenSynced
+injectorSequenceControl_tb.evgCountersInst.genblk1[2].clkGen.heartbeatStrobe
+@200
+-Counter 3
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[3].clkGen.en
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[3].clkGen.clkGenCounter[7:0]
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[3].clkGen.clkGenStrobe
+injectorSequenceControl_tb.evgCountersInst.genblk1[3].clkGen.clkGenSynced
+injectorSequenceControl_tb.evgCountersInst.genblk1[3].clkGen.heartbeatStrobe
+@200
+-Counter 4
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[4].clkGen.en
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[4].clkGen.clkGenCounter[2:0]
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[4].clkGen.clkGenStrobe
+injectorSequenceControl_tb.evgCountersInst.genblk1[4].clkGen.clkGenSynced
+injectorSequenceControl_tb.evgCountersInst.genblk1[4].clkGen.heartbeatStrobe
+@200
+-Counter 5
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[5].clkGen.en
+@24
+injectorSequenceControl_tb.evgCountersInst.genblk1[5].clkGen.clkGenCounter[6:0]
+@28
+injectorSequenceControl_tb.evgCountersInst.genblk1[5].clkGen.clkGenStrobe
+injectorSequenceControl_tb.evgCountersInst.genblk1[5].clkGen.clkGenSynced
+injectorSequenceControl_tb.evgCountersInst.genblk1[5].clkGen.heartbeatStrobe
+@200
+-DUT
+-Alignment Counter
+@420
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.ALIGNMENT_COUNTER_RELOAD
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.ALIGNMENT_COUNTER_WIDTH
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.CLK_PER_ALIGNMENT
+@28
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.alignmentCounterDone
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.alignmentCounterSynced
+@22
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.alignmentCounter[15:0]
+@28
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.clk
+injectorSequenceControl_tb.dut.genblk5[0].alignmentGenerator.heartbeatStrobe
+@200
+-DUT
+@420
+injectorSequenceControl_tb.dut.ALIGNMENT_SYNC_COUNT
+injectorSequenceControl_tb.dut.ALIGNMENT_SYNC_COUNT_MAX_WIDTH
+injectorSequenceControl_tb.dut.ALIGNMENT_SYNC_COUNT_WIDTH
+injectorSequenceControl_tb.dut.BR_BUCKET_SUM_WIDTH
+injectorSequenceControl_tb.dut.CYCLE_COUNTER_RELOAD_WIDTH
+injectorSequenceControl_tb.dut.CYCLE_COUNTER_WIDTH
+injectorSequenceControl_tb.dut.MOD_125_WIDTH
+injectorSequenceControl_tb.dut.RF_ALIGN_COEFF
+injectorSequenceControl_tb.dut.RF_ALIGN_COEFF_WIDTH
+injectorSequenceControl_tb.dut.RF_ALIGN_IDX_WIDTH
+injectorSequenceControl_tb.dut.RF_ALIGN_IDX_WIDTH_MAX
+injectorSequenceControl_tb.dut.RF_ALIGN_TERM_WIDTH
+injectorSequenceControl_tb.dut.RF_COINC_IDX_WIDTH
+injectorSequenceControl_tb.dut.RF_COINC_IDX_WIDTH_MAX
+injectorSequenceControl_tb.dut.RF_COINC_TERM_WIDTH
+injectorSequenceControl_tb.dut.RF_COINC_TERM_WIDTH_MAX
+injectorSequenceControl_tb.dut.ST_AWAIT_ALIGNMENT
+injectorSequenceControl_tb.dut.ST_AWAIT_COINC_IDX_SEL
+injectorSequenceControl_tb.dut.ST_AWAIT_POWER_LINE
+injectorSequenceControl_tb.dut.ST_IDLE
+injectorSequenceControl_tb.dut.ST_TRIGGER
+injectorSequenceControl_tb.dut.SYSCLK_DIVIDER_RELOAD
+injectorSequenceControl_tb.dut.SYSCLK_DIVIDER_WIDTH
+injectorSequenceControl_tb.dut.SYSCLK_PER_MILLISECOND
+injectorSequenceControl_tb.dut.SYSCLK_RATE
+injectorSequenceControl_tb.dut.TX_CLK_PER_ALIGNMENT
+@28
+injectorSequenceControl_tb.dut.alignmentCounterDone[1:0]
+injectorSequenceControl_tb.dut.alignmentCounterSyncedAll
+injectorSequenceControl_tb.dut.alignmentCounterSynced[1:0]
+injectorSequenceControl_tb.dut.evgAlignCounterDone[1:0]
+injectorSequenceControl_tb.dut.evgAlignCounterSelLatch
+injectorSequenceControl_tb.dut.evgAlignCounterSel[2:0]
+@22
+injectorSequenceControl_tb.dut.evgBRBucketSumLatched[7:0]
+injectorSequenceControl_tb.dut.evgBRBucketSum[7:0]
+injectorSequenceControl_tb.dut.evgBRBucket[6:0]
+@28
+injectorSequenceControl_tb.dut.evgBRBucket_valid
+injectorSequenceControl_tb.dut.evgHeartbeatAlign
+injectorSequenceControl_tb.dut.evgHeartbeatAlignSel
+injectorSequenceControl_tb.dut.evgHeartbeatCore
+injectorSequenceControl_tb.dut.evgHeartbeatCoreSel
+injectorSequenceControl_tb.dut.evgHeartbeatSel[2:0]
+injectorSequenceControl_tb.dut.evgHeartbeat[1:0]
+@24
+injectorSequenceControl_tb.dut.evgRFAlignCount[2:0]
+injectorSequenceControl_tb.dut.evgRFAlignCount_r[2:0]
+injectorSequenceControl_tb.dut.evgRFAlignMult[9:0]
+injectorSequenceControl_tb.dut.evgRFAlignMult_r[9:0]
+injectorSequenceControl_tb.dut.evgRFAlignTerm[6:0]
+injectorSequenceControl_tb.dut.evgRFAlignTerm_valid
+@25
+injectorSequenceControl_tb.dut.evgRFCoincCount[6:0]
+injectorSequenceControl_tb.dut.evgRFCoincIdxSel[6:0]
+injectorSequenceControl_tb.dut.evgRFCoincTerm[2:0]
+@28
+injectorSequenceControl_tb.dut.evgSequenceStart
+injectorSequenceControl_tb.dut.evgTxClk
+@24
+injectorSequenceControl_tb.dut.injectorStartState[2:0]
+@28
+injectorSequenceControl_tb.dut.injectorStartToggle
+injectorSequenceControl_tb.dut.injectorStartToggle_d
+injectorSequenceControl_tb.dut.injectorStartToggle_m
+injectorSequenceControl_tb.dut.powerline
+injectorSequenceControl_tb.dut.powerlineTimeout
+injectorSequenceControl_tb.dut.powerlineTimeout_m
+injectorSequenceControl_tb.dut.powerline_a
+injectorSequenceControl_tb.dut.powerline_d
+injectorSequenceControl_tb.dut.powerline_m
+injectorSequenceControl_tb.dut.sysAlignCounterSel[2:0]
+@22
+injectorSequenceControl_tb.dut.sysAlignStatus[31:0]
+@28
+injectorSequenceControl_tb.dut.sysClk
+injectorSequenceControl_tb.dut.sysClkDividerDone
+@24
+injectorSequenceControl_tb.dut.sysClkDivider[17:0]
+@28
+injectorSequenceControl_tb.dut.sysCsrAlignStrobe
+injectorSequenceControl_tb.dut.sysCsrStrobe
+injectorSequenceControl_tb.dut.sysCsrTargetStrobe
+injectorSequenceControl_tb.dut.sysCycleCounterDone
+@22
+injectorSequenceControl_tb.dut.sysCycleCounterReload[15:0]
+injectorSequenceControl_tb.dut.sysCycleCounter[16:0]
+@28
+injectorSequenceControl_tb.dut.sysCycleEnabled
+injectorSequenceControl_tb.dut.sysEvgHeartbeatSel[2:0]
+@22
+injectorSequenceControl_tb.dut.sysGPIO_OUT[31:0]
+@28
+injectorSequenceControl_tb.dut.sysInjectorStartToggle
+injectorSequenceControl_tb.dut.sysPowerline
+injectorSequenceControl_tb.dut.sysPowerlineTimeout
+@22
+injectorSequenceControl_tb.dut.sysRFCoincIdxSel[6:0]
+@28
+injectorSequenceControl_tb.dut.sysRFCoincTerm[2:0]
+@22
+injectorSequenceControl_tb.dut.sysStatus[31:0]
+injectorSequenceControl_tb.dut.sysTargetStatus[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

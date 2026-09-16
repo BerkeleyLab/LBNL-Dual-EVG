@@ -35,7 +35,7 @@
 #ifndef _EVG_COINCIDENCE_H_
 #define _EVG_COINCIDENCE_H_
 
-#include "util.h"
+#include "reg_macros.h"
 
 /* CSR read */
 

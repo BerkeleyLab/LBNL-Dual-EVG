@@ -18,6 +18,7 @@ module ntpClock #(
     input                                   clk,
     input                                   pps_a,
     output reg                              ppsToggle = 0,
+    (*mark_debug=DEBUG*) output reg         ppsStrobe = 0,
     output wire                             ppsMarker,
     (*mark_debug=DEBUG*) output reg  [31:0] seconds,
     (*mark_debug=DEBUG*) output wire [31:0] fraction,
@@ -62,7 +63,6 @@ localparam FILTER_L2_ALPHA = 4;
 reg pps = 0;
 reg [8:0] ppsDebounce = 0;
 wire ppsDebounceDone = ppsDebounce[8];
-(*mark_debug=DEBUG*) reg ppsStrobe;
 
 // Provide a marker wide enough to be seen in other clock domains
 reg [7:0] ppsMarkerCounter = 0;

@@ -21,7 +21,7 @@ GW_DEVG_TGT_DIR = $(GW_SYN_DIR)/$(TARGET)
 XPR             = $(GW_DEVG_TGT_DIR)/_xilinx/$(TARGET)_top/$(TARGET)_top.xpr
 
 # Top level bitstream name
-all: $(TARGET)_top.bit $(TARGET)_top.mmi
+all: $(TARGET)_top.bit $(TARGET)_top.mmi $(TARGET)_coinc_rec.rpt
 
 # Search for .v files here
 vpath %.v $(MODULES_DIR)
@@ -140,7 +140,7 @@ VFLAGS_COMMAND_FILE += \
 
 VFLAGS_DEP += $(addprefix -c, $(VFLAGS_COMMAND_FILE))
 
-VFLAGS_DEP += -DSIMULATE
+VFLAGS_DEP += -DSIMULATE -g2012 -Y .sv
 
 # Badger build
 RTEFI_CLIENT_LIST = hello.v
@@ -163,6 +163,9 @@ $(TOP_LVL_DIR)/$(TARGET)_top.v: $(TOP_LVL_DIR)/gitHash.vh $(TOP_LVL_DIR)/firmwar
 
 $(TARGET)_top.mmi: $(XPR) $(TARGET)_top.bit
 	vivado -mode batch -nojou -nolog -source $(GW_SCRIPTS_DIR)/gen_mem_info.tcl -tclargs $< $@
+
+$(TARGET)_coinc_rec.rpt: $(XPR) $(TARGET)_top.bit
+	vivado -mode batch -nojou -log $@ -source $(GW_SCRIPTS_DIR)/gen_report_coinc_recorder_prop.tcl -tclargs $<
 
 # Generate bundled .xdc from other .xdc. Don't change the order of the
 # prerequisites as we need constraints in tGe order specified

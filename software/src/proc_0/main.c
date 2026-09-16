@@ -55,6 +55,10 @@
 # error "CFG_RATIO_TXCLK_PER_BR_AR_ALIGNMENT invalid"
 #endif
 
+#if((CFG_EVG1_ALS_CLK_PER_HEARTBEAT % CFG_EVG1_ALS_CLK_PER_BR_SR_ALIGNMENT)!=0)
+# error "CFG_RATIO_TXCLK_PER_ALS_BR_SR_ALIGNMENT invalid"
+#endif
+
 #define SHARED_MEMORY_CAPACITY (XPAR_SHARED_RAM_S_AXI_HIGHADDR + 1 - \
                                                  XPAR_SHARED_RAM_S_AXI_BASEADDR)
 static void

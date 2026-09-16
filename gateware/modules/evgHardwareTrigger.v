@@ -60,7 +60,7 @@ wire [HARDWARE_TRIGGER_COUNT-1:0] pendingChannels = eventToggles ^ eventMatches;
 // Priority encoder
 // Not parameterized, but simple
 if (HARDWARE_TRIGGER_COUNT != 8) begin
-    NeedToChangePriorityEncoderFirmware();
+    NeedToChangePriorityEncoderFirmware err();
 end
 wire [ADDRESS_WIDTH-1:0] priorityBitnum = pendingChannels[7] ? 7 :
                                           pendingChannels[6] ? 6 :

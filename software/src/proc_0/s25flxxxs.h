@@ -5,7 +5,7 @@
 #ifndef _S25FLxxxS_H_
 #define _S25FLxxxS_H_
 
-#include "util.h"
+#include "reg_macros.h"
 
 /*
  * Flash memory definitions

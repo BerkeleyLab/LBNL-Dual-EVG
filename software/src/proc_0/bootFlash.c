@@ -213,9 +213,14 @@ spiFlashIsWriteOk(uint32_t address, uint32_t length)
 {
     uint32_t wp_start = bootFlash.wp_start;
     uint32_t wp_size = bootFlash.wp_size;
+    uint32_t wp_end = wp_start + wp_size;
 
-    if (((address >= wp_start) && (address < (wp_start + wp_size))) ||
-            ((address <= wp_start) && ((address + length) > wp_start))) {
+    if (wp_size == 0) {
+        return SPIFLASH_OK;
+    }
+
+    if (((address >= wp_start) && (address < wp_end)) ||
+            ((address <= wp_start) && ((address + length) > wp_end))) {
         return SPIFLASH_ERR_BAD_STATE;
     }
 

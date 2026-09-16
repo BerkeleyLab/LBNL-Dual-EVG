@@ -1,19 +1,47 @@
 stages:
-  - prepare
+  - tests
   - gateware
   - software
 
 default:
   tags:
-    - xilinx
+    - xilinx-bookworm
 
 variables:
   XILINX_VIVADO: /non-free/Xilinx/Vivado_and_Vitis/2020.2.2/Vivado/2020.2
   XILINX_VITIS: /non-free/Xilinx/Vivado_and_Vitis/2020.2.2/Vitis/2020.2
+  CI_REGISTRY: mohs2.dhcp.lbl.gov
+  IMAGE_BASE: xilinx_env_bookworm
+  DEFAULT_IMAGE: ${CI_REGISTRY}/${IMAGE_BASE}
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
   GIT_SUBMODULE_STRATEGY: normal
   FF_SCRIPT_SECTIONS: "true"
+
+# default image if no other specified
+image: $DEFAULT_IMAGE
+
+tests:
+  before_script: |
+    apt-get update && \
+    apt-get install -y \
+      autoconf \
+      help2man && \
+    rm -rf /var/lib/apt/lists/* && \
+    python3 -m pip install -r requirements.txt && \
+    git clone --branch=v5.046 https://github.com/verilator/verilator && \
+    cd verilator && \
+    autoconf && \
+    ./configure && \
+    make -j4 && \
+    make install &&
+    verilator --version
+  stage: tests
+  script: |
+    cd ${CI_PROJECT_DIR}/gateware/modules && \
+    make checks && \
+    cd ${CI_PROJECT_DIR}/gateware/modules/injectorSequenceControl_test && \
+    make sim
 
 # Gateware jobs
 # Gitlab doesn't seem to suport the usage of variables in
@@ -23,16 +51,20 @@ gw_devg_marble:
   before_script:
     - cd gateware/syn/devg_${VARIANT_MOD}marble && ls /non-free
   stage: gateware
+  # Don't wait for the tests stage
+  needs: []
   script: |
     make EVIO_TYPE=${EVIO_TYPE} clean && \
       PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.bit && \
-      PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.mmi
+      PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_top.mmi && \
+      PATH=$XILINX_VIVADO/bin:$PATH make EVIO_TYPE=${EVIO_TYPE} devg_${VARIANT_MOD}marble_coinc_rec.rpt
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 4 weeks
     paths:
       - gateware/syn/devg_${VARIANT_MOD}marble/devg_${VARIANT_MOD}marble_top.bit
       - gateware/syn/devg_${VARIANT_MOD}marble/devg_${VARIANT_MOD}marble_top.mmi
+      - gateware/syn/devg_${VARIANT_MOD}marble/devg_${VARIANT_MOD}marble_coinc_rec.rpt
       - gateware/syn/devg_${VARIANT_MOD}marble/_xilinx/devg_${VARIANT_MOD}marble_top/*.runs/impl_1/*.rpt
       - gateware/syn/devg_${VARIANT_MOD}marble/bd.xsa
   rules:

@@ -12,36 +12,37 @@ BSP_DIR    = $(TARGET)_$(PROC_NAME)/bd/$(CPU_NAME)/standalone_domain/bsp/$(CPU_N
 all: $(TARGET)_$(PROC_NAME) $(TARGET)_$(PROC_NAME).elf $(TARGET)_$(PROC_NAME).elf.size
 
 __SRC_FILES = \
-    NMEA.c \
-    epics.c \
-    evg.c \
-    fmcIO.c \
-    gps.c \
-    injectionCycle.c \
-    ipc.c \
-    main.c \
-    mgt.c \
-    platform.c \
-    swapoutCycle.c \
-    tod.c \
-    util.c
+	NMEA.c \
+	epics.c \
+	evg.c \
+	fmcIO.c \
+	gps.c \
+	injectionCycle.c \
+	ipc.c \
+	main.c \
+	mgt.c \
+	platform.c \
+	swapoutCycle.c \
+	tod.c \
+	util.c
 SRC_FILES = $(addprefix $(SW_SRC_DIR)/$(PROC_NAME)/, $(__SRC_FILES))
 
 __HDR_FILES = \
-    NMEA.h \
-    epics.h \
-    evg.h \
-    fmcIO.h \
-    gps.h \
-    injectionCycle.h \
-    ipc.h \
-    mgt.h \
-    platform.h \
-    swapoutCycle.h \
+	NMEA.h \
+	epics.h \
+	evg.h \
+	fmcIO.h \
+	gps.h \
+	injectionCycle.h \
+	ipc.h \
+	mgt.h \
+	platform.h \
+	swapoutCycle.h \
 	sharedMemory.h \
 	systemParameters.h \
-    tod.h \
-    util.h
+	tod.h \
+	util.h \
+	reg_macros.h
 HDR_FILES = $(addprefix $(SW_SRC_DIR)/$(PROC_NAME)/, $(__HDR_FILES))
 
 __SRC_BANTAMWEIGHTUDP_FILES = \
@@ -90,9 +91,9 @@ INCLUDE_FLAGS = $(addprefix -I, $(INCLUDE_DIRS))
 
 .PHONY: all clean bsp
 
-vpath *.c $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
-vpath *.h $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
-vpath *.o $(SW_SRC_DIR)/$(PROC_NAME)
+vpath %.c $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
+vpath %.h $(SW_SRC_DIR)/$(PROC_NAME) $(TARGET_DIR)
+vpath %.o $(SW_SRC_DIR)/$(PROC_NAME)
 
 # Actual build rules
 include $(SW_DEVG_TEST_APP_DIR)/bottom_rules.mk

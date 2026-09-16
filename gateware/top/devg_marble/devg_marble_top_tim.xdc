@@ -86,3 +86,7 @@ set_max_delay -datapath_only -from [get_clocks gtx_ref0] -to [get_clocks evg2mgt
 set_max_delay -datapath_only -from [get_clocks evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks gtx_ref0] $clk_gtx_ref0_period
 set_max_delay -datapath_only -from [get_clocks evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks gtx_ref1] $clk_gtx_ref1_period
 set_false_path -from [get_clocks evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/RXOUTCLK] -to [get_clocks -of_objects [get_pins bd_i/clk_wiz_1/inst/mmcm_adv_inst/CLKOUT0]]
+
+# For chipscope
+# set_max_delay -datapath_only -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/RXOUTCLK] -to [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] 2.0
+# set_max_delay -datapath_only -from [get_clocks *evg2mgt/evg2mgt_i/inst/evg2mgt_i/gt0_evg2mgt_i/gtxe2_i/TXOUTCLK] -to [get_clocks *evg1mgt/evg1mgt_i/inst/evg1mgt_i/gt0_evg1mgt_i/gtxe2_i/TXOUTCLK] 2.0

@@ -10,13 +10,14 @@ GW_TGT_DIR   = $(GW_SYN_DIR)/$(TARGET)
 BIT          = $(GW_TGT_DIR)/$(TARGET)_top.bit
 SW_TGT_DIR   = $(SW_APP_DIR)/$(APP)
 
-.PHONY: all bit sw
+.PHONY: all bit rpt sw
 
 all: bit sw
 
 bit:
 	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_top.bit
 	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_top.mmi
+	make -C $(GW_TGT_DIR) TARGET=$(TARGET) EVIO_TYPE=$(EVIO_TYPE) $(TARGET)_coinc_rec.rpt
 
 sw:
 	make -C $(SW_TGT_DIR) TARGET=$(TARGET) BIT=$(BIT) all

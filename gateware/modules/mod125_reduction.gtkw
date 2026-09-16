@@ -1,0 +1,116 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Tue Mar 24 21:40:37 2026
+[*]
+[dumpfile] "/home/lrusso/repos/dual-evg/gateware/modules/mod125_reduction.vcd"
+[dumpfile_mtime] "Tue Mar 24 21:38:17 2026"
+[dumpfile_size] 7899516
+[savefile] "/home/lrusso/repos/dual-evg/gateware/modules/mod125_reduction.gtkw"
+[timestart] 0
+[size] 1156 1340
+[pos] -3 49
+*-6.600000 55 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] mod125_reduction_tb.
+[sst_width] 249
+[signals_width] 280
+[sst_expanded] 1
+[sst_vpaned_height] 418
+@200
+-TB
+@420
+mod125_reduction_tb.NUM_TESTS
+@28
+mod125_reduction_tb.clk
+mod125_reduction_tb.done_14
+mod125_reduction_tb.done_16
+mod125_reduction_tb.done_32
+@200
+-DUT_14
+@24
+mod125_reduction_tb.mod125_reduction_w14.NUM_TESTS
+mod125_reduction_tb.mod125_reduction_w14.WIDTH
+@28
+mod125_reduction_tb.mod125_reduction_w14.clk
+mod125_reduction_tb.mod125_reduction_w14.done
+@420
+mod125_reduction_tb.mod125_reduction_w14.errors
+@28
+mod125_reduction_tb.mod125_reduction_w14.valid_in
+@24
+mod125_reduction_tb.mod125_reduction_w14.data_in[13:0]
+@28
+mod125_reduction_tb.mod125_reduction_w14.next_valid_in
+@24
+mod125_reduction_tb.mod125_reduction_w14.next_data_in[13:0]
+mod125_reduction_tb.mod125_reduction_w14.mod_val[6:0]
+@22
+mod125_reduction_tb.mod125_reduction_w14.queue_out[20:0]
+@24
+mod125_reduction_tb.mod125_reduction_w14.input_val[13:0]
+mod125_reduction_tb.mod125_reduction_w14.actual_val[6:0]
+mod125_reduction_tb.mod125_reduction_w14.exp_val[6:0]
+@28
+mod125_reduction_tb.mod125_reduction_w14.valid_out
+@24
+mod125_reduction_tb.mod125_reduction_w14.data_out[6:0]
+@200
+-DUT_16
+@24
+mod125_reduction_tb.mod125_reduction_w16.NUM_TESTS
+mod125_reduction_tb.mod125_reduction_w16.WIDTH
+@28
+mod125_reduction_tb.mod125_reduction_w16.clk
+@420
+mod125_reduction_tb.mod125_reduction_w16.errors
+@28
+mod125_reduction_tb.mod125_reduction_w16.done
+mod125_reduction_tb.mod125_reduction_w16.valid_in
+@24
+mod125_reduction_tb.mod125_reduction_w16.data_in[15:0]
+@28
+mod125_reduction_tb.mod125_reduction_w16.next_valid_in
+@24
+mod125_reduction_tb.mod125_reduction_w16.next_data_in[15:0]
+mod125_reduction_tb.mod125_reduction_w16.mod_val[6:0]
+@22
+mod125_reduction_tb.mod125_reduction_w16.queue_out[22:0]
+@24
+mod125_reduction_tb.mod125_reduction_w16.input_val[15:0]
+mod125_reduction_tb.mod125_reduction_w16.actual_val[6:0]
+mod125_reduction_tb.mod125_reduction_w16.exp_val[6:0]
+@28
+mod125_reduction_tb.mod125_reduction_w16.valid_out
+@24
+mod125_reduction_tb.mod125_reduction_w16.data_out[6:0]
+@200
+-DUT_32
+@24
+mod125_reduction_tb.mod125_reduction_w32.NUM_TESTS
+mod125_reduction_tb.mod125_reduction_w32.WIDTH
+@28
+mod125_reduction_tb.mod125_reduction_w32.clk
+mod125_reduction_tb.mod125_reduction_w32.done
+@420
+mod125_reduction_tb.mod125_reduction_w32.errors
+@28
+mod125_reduction_tb.mod125_reduction_w32.valid_in
+@24
+mod125_reduction_tb.mod125_reduction_w32.data_in[31:0]
+@28
+mod125_reduction_tb.mod125_reduction_w32.next_valid_in
+@24
+mod125_reduction_tb.mod125_reduction_w32.next_data_in[31:0]
+mod125_reduction_tb.mod125_reduction_w32.mod_val[6:0]
+@22
+mod125_reduction_tb.mod125_reduction_w32.queue_out[38:0]
+@25
+mod125_reduction_tb.mod125_reduction_w32.input_val[31:0]
+@24
+mod125_reduction_tb.mod125_reduction_w32.actual_val[6:0]
+mod125_reduction_tb.mod125_reduction_w32.exp_val[6:0]
+@28
+mod125_reduction_tb.mod125_reduction_w32.valid_out
+@24
+mod125_reduction_tb.mod125_reduction_w32.data_out[6:0]
+[pattern_trace] 1
+[pattern_trace] 0

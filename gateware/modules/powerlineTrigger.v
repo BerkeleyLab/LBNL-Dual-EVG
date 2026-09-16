@@ -23,7 +23,7 @@ localparam FAKE60_LIMIT = $rtoi(CLK_RATE/NOMINAL_TRIGGER_RATE);
 localparam FAKE60_RELOAD = FAKE60_LIMIT - 2;
 localparam FAKE60_WIDTH = $clog2(FAKE60_RELOAD+1) + 1;
 reg [FAKE60_WIDTH-1:0] fake60counter = FAKE60_RELOAD;
-assign fake60trigger = fake60counter[FAKE60_WIDTH-1];
+wire fake60trigger = fake60counter[FAKE60_WIDTH-1];
 
 (*ASYNC_REG="true"*) reg powerline_m;
 reg powerline = 0, powerline_d = 0;
