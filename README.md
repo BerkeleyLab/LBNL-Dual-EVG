@@ -1,68 +1,16 @@
-Dual EVG
-==========
+# Dual EVG
 
-Gateware/Software for Dual EVG
+Gateware and software for the ALS-U dual event generator: a Marble FPGA carrier with two EVIO FMC cards that distributes RF reference and timing signals for both ALS-U frequency domains.
 
-### Building
+## Quick start
 
-This repository contains both gateware and software
-for the Dual EVG.
-
-#### Gateware Dependencies
-
-To build the gateware the following dependencies are needed:
-
-* GNU Make
-* Xilinx Vivado (2020.2.2 tested), available [here](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools.html)
-* Xilinx Vitis (2020.2.2 tested), available [here](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vitis.html)
-
-Make sure `vivado` and `vitis` are in PATH.
-
-#### Software Dependencies
-
-To build the software the following dependencies are needed:
-
-* mb-gcc toolchain, bundled within Vitis
-
-#### Building Instructions
-
-With the dependencies in place a simple `make` should be able to generate
-both gateware and software:
-
-```bash
-make
+```sh
+git submodule update --init
+make APP=devg PLATFORM=marble EVIO_TYPE=evio
 ```
 
-A suggestion in running the `make` command is to measure the time
-and redirect stdout/stderr to a file so you can inspect it later:
+Requires Vivado and Vitis 2020.2.2 on `PATH`. The bootable image is written to `software/app/devg/devg_marble.<git-hash>.bit`.
 
-```bash
-ARM_TOOLCHAIN_LOCATION=/media/Xilinx/Vivado/2020.2.2/Vitis/2020.2/gnu/microblaze/lin
-(time make CROSS_COMPILE=${ARM_TOOLCHAIN_LOCATION}/bin/mb- APP=devg PLATFORM=marble EVIO_TYPE=evio && notify-send 'Compilation SUCCESS' || notify-send 'Compilation ERROR'; date) 2>&1 | tee make_output
-```
+## Documentation
 
-For now the following APPs are supported:
-
-* devg
-* devg_test
-
-For now the following EVIO_TYPEs are supported:
-
-* evio
-* evio_trig_nibble_reversed
-
-### Deploying
-
-To deploy the gateware and the software we can use a variety of
-methods. For development, JTAG is being used.
-
-####
-
-The following script can download the gateware/software via JTAG:
-
-```bash
-cd scripts
-./deploy.sh software/app/<APP>/download.bit
-```
-
-Usually, APP=devg or APP=devg_test depending on the desired target.
+📖 **[documentation/README.md](documentation/README.md)** — dependencies, build options, deployment, hardware, firmware, and update procedures.
